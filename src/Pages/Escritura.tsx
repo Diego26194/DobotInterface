@@ -32,8 +32,9 @@ const Escritura = () => {
   const [flagAddPoint, setFlagAddPoint] = useState(false);
   const [flagAddRutine, setFlagAddRutine] = useState(false);
   const [showSection1, setShowSection1] = useState(true);
-  const [showLibrarie, setShowLibrarie] = useState(0);
-
+  const [showLibrariePuntos, setShowLibrariePuntos] = useState(false);
+  const [showLibrarieRutina, setShowLibrarieRutinas] = useState(false);
+{/* 
   const handleRutinas = () => {
     setShowLibrarie(2)
   };
@@ -45,7 +46,7 @@ const Escritura = () => {
   const handleSection1 = () => {
     setShowLibrarie(0)
   };
-
+*/}
   return (
     <Stack
       sx={{
@@ -85,8 +86,9 @@ const Escritura = () => {
 
       </Stack> */}
       <Stack direction="row" spacing={5}
-        sx={{ height: '4%' , width: '100%', backgroundColor: 'rgba(194, 170, 104, 0.76)',}}
+        sx={{ height: '3%' , width: '100%', backgroundColor: 'rgba(194, 170, 104, 0.76)',}}
       >
+        {/* 
        <Button 
           onClick={handleSection1} 
           variant="contained" 
@@ -94,29 +96,30 @@ const Escritura = () => {
         >
           {showSection1 ? "Ocultar Panel" : "Mostrar Panel"}
         </Button>
+        */}
         <Button 
-          onClick={handlePuntos} 
+          onClick={() => setShowLibrariePuntos(prev => !prev)} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
           B.Putnos
         </Button>
         <Button 
-          onClick={handleRutinas} 
+          onClick={() => setShowLibrarieRutinas(prev => !prev)} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
           B.Rutinas
         </Button>
         <Button 
-          onClick={handleRutinas} 
+         // onClick={handleRutinas} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
           Inicializar Programa
         </Button>
         <Button 
-          onClick={handleRutinas} 
+          //onClick={handleRutinas} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
@@ -124,14 +127,14 @@ const Escritura = () => {
         </Button>
 
         <Button 
-          onClick={handleRutinas} 
+         // onClick={handleRutinas} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
           M Escritura
         </Button>
         <Button 
-          onClick={handleRutinas} 
+         // onClick={handleRutinas} 
           variant="contained" 
           sx={{ height: '85%'}}
         >
@@ -140,7 +143,7 @@ const Escritura = () => {
 
       </Stack>
     
-      <Grid container spacing={0} sx={{ height: '96%' , width: '100%' }}>
+      <Grid container spacing={0} sx={{ height: '86%' , width: '100%' }}>
         {/*<Button 
           onClick={() => setShowSection1(prev => !prev)} 
           variant="contained" 
@@ -150,29 +153,30 @@ const Escritura = () => {
         </Button>*/}
 
         {/* Section1 condicional */}
-        {showLibrarie > 0 ? (
+        {(showLibrariePuntos || showLibrarieRutina) && (
           <Grid size={{xs: 2.5, md: 2.5}} sx={{ height: '100%' , borderRight: '3px solid #aaa'}} >
-            <Stack spacing={2} sx={{ height: '100%', overflowY: 'auto',}}>
-              <Box sx={{ height: '80%', maxHeight: "80%"}}> 
-                {showLibrarie === 1 ? (
-                  <Section1 setFlagAddPoint={setFlagAddPoint} />
-                ) : showLibrarie === 2 ? (
+            <Stack spacing={0.5} sx={{ height: '100%', overflowY: 'auto',}}>
+              {showLibrariePuntos && (
+                <Box sx={{ height: showLibrarieRutina? '48%':'100%', maxHeight: showLibrarieRutina? '48%':'100%'}}> 
+                    <Section1 setFlagAddPoint={setFlagAddPoint} />
+                </Box>
+              )}
+              {showLibrarieRutina && (
+                <Box sx={{ height: showLibrariePuntos? '48%':'100%', maxHeight: showLibrariePuntos? '48%':'100%'}}> 
                   <Section4 setFlagAddPoint={setFlagAddPoint} />
-                ) : null}      
-              </Box>
-              <Box
-                  sx={{
-                    width: '100%', 
-                    height: '16%',
-                    display: 'flex',
-                    border: '1px solid #000',
-                  }}
-                ></Box>
+                </Box>
+              )}
+              
             </Stack> 
           </Grid>
-        ): null}
+        )}
 
-        <Grid size={{ xs: showLibrarie ? 9.5 : 12, md: showLibrarie ? 9.5 : 12}} sx={{ height: '100%' }} >
+        <Grid 
+          size={{ xs: (showLibrariePuntos || showLibrarieRutina) ? 9.5 : 12, 
+            md: (showLibrariePuntos || showLibrarieRutina) ? 9.5 : 12
+          }}
+          sx={{ height: '100%' }} 
+        >
           <Box
             sx={{
               width: '100%', 
@@ -218,6 +222,14 @@ const Escritura = () => {
           
           </Grid>
       </Grid>
+      <Box
+        sx={{
+          width: '100%', 
+          height: '10%',
+          display: 'flex',
+          border: '1px solid #000',
+        }}
+      ></Box>
     </Stack>
   );
 };

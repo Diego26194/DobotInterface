@@ -52,7 +52,7 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
 
   return (
     <Stack 
-      spacing={2}
+      spacing={0}
       sx={{
         width: '100%', 
         height: '100%', 
@@ -68,7 +68,7 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
       </Stack>
       <Paper sx={{
             width: '100%', 
-            height: '90%',
+            height: '93%',
             border: '1px solid #000',
           }}> 
 

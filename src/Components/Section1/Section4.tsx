@@ -49,12 +49,26 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
     setNombre(name)
   };
 
-
   return (
     
+    <Stack 
+      spacing={0}
+      sx={{
+        width: '100%', 
+        height: '100%', 
+      }}
+    >
+      {/*<Button variant="contained" onClick={cargarPuntosDB}>Cargar datos</Button>*/}
+      <Stack direction="row" spacing={0} >
+        <Typography variant="h6">Rutina</Typography>
+        <ButtonAdd onClick={handleAddClick}/>
+        <ButtonEdit onClick={() => setOpen(true)}/>
+        <ButtonDelete onClick={() => elimiarPuntoDB(nombre)}/>
+        <ButtonReflesh onClick={cargarPuntosDB}/>
+      </Stack>
       <Paper sx={{
             width: '100%', 
-            height: '100%',
+            height: '93%',
             border: '1px solid #000',
           }}> 
 
@@ -85,7 +99,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
 
       
 
-    
+    </Stack>
   );
 };
 
