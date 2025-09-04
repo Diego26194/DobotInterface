@@ -23,7 +23,7 @@ import Section2 from "../Components/Section2/Section2";
 import Section3 from "../Components/Section3/Section3";
 
 import ToolBar from "../Components/Elements/ToolBar";
-import InputAng from "../Components/Elements/InputCord";
+import InputAng from "../Components/Elements/Inputs/InputCord";
 import { useState } from "react";
 import TextField from "@mui/material/TextField";
 

@@ -1,7 +1,7 @@
 import React, { useImperativeHandle, forwardRef, useState, useEffect } from 'react';
 import { Grid, Stack } from '@mui/material';
-import Button1 from './Buettons/Button1';
-import CoordInput from './Inputs/CoordInput';
+import Button1 from '../Buettons/Button1';
+import CoordInput from './CoordInput';
 
 //import { cargarPuntosDB, elimiarPuntoDB, escucharPuntoDB } from "../../Services/Funciones";
 

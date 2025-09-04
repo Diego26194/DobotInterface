@@ -59,8 +59,8 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
       }}
     >
       {/*<Button variant="contained" onClick={cargarPuntosDB}>Cargar datos</Button>*/}
-      <Stack direction="row" spacing={0}>
-        <Typography variant="h6">Puntos</Typography>
+      <Stack direction="row" spacing={0} sx={{height: '10%', fontSize: '0.9rem'}}>
+        <Typography variant="h6" sx={{fontSize: '1.1rem'}}>Puntos</Typography>
         <ButtonAdd onClick={handleAddClick}/>
         <ButtonEdit onClick={() => setOpen(true)}/>
         <ButtonDelete onClick={() => elimiarPuntoDB(nombre)}/>
@@ -68,7 +68,7 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
       </Stack>
       <Paper sx={{
             width: '100%', 
-            height: '93%',
+            height: '90%',
             border: '1px solid #000',
           }}> 
 

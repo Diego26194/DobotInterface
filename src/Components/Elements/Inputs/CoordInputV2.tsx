@@ -1,10 +1,8 @@
 import React from "react";
-//import TextField from "@mui/material/TextField";
 import { styled } from "@mui/material/styles";
+import CompactsInput from "./CompactsInput";
 
-import CompactsInputs from "./Inputs/CompactsInput";
-
-const NoSpinnerInput = styled(CompactsInputs)(({ theme }) => ({
+const NoSpinnerInput = styled(CompactsInput)(({ theme }) => ({
   "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {
     WebkitAppearance: "none",
     margin: 0,
@@ -14,7 +12,7 @@ const NoSpinnerInput = styled(CompactsInputs)(({ theme }) => ({
   },
 }));
 
-type InputCordProps = {
+type CoordInputV2Props = {
   label: string;
   valMin: number;
   valMax: number;
@@ -23,51 +21,59 @@ type InputCordProps = {
   disabled?: boolean;
 };
 
-const InputCord: React.FC<InputCordProps> = ({ label, valMin, valMax, value, onChange, disabled = false }) => {
-
+const CoordInputV2: React.FC<CoordInputV2Props> = ({
+  label,
+  valMin,
+  valMax,
+  value,
+  onChange,
+  disabled = false,
+}) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value;
 
     // Eliminar cualquier caracter que no sea dígito o el signo negativo al principio
-    val = val.replace(/[^0-9-]/g, "");  // elimina puntos, comas, letras, etc.
+    val = val.replace(/[^0-9-]/g, ""); // elimina puntos, comas, letras, etc.
 
     // Asegurar que solo haya un '-' y esté al principio
     if (val.includes("-")) {
-      val = val.replace(/(?!^)-/g, ""); 
+      val = val.replace(/(?!^)-/g, "");
     }
 
     if (val === "" || val === "-") {
       onChange(NaN); // usamos NaN para indicar input "vacío" o solo "-"
       return;
-    }    
+    }
 
     const num = parseInt(val, 10);
     if (!isNaN(num)) {
       onChange(num);
-    } 
+    }
   };
+
   const handleBlur = () => {
-    if (isNaN(value)) onChange(0);
+    if (isNaN(value)) onChange(0); // si queda vacío o inválido → se pone en 0
   };
 
   const numericVal = parseInt(value.toString(), 10);
-  const isOutOfRange = !isNaN(numericVal) && (numericVal < valMin || numericVal > valMax);
+  const isOutOfRange =
+    !isNaN(numericVal) && (numericVal < valMin || numericVal > valMax);
 
   return (
     <NoSpinnerInput
       type="number"
       label={label}
-      value={value.toString()}   
+      value={isNaN(value) ? "" : value.toString()}
       onChange={handleChange}
+      onBlur={handleBlur}
       disabled={disabled}
       inputProps={{
-        inputMode: "numeric",
-        pattern: "-?[0-9]*",
+        inputMode: "numeric", // teclado numérico en móviles
+        pattern: "-?[0-9]*", // permite negativo
       }}
       error={isOutOfRange}
-      onBlur={handleBlur}
     />
   );
 };
 
-export default InputCord;
+export default CoordInputV2;

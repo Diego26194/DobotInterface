@@ -125,7 +125,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   const [rows, setRows] = useState([
     { id: 1, nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
     { id: 2, nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
-    { id: 3, nombre: 'Punto B', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true},
+    { id: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true},
+    { id: 4, nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
   ]);
     //const [wite, setShoWite] = useState(0);
 

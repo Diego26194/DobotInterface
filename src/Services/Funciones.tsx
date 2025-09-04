@@ -80,6 +80,12 @@ export function escucharPuntoDB(callback: (msg: any) => void) {
   // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
 }
 
+export function escucharCordReal(callback: (msg: any) => void) {
+  subTopic("pos_dy", callback);
+
+  // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
+}
+
 //////////////////////////    FIN Section2     /////////////////////////
 
 export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {

@@ -2,7 +2,7 @@ import React from "react";
 //import TextField from "@mui/material/TextField";
 import { styled } from "@mui/material/styles";
 
-import CompactsInputs from "./Inputs/CompactsInput";
+import CompactsInputs from "./CompactsInput";
 
 const NoSpinnerInput = styled(CompactsInputs)(({ theme }) => ({
   "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button": {

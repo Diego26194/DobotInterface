@@ -13,13 +13,13 @@ import {
 import { FormControl, InputLabel } from "@mui/material";
 
 import { useState } from "react";
-import InputCord from "../Elements/InputCord";
+import InputCord from "../Elements/Inputs/InputCord";
 import CompactsInputs from "../Elements/Inputs/CompactsInput";
 import Button1 from "../Elements/Buettons/Button1";
 
 
 import InputsCarts, { InputsCartsRef } from "../Elements/Inputs/InputsCart";
-import InputsAngs, { InputsAngsRef } from "../Elements/InputsAng";
+import InputsAngs, { InputsAngsRef } from "../Elements/Inputs/InputsAng";
 
 import SelectPlan from "../Elements/SelectPlan";
 import { SelectChangeEvent } from "@mui/material/Select";

@@ -31,7 +31,7 @@ function App() {
         <Box >
           <Routes>
             <Route path="/" element={<Escritura />} />
-            <Route path="/lectura" element={<Lectura />} />
+            <Route path="/2" element={<Lectura />} />
             <Route path="/p2" element={<Prueba2 />} />
           </Routes>
         </Box>

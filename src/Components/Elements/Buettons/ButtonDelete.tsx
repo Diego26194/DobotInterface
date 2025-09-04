@@ -8,7 +8,13 @@ interface ButtonDeleteProps {
 
 const ButtonDelete = ({ onClick, description }: ButtonDeleteProps) => {
   return (
-    <MenuItem title={description} onClick={onClick}>
+    <MenuItem title={description} onClick={onClick}
+      sx={{
+        minHeight: "28px",  // baja la altura mínima
+        padding: "2px 1px", // menos espacio interno
+        fontSize: "0.8rem", // texto más chico (si hubiera texto)
+      }}
+    >
       <DeleteIcon fontSize="small" style={{ marginRight: 2 }} color="error"  />
       {/*Eliminar*/}
     </MenuItem>

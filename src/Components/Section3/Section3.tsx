@@ -26,8 +26,9 @@ import Button1 from "../Elements/Buettons/Button1";
 import ButtonDelete from "../Elements/Buettons/ButtonDelete";
 import ButtonEdit from "../Elements/Buettons/ButtonEdit";
 import ButtonAdd from "../Elements/Buettons/ButtonAdd";
+import ButtonSave from "../Elements/Buettons/ButtonSave";
 import SelectRutina from "../Elements/SelectRutina";
-import InputCord from "../Elements/InputCord";
+import InputCord from "../Elements/Inputs/InputCord";
 import InputPositive from "../Elements/Inputs/InputPoisitive";
 
 
@@ -113,7 +114,21 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
                 width: '100%', //76%
               }}>
 
-              <Typography variant="h6">Rutina</Typography>          
+              <Typography variant="h6">Rutina</Typography>  
+
+              <CompactsInputs 
+                label="Nombre de Rutina" 
+                sx={{width: '40%',
+                  height: '100%',
+                  padding: '4px 0px',   
+                  '& input': {
+                    padding: '0px 2px',
+                  },
+                }}
+              >              
+              </CompactsInputs>        
+
+              <ButtonSave description={'Guardar Rutina'} onClick={handleAddRutineClick}/>
           
               <Button1 sx={{width: '20%'}} variant="outlined" onClick={() => setOpen(true)}>
                 Correr Ruina
@@ -147,28 +162,20 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
           <Grid size={{xs: 2, md: 2}}>
             <Stack direction="row" spacing={0}>
-            <CompactsInputs 
-              label="Nombre de Rutina" 
-              sx={{width: '80%',
-                height: '100%',
-                padding: '4px 0px',   
-                '& input': {
-                  padding: '0px 2px',
-                },
-              }}
-            >              
-            </CompactsInputs>
-            <SelectRutina onAdd={handleAddClick} onEdit={handleEditClick} onDelete={handleDeleteClick }/>
+              
+              {/* 
+              <SelectRutina onAdd={handleAddClick} onEdit={handleEditClick} onDelete={handleDeleteClick }/>
 
-            <IconButton
-                onClick={() => setShowLibrarie(prev => !prev)}
-                size="small"
-                sx={{ "&:focus": { outline: "none" }, padding: '0px 0px', }}
-              >
-                {showLibrarie ?<ExpandLessIcon/> : <ExpandMoreIcon />}
-                
+              <IconButton
+                  onClick={() => setShowLibrarie(prev => !prev)}
+                  size="small"
+                  sx={{ "&:focus": { outline: "none" }, padding: '0px 0px', }}
+                >
+                  {showLibrarie ?<ExpandLessIcon/> : <ExpandMoreIcon />}
+                  
               </IconButton>
-              </Stack>
+            */}
+            </Stack>
             
           </Grid>
         </Grid>  
@@ -189,7 +196,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
               ref={editwait} 
             />
           </Grid>
-
+          {/* 
           {showLibrarie && (
           <Grid size={{xs: 2., md: 2.}} sx={{ height: '100%' , borderRight: '3px solid #aaa'}} >
             <Stack spacing={2} sx={{ height: '100%', overflowY: 'auto',}}>
@@ -199,6 +206,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
             </Stack>
           </Grid>
           )}
+          */}
         </Grid>
         
         
