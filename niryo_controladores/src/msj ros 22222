@@ -1,0 +1,48 @@
+rostopic pub -1 /cord_ros std_msgs/Float64MultiArray "data: [130, 0.0, 0.0, 0.0, 0.0, -90]"
+
+ls -l /dev | grep ACM
+
+sudo chmod 666 /dev/ttyACM0
+
+rosrun rosserial_python serial_node.py /dev/ttyACM0 _baud:=115200
+
+ls -l /dev | grep ACM
+
+
+
+rostopic echo puntos_dy
+rostopic echo joint_states
+rostopic echo cord_dy
+rostopic echo pos_dy
+
+python3 trayectoria17.py
+python3 modo_lectura10.py
+
+oslaunch niryo_controladores preubaInicio3.launch
+
+
+
+
+[ WARN] [1727397352.584877040]: Fail: ABORTED: No motion plan found. No execution attempted.
+[INFO] [1727397352.585976]: Ejecutando trayectoria desde cord_ros: [1.5707963267948966, 0.0, 0.0, 0.0, 0.0, -1.5707963267948966]
+
+
+
+
+[ERROR] [1727417131.719016]: bad callback: <bound method ControladorRobot.ejecutar_rutina of <__main__.ControladorRobot object at 0x7f7cea489fd0>>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "trayectoria23.py", line 152, in ejecutar_rutina
+    self.move_group.plan(sequence_request)
+  File "/opt/ros/noetic/lib/python3/dist-packages/moveit_commander/move_group.py", line 628, in plan
+    self.set_joint_value_target(joints)
+  File "/opt/ros/noetic/lib/python3/dist-packages/moveit_commander/move_group.py", line 282, in set_joint_value_target
+    raise MoveItCommanderException(
+moveit_commander.exception.MoveItCommanderException: Unsupported argument of type <class 'moveit_msgs.msg._MotionSequenceRequest.MotionSequenceRequest'>
+
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "trayectoria23.py", line 122, in ejecutar_rutina
+    sequence_request.blend_radius = 0.05  # Radio de mezcla, ajusta según sea necesario
+AttributeError: 'MotionSequenceRequest' object has no attribute 'blend_radius'

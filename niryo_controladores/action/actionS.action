@@ -1,0 +1,11 @@
+# Goal
+moveit_msgs/RobotTrajectory traj
+
+---
+# Result (puedes personalizar esto según lo que quieras recibir de vuelta)
+bool success
+
+---
+# Feedback (retroalimentación): el estado intermedio (bandera de ejecución)
+bool is_running
+

@@ -1,0 +1,9 @@
+ 
+./catkin_ws/src/niryo_one_driver/include/niryo_one_driver/communication_base.h:52:        virtual void sendPositionToRobot(const double cmd[6]) = 0;
+./catkin_ws/src/niryo_one_driver/include/niryo_one_driver/fake_communication.h:48:        void sendPositionToRobot(const double cmd[6]);
+./catkin_ws/src/niryo_one_driver/include/niryo_one_driver/niryo_one_communication.h:60:        void sendPositionToRobot(const double cmd[6]); 
+./catkin_ws/src/niryo_one_driver/src/niryo_one_hardware_interface.cpp:99:    comm->sendPositionToRobot(cmd);
+./catkin_ws/src/niryo_one_driver/src/hw_comm/niryo_one_communication.cpp:451:void NiryoOneCommunication::sendPositionToRobot(const double cmd[6])
+./catkin_ws/src/niryo_one_driver/src/hw_comm/fake_communication.cpp:316:void FakeCommunication::sendPositionToRobot(const double cmd[6])
+./catkin_ws/src/niryo_one_driver/src/hw_comm/fake_communication.cpp:318:    //ROS_INFO("sendPositionToRobot: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f", cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], cmd[5]);
+

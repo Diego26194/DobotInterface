@@ -1,0 +1,7 @@
+<launch>
+      
+     <!-- Ejecutar los dos scripts Python -->
+     <node name="inicializacion_encendido" pkg="niryo_controladores" type="inicializacion_encendido.py" output="screen" />
+        
+</launch>
+

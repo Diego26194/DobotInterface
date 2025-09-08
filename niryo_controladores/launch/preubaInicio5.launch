@@ -1,0 +1,43 @@
+<launch>
+
+  <!-- Cambiar a Pilz como planificador -->
+  <arg name="pipeline" default="pilz_industrial_motion_planner" />
+
+  <!-- By default, we are not in debug mode -->
+  <arg name="debug" default="false" />
+
+  <!-- Load robot description -->
+  <arg name="load_robot_description" default="true"/>
+
+  <!-- Specify Pilz Industrial Motion Planner -->
+  <param name="move_group/planning_pipelines" value="pilz_industrial_motion_planner" />
+
+  <!-- MoveIt launch -->
+  <include file="$(find niryo_moveit_config)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="moveit_controller_manager" value="$(arg moveit_controller_manager)" />
+    <arg name="fake_execution_type" value="$(arg fake_execution_type)"/>
+    <arg name="info" value="true"/>
+    <arg name="debug" value="$(arg debug)"/>
+    <arg name="pipeline" value="$(arg pipeline)"/>
+    <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+  </include>
+
+  <!-- Lanzar el nodo del planificador Pilz -->
+  <node name="pilz_planner" pkg="pilz_industrial_motion_planner" type="moveit_planner" output="screen">
+    <param name="pipeline_id" value="pilz_industrial_motion_planner" />
+  </node>
+
+  <!-- Run RViz for visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find niryo_description)/config/default_config.rviz" />
+
+  <!-- Iniciar nodo Python para la base de datos -->
+  <node name="coordenadas_node" pkg="niryo_controladores" type="db_puntos.py" output="screen">
+    <param name="db" value="$(arg db)" />
+    <param name="db_path" value="$(arg db_path)" />
+  </node>
+
+  
+</launch>
+
+
