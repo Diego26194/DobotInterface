@@ -24,8 +24,9 @@ import Section3 from "../Components/Section3/Section3";
 
 import ToolBar from "../Components/Elements/ToolBar";
 import InputAng from "../Components/Elements/Inputs/InputCord";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import TextField from "@mui/material/TextField";
+import {initRos} from "../Services/RosService2";
 
 const Lectura = () => {
   const [angle, setAngle] = useState(0);
@@ -47,6 +48,10 @@ const Lectura = () => {
     setShowLibrarie(0)
   };
 */}
+useEffect(() => {
+  // inicializa ROS solo una vez cuando el componente se monta
+  initRos();
+}, [])
   return (
     <Stack
       sx={{
@@ -138,7 +143,7 @@ const Lectura = () => {
         >
           <Grid container spacing={0} sx={{ height: '100%' , width: '100%' }}>
             <Grid 
-              size={{ xs: 2.3,md: 2.1}}
+              size={{ xs: 2.3,md: 2.2}}
               sx={{ 
                 height: '100%' ,
                 backgroundColor: '#d0eaff',
@@ -158,7 +163,7 @@ const Lectura = () => {
             </Grid>
 
             <Grid 
-              size={{ xs: 9.7,md: 9.7}}
+              size={{ xs: 9.7,md: 9.8}}
               sx={{ 
                 height: '100%' ,
                 //backgroundColor: '#FF745C',

@@ -3,6 +3,7 @@ import {initRos, pubTopic, subTopic, unsubTopic } from './RosService2';
 
 //////////////////////////    Section1     /////////////////////////
 
+//Envia Orden para traer puntos desde la libreria de punto (Refrescar)
 export function cargarPuntosDB() {
   const msg = {
     orden: ["subir_db"],
@@ -15,32 +16,92 @@ export function cargarPuntosDB() {
   pubTopic('orden_web', msg);
 }
 
+//Agrega Punto a Libreria de Puntos (Puesto ahora en Section2)
+export function agregarPuntoDB(nombrePunto:string, coord:number[]) {
+  const msg = {
+    orden: ['agregar', nombrePunto],
+    coordenadas: coord
+  };
+
+  console.log(" Enviando a /orden_web: agregando punto", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+// Elimina Punto seleccionado
+export function elimiarPuntoDB(nombrePunto:string) {
+  if (nombrePunto){
+    const confirmar = confirm(`¿Estás seguro de querer eliminar el Punto "${nombrePunto}"?`);
+    if (confirmar){
+      const msg = {
+        orden: ['eliminar', nombrePunto],
+        coordenadas: []
+      };
+
+      console.log(" Enviando a /orden_web: ELIMIAR", msg);
+
+      // Publica en ROS
+      pubTopic('orden_web', msg);
+    } 
+  }    
+}
+
+//Resibe lista con todos los puntos de la libreria
 export function nombrePuntoDB(callback: (msg: any) => void) {
   subTopic("lista_puntosdb", callback);
 
   // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
 }
 
-export function elimiarPuntoDB(nombrePunto:string) {
-  const confirmar = confirm(`¿Estás seguro de querer eliminar el Punto "${nombrePunto}"?`);
+//Resibe lista con todos los puntos de la libreria
+export function nombreRutinaDB(callback: (msg: any) => void) {
+  subTopic("lista_rutinasdb", callback);
+
+  // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
+}
+
+// Elimina Punto seleccionado
+export function elimiarRutinaDB(nombreRutina:string) {
+  console.log("a",nombreRutina,"no");
+  if (nombreRutina){
+    const confirmar = confirm(`¿Estás seguro de querer eliminar esta Rutina "${nombreRutina}"?`);
+    if (confirmar){
+      const msg = {
+        orden: ['eliminarRutina', nombreRutina],
+        coordenadas: []
+      };
+      console.log(" Enviando a /orden_web: ELIMIAR", msg);
+
+      // Publica en ROS
+      pubTopic('orden_web', msg);
+    } 
+  }  
+}
+
+// Elimina Punto seleccionado
+export function agregarRutinaTabla(nombreRutina:string) { //agregar posicion despues
+  console.log("a",nombreRutina,"no");
+  if (nombreRutina){
+    const msg = {
+      orden: ['addRT', nombreRutina],
+      coordenadas: [] //luego agregar posicion aca coordenadas: [posicion]
+    };
+    console.log(" Enviando a /orden_web: agregar", msg);
+
+    // Publica en ROS
+    pubTopic('orden_web', msg);
+  }  
+}
+
+//Envia Orden para traer puntos desde la libreria de punto (Refrescar)
+export function cargarRutinasDB() {
   const msg = {
-    orden: ['eliminar', nombrePunto],
+    orden: ['subirR_db'],
     coordenadas: []
   };
 
-  console.log(" Enviando a /orden_web: ELIMIAR", msg);
-
-  // Publica en ROS
-  pubTopic('orden_web', msg);
-}
-
-export function agregarPuntoDB(nombrePunto:string, coord:number[]) {
-  const msg = {
-    orden: ['agregar', nombrePunto],
-    coordenadas: [coord]
-  };
-
-  console.log(" Enviando a /orden_web: agregando punto", msg);
+  console.log(" Enviando a /orden_web:", msg);
 
   // Publica en ROS
   pubTopic('orden_web', msg);
@@ -54,7 +115,7 @@ export function agregarPuntoDB(nombrePunto:string, coord:number[]) {
 
 export function correrTAngular( coord:number[]) {
   const msg = {
-    data: [coord]
+    data: coord
   };
 
   console.log(" Enviando a /cord_ros: correr angulos", msg);
@@ -65,7 +126,7 @@ export function correrTAngular( coord:number[]) {
 
 export function correrTCartesiano( coord:number[]) {
   const msg = {
-    data: [coord]
+    data: coord
   };
 
   console.log(" Enviando a /cord_ros: correr cartesianos", msg);
@@ -75,7 +136,7 @@ export function correrTCartesiano( coord:number[]) {
 }
 
 export function escucharPuntoDB(callback: (msg: any) => void) {
-  subTopic("puntoDB", callback);
+  subTopic("puntodb", callback);
 
   // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
 }
@@ -91,7 +152,7 @@ export function escucharCordReal(callback: (msg: any) => void) {
 export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {
   const msg = {
     orden: ['addR', nombrePunto,plan],
-    coordenadas: [coord]
+    coordenadas: coord
   };
 
   console.log(" Enviando a /orden_web: agregando punto rutina", msg);
@@ -103,18 +164,60 @@ export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[
 //////////////////////////    Section3     ////////////////////////////
 
 
-export function mostrarPuntoRutina(callback: (msg: any) => void) {
+export function resibirMsgRutina(callback: (msg: any) => void) {
   subTopic("puntoRutina", callback);
 }
 
-export function elimiarPuntoRutina(id:number) {
+//Elimina Punto de Rutina
+export function elimiarPuntoRutina(nombrePunto:string[], ids:number[]) {
   const msg = {
-    orden: ['eliminarRut', id],
-    coordenadas: []
+    orden: ['eliminarPunRut', ...nombrePunto],
+    coordenadas: ids
   };
 
-  console.log("del", id);
+  console.log("del", msg);
 
   // Publica en ROS
   pubTopic('orden_web', msg);
 }
+
+//////////////////////////    General     ////////////////////////////
+
+
+export function msgEmergente(tipoMsg: string) {
+  let mensaje: string = "";   // inicializado en vacío
+
+  switch (tipoMsg) {    
+    case 'errorR':
+      mensaje = [
+        "⚠ Rutina no encontrada en base de datos lo que infiere una desincronizacion con esta.",
+          "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+      ].join("\n");
+      break;
+
+    case 'errorP':
+      mensaje = [
+        "⚠ Punto no encontrado en base de datos lo que infiere una desincronizacion con esta.",
+          "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+      ].join("\n");
+      break;
+
+    case 'delPR':
+      // lógica si eliminás bien
+      break;
+
+    case 'ErrordelPR':
+      mensaje = [
+        "⚠ No se eliminó ninguna fila, algunas instrucciones no coinciden con la base de datos lo que infiere una desincronizacion con esta.",
+        "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+      ].join("\n");
+      break;
+
+    default:
+      console.warn("Acción no reconocida:", tipoMsg);
+  }
+
+  if (mensaje) {
+    alert(mensaje);
+  }
+};

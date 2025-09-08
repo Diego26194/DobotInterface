@@ -8,6 +8,7 @@ import {
   Stack,
   Box,
   MenuItem,
+  FormLabel,
 } from "@mui/material";
 
 import { FormControl, InputLabel } from "@mui/material";
@@ -16,6 +17,8 @@ import { useState } from "react";
 import InputCord from "../Elements/Inputs/InputCord";
 import CompactsInputs from "../Elements/Inputs/CompactsInput";
 import Button1 from "../Elements/Buettons/Button1";
+
+import InputPositive from "../Elements/Inputs/InputPoisitive";
 
 import CoordDisplay from "../Elements/CoordDisplay";
 
@@ -29,6 +32,17 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import { agregarPuntoDB, correrTAngular, correrTCartesiano, escucharPuntoDB, agregarPuntoRutina } from "../../Services/Funciones";
 
 import CoordInput from "../Elements/Inputs/CoordInput";
+
+//Iconos de Flechas
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
+import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+import EastIcon from '@mui/icons-material/East';
+
+import ButtonRutineAdd from "../Elements/Buettons/ButtonRutineAdd";
+import ButtonSave from "../Elements/Buettons/ButtonSave";
+
 
 interface Section2V2Props {
   flagAddPoint: boolean;
@@ -54,6 +68,7 @@ const Section2V2: React.FC<Section2V2Props> =
   //const [aceleracionPunto, setAceleracionPunto] = useState(0);
   const [nombrePuntoCord, setNombrePuntoCord] = useState("");
   const [plan, setPlan] = useState("PTP");
+  const [diametroPuntoCord, setDiametroPuntoCord] = useState(0);
 
   useEffect(() => {
       escucharPuntoDB((msg) => {
@@ -74,27 +89,45 @@ const Section2V2: React.FC<Section2V2Props> =
   }, []);
 
   useEffect(() => {
-      if (flagAddPoint) {
-        if (inputsRefAng.current) {
-          const valores = inputsRefAng.current.getValues();
-          agregarPuntoDB(nombrePuntoCord, valores)
-        }
-        setFlagAddPoint(false);
+    if (flagAddPoint) {
+      if (inputsRefAng.current) {
+        const valores = inputsRefAng.current.getValues();
+        agregarPuntoDB(nombrePuntoCord, valores)
       }
-    }, [flagAddPoint, setFlagAddPoint]);
+      setFlagAddPoint(false);
+    }
+  }, [flagAddPoint, setFlagAddPoint]);
+
+  const agregarPuDB = () => {
+    if (inputsRefAng.current) {
+      const valores = inputsRefAng.current.getValues();
+      agregarPuntoDB(nombrePuntoCord, valores)
+    }
+  };
 
 
-   useEffect(() => {
-      if (flagAddRutine) {
-        if (inputsRefAng.current) {
-          const valores = inputsRefAng.current.getValues();
-          valores.push(velocidad)
-          valores.push(ratio)
-          agregarPuntoRutina(nombrePuntoCord,plan, valores)
-        }
-        setFlagAddRutine(false);
+  useEffect(() => {
+    if (flagAddRutine) {
+      if (inputsRefAng.current) {
+        const valores = inputsRefAng.current.getValues();
+        valores.push(velocidad)
+        valores.push(ratio)
+        agregarPuntoRutina(nombrePuntoCord,plan, valores)
       }
-    }, [flagAddRutine, setFlagAddRutine]);
+      setFlagAddRutine(false);
+    }
+  }, [flagAddRutine, setFlagAddRutine]);
+
+  const agregarPuRutina = () => {
+    if (inputsRefAng.current) {
+      const  valores = [
+        ...inputsRefAng.current.getValues(),
+        velocidad,
+        ratio
+      ];
+      agregarPuntoRutina(nombrePuntoCord,plan, valores)
+    }
+  };
 
   const correrCordAng = () => {
     if (inputsRefAng.current) {
@@ -153,6 +186,10 @@ const Section2V2: React.FC<Section2V2Props> =
     setRatio(val ?? 0); // si llega null, lo reemplazo por 0 (o lo que quieras)
   };
 
+  const handleSetRadioCart = (val: number) => {
+    setDiametroPuntoCord(val);
+  };
+
   //const [angle, setAngle] = useState(0);
   return (
     
@@ -163,75 +200,115 @@ const Section2V2: React.FC<Section2V2Props> =
         maxHeight: "100%"           
       }}
     >
-      <Typography variant="h6"sx={{fontSize: '1rem',height: '5%',}} >Coordenadas</Typography>
+      <Stack direction="row" spacing={2}
+        sx={{
+          width: '100%',
+          height: '4%',
+          
+        }}
+        >
+          <Typography variant="h6"sx={{fontSize: '1rem',}} >Coordenadas</Typography>
+          <ButtonSave description={'Guardar Punto en Base de Datos'} onClick={agregarPuDB}/>  
+          <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={agregarPuRutina}/> 
+          
+
+        
+      </Stack>
+      
       {/*
       <Stack direction="row" spacing={1}>
         <Button1 variant="contained">Botón 1</Button1>
         <Button1 variant="contained">Botón 2</Button1>
       </Stack>
-      */}   
+      */} 
       {/*Coordeadas actuales */}
       <Box 
         sx={{
           width: '100%',
-          height: '15%',
+          height: '12%',
         }}
       >
         <CoordDisplay/>
       </Box>  
       
       {/*Coordenadas a Cartesianas */}
-      <Box 
-        sx={{
-          width: '100%',
-          height: '30%',
-          border: '1px solid #000',
-          borderRadius: '5px',
+      <FormControl 
+        component="fieldset" 
+        sx={{ border: '1px solid #000', 
+            borderRadius: "5px", 
+            padding: "0px 0px",
+            fontFamily: "monospace" , 
+            width: '100%' , 
+            height: '27%',
         }}
       >
+        <FormLabel 
+          component="legend" 
+          sx={{ fontSize: "0.7rem", 
+            color: "#000",
+            m: 0 
+          }}
+        >
+          Coordenadas Cartesianas
+        </FormLabel>
 
-        <Stack spacing={1}>
+        <Stack spacing={0.5} sx={{ padding: "0px 0px"  }}>
 
           <Grid
             container
             spacing={2}
             sx={{
               width: '100%',
-              padding: 1,
+              py: 0,
+              px: 1,
             }}
           >
             <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={activarAng}>Modificar</Button1>
+              <Button1 variant="contained" onClick={activarCart}>Modificar</Button1>
             </Grid>
             <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={correrCordAng}>Ejecutar</Button1>
+              <Button1 variant="contained" onClick={correrCordCart}>Ejecutar</Button1>
             </Grid>
           </Grid>
 
+          <InputsCartV2s ref={inputsRefCart} disabled={bloquearInputsCartV2s}/>
+
         </Stack>
 
-        <InputsAngV2 ref={inputsRefAng} disabled={bloquearInputsAngV2}/>
+      </FormControl>
 
-      </Box>
+      
       
       {/*Coordenadas a Angulares */}
-      <Box 
-        sx={{
-          width: '100%',
-          height: '30%',
-          border: '1px solid #000',
-          borderRadius: '5px',
+      <FormControl 
+        component="fieldset" 
+        sx={{ border: '1px solid #000', 
+            borderRadius: "5px", 
+            padding: "0px 0px",
+            fontFamily: "monospace" , 
+            width: '100%' , 
+            height: '27%',
         }}
       >
+        <FormLabel 
+          component="legend" 
+          sx={{ fontSize: "0.7rem", 
+            color: "#000",
+            m: 0 
+          }}
+        >
+          Coordenadas Angulares
+        </FormLabel>
 
-        <Stack spacing={1}>
+        <Stack spacing={0.5} sx={{ padding: "0px 0px"  }}>
 
           <Grid
             container
             spacing={2}
             sx={{
               width: '100%',
-              padding: 1,
+              py: 0,
+              px: 1,
             }}
           >
             <Grid size={{xs: 6, md: 6}}>
@@ -242,36 +319,45 @@ const Section2V2: React.FC<Section2V2Props> =
             </Grid>
           </Grid>
 
+          <InputsAngV2 ref={inputsRefAng} disabled={bloquearInputsAngV2}/>
+
         </Stack>
 
-        <InputsAngV2 ref={inputsRefAng} disabled={bloquearInputsAngV2}/>
-
-      </Box>
+      </FormControl>
 
       {/*Caracteristicas de coordenadas */}
-      <Box 
-        sx={{
-          width: '100%',
-          height: '25%',
-          border: '1px solid #000',
-          borderRadius: '5px',
+
+      <FormControl 
+        component="fieldset" 
+        sx={{ border: '1px solid #000', 
+            borderRadius: "5px", 
+            padding: "0px 0px",
+            fontFamily: "monospace" , 
+            width: '100%' , 
+            height: '24%',
         }}
       >
-        <Stack spacing={1}>
+        <FormLabel 
+          component="legend" 
+          sx={{ fontSize: "0.7rem", 
+            color: "#000000ff",
+            m: 0 
+          }}
+        >
+          Caracteristicas
+        </FormLabel>
+        <Stack spacing={1.5} sx={{ padding: "0px 0px"  }}>
 
           <Grid 
-            container spacing={0} 
+            container
+            spacing={2}
             sx={{
-              width: '100%', 
+              width: '100%',
+              py: 0,
+              px: 1,
             }}
           >
-            <Grid size={{xs: 4, md: 4}}
-              sx={{
-                width: '100%',
-              }}>
-                <Typography variant="h6">Plan: </Typography>
-            </Grid>
-            <Grid size={{xs: 8, md: 8}}
+            <Grid size={{xs: plan === 'CIRC' ? 6 : 12, md: plan === 'CIRC' ? 6 : 12}}
               sx={{
                 width: '100%',
               }}>
@@ -280,33 +366,66 @@ const Section2V2: React.FC<Section2V2Props> =
                   onChange={handleChangePlan}
                 />
             </Grid>
+            {plan === 'CIRC' ? (
+              <Grid size={{xs: 6, md: 6}}
+                sx={{
+                  width: '100%',
+                  pt: '4px'
+                }}>
+                  <InputPositive
+                    label="Diametro"
+                    valMin={0}
+                    valMax={100}
+                    value={diametroPuntoCord}
+                    onChange={handleSetRadioCart}
+                    sx={{
+                      height: '100%',
+                    }}
+                  />                 
+              </Grid>
+            ):null}
           </Grid>
 
-          <InputCord
-            label="Velocidad"
-            valMin={0}
-            valMax={100}
-            value={velocidad}
-            onChange={handleVelocidadChange}
-          />
-          <InputCord
-            label="Ratio"
-            valMin={0}
-            valMax={100}
-            value={ratio}
-            onChange={handleRatioChange}
-          />
-          
+          <Grid
+            container
+            spacing={2}
+            sx={{
+              width: '100%',
+              py: 0,
+              px: 1,
+            }}
+          >
+            <Grid size={{xs: 6, md: 6}}>
+              <InputPositive
+                label="Velocidad"
+                valMin={0}
+                valMax={100}
+                value={velocidad}
+                onChange={handleVelocidadChange}
+              /> 
+            </Grid>
+            <Grid size={{xs: 6, md: 6}}>
+              <InputPositive
+                label="Ratio"
+                valMin={0}
+                valMax={100}
+                value={ratio}
+                onChange={handleRatioChange}
+              /> 
+            </Grid>
+          </Grid>               
+                   
           {/*<CompactsInputs label="Aceleracion" fullWidth />*/}
           <CompactsInputs 
             label="Nombre" 
             fullWidth size="small"
             value={nombrePuntoCord}
             onChange={(e) => setNombrePuntoCord(e.target.value)}
+            sx={{ px: 1}}
           />
         </Stack>
-
-      </Box>
+      </FormControl>
+      
 
 
       

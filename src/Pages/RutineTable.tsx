@@ -10,7 +10,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DoneIcon from "@mui/icons-material/Done";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
-import { mostrarPuntoRutina,elimiarPuntoRutina, correrTAngular } from "../Services/Funciones";
+import { resibirMsgRutina ,elimiarPuntoRutina, correrTAngular, msgEmergente } from "../Services/Funciones";
 import InputPoisitive from "../Components/Elements/Inputs/InputPoisitive";
 
 
@@ -97,7 +97,8 @@ const NumericEditCell: React.FC<NumericEditCellProps> = ({ id, field, value, api
 };
 
 type RowType = {
-  id: number;         
+  id: number; 
+  posicion: number;           
   nombre: string;
   coordenadas: number[]; // 6 elementos
   escV: number; 
@@ -123,26 +124,57 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   const [rowSelectionModel, setRowSelectionModel] =
     React.useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
   const [rows, setRows] = useState([
-    { id: 1, nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
-    { id: 2, nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
-    { id: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true},
-    { id: 4, nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
+    { id: 1, posicion: 1 , nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
+    { id: 2, posicion: 2 , nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
+    { id: 3, posicion: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true},
+    { id: 4, posicion: 4 , nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
   ]);
     //const [wite, setShoWite] = useState(0);
 
   useEffect(() => {
     if (flagEliminarPRut) {
-      rowSelectionModel.ids.forEach((id) => {
-        elimiarPuntoRutina(Number(id));
-      });
+      const idsArray = Array.from(rowSelectionModel.ids);
+      const nombresArray = rows
+      .filter((row) => idsArray.includes(row.id)) 
+      .map((row) => row.nombre);
+      
+      if (idsArray.length > 0) {
+        elimiarPuntoRutina(nombresArray, idsArray.map(Number));
+        //eliminarInstruccionRutina(idsArray.map(Number),['delPR','Punto A','Ir a Torno']);
+        eliminarInstruccionRutina(idsArray.map(Number));
+        msgEmergente('ErrordelPR');
+      }
 
       setFlagEliminarPRut(false);
     }
   }, [flagEliminarPRut, rowSelectionModel, setFlagEliminarPRut]);
 
   useEffect(() => {
-    mostrarPuntoRutina((msg) => {
-      addRow(msg.orden, msg.coordenadas);
+    resibirMsgRutina((msg) => {
+      switch (msg.orden[0]) {
+        case 'addP':
+          addRowPunto(msg.orden, msg.coordenadas);
+          break;
+
+        case 'errorP':
+          msgEmergente('errorP');
+          break;
+
+        case 'delPR':
+          eliminarInstruccionRutina(msg.coordenadas);
+          break;
+
+        case 'ErrordelPR':
+          msgEmergente('ErrordelPR');
+          break;
+
+        case 'errorR':
+          msgEmergente('errorR');
+          break;
+
+        default:
+          console.warn("Acción no reconocida:", msg.orden[0]);
+      }
     });
   }, []);
 
@@ -160,22 +192,105 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     console.log(rows);
   };
   
-  const addRow = (orden: string[], coordenadas: number[]) => { //orden [id,noombre,plan] coordenadas[a1,a2,a3,a4,a5,a6,vel, ratio]
-  setRows((prev) => {
-    const newRow: RowType = {
-      id: Number(orden[0]),               
-      nombre: orden[1],
-      plan: orden[2],
-      coordenadas: coordenadas.slice(0, 6),
-      escV: coordenadas[6], 
-      ratio: coordenadas[7], 
-      editable: false,
-      wait: 0,
-      rutine: false,                   
-    };
-    return [...prev, newRow];
+  const addRowPunto = (orden: string[], coordenadas: number[]) => { //orden [id,noombre,plan] coordenadas[a1,a2,a3,a4,a5,a6,vel, ratio]
+    setRows((prev) => {
+      const newRow: RowType = {
+        id: Date.now(),      
+        posicion: coordenadas[0], //prev.length + 1,         
+        nombre: orden[1],
+        plan: orden[2],
+        coordenadas: coordenadas.slice(1, 7),
+        escV: coordenadas[7], 
+        ratio: coordenadas[8], 
+        editable: false,
+        wait: 0,
+        rutine: false,                   
+      };
+      return [...prev, newRow];
+    });
+  };  
+   
+  const eliminarInstruccionRutina = (posiciones: number[]) => {
+    setRows((prevRows) => {
+      // 1. Filtrar las filas que NO están en posiciones a eliminar
+      const filtradas = prevRows.filter(row => !posiciones.includes(row.posicion));
+
+      // 2. Recalcular posiciones
+      return filtradas.map((row, index) => ({
+        ...row,
+        posicion: index + 1
+      }));
+    });
+  };
+{/* 
+  const FalloEliminarIRutina=(posiciones: number[])=> {
+    const mensaje = [
+      "              ⚠ No se elimino nunguna fila:",
+      " Las siguientes instrucciones no se encuentran en la rutina o no coinciden con la base de datos:",
+      ...posiciones.map(
+        (item) =>
+          `- Posición ${item}`,
+      ),
+      "",
+      "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+    ].join("\n");
+
+    alert(mensaje);
+  }
+  */}
+  {/* 
+  const eliminarInstruccionRutina = (posiciones: number[], orden: string[]) => {
+  setRows((prevRows: RowType[]) => {
+    // Relacionar posiciones con nombres esperados
+    const objetivos = posiciones.map((pos, i) => ({
+      pos,
+      nombreEsperado: orden[i + 1],
+    }));
+
+    const noCoinciden: { pos: number; esperado: string; encontrado?: string }[] = [];
+
+    // Filtrar filas
+    const filtradas = prevRows.filter((row) => {
+      const objetivo = objetivos.find((o) => o.pos === row.posicion);
+      if (!objetivo) return true; // no estaba en la lista → se queda
+
+      if (row.nombre === objetivo.nombreEsperado) {
+        return false; // ✅ coincide, se elimina
+      } else {
+        // ❌ no coincide → lo guardamos como error
+        noCoinciden.push({
+          pos: row.posicion,
+          esperado: objetivo.nombreEsperado,
+          encontrado: row.nombre,
+        });
+        return true; // no lo eliminamos
+      }
+    });
+
+    // Mostrar popup si hubo inconsistencias
+    if (noCoinciden.length > 0) {
+      const mensaje = [
+        "⚠ Los siguientes puntos no se encuentran en la rutina o no coinciden con la base de datos:",
+        ...noCoinciden.map(
+          (item) =>
+            `- Posición ${item.pos}: esperado "${item.esperado}" pero encontrado "${item.encontrado ?? "ninguno"}"`
+        ),
+        "",
+        "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+      ].join("\n");
+
+      alert(mensaje);
+    }    
+
+    // Recalcular posiciones
+    return filtradas.map((row, index) => ({
+      ...row,
+      posicion: index + 1,
+    }));
   });
 };
+*/}
+
   
   const handleEdit = (id: number) => {
     setRows((prev) =>
@@ -207,7 +322,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   };
 
   const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 40 },
+    { field: 'posicion', headerName: 'Pos.', width: 40 },
     {
       field: 'nombre',
       headerName: 'Nombre',

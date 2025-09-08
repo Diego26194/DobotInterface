@@ -3,7 +3,7 @@ import {
   Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper
 } from '@mui/material';
-import { nombrePuntoDB } from "../../Services/Funciones";
+import { nombreRutinaDB } from "../../Services/Funciones";
 
 interface Point {
   nombre: string;
@@ -47,7 +47,7 @@ const RutineLibrarie: React.FC<RutineLibrarieProps> = ({ onSelect, flagDelete, s
   
   
     useEffect(() => {
-      nombrePuntoDB((msg) => {
+      nombreRutinaDB((msg) => {
         const nuevosPuntos = msg.nombres.map((nombre: string) => ({
           nombre,
         }));

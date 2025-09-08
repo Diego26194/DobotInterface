@@ -18,8 +18,8 @@ const SelectPlan: React.FC<Select1Props> = ({ sx, value, onChange , ...props}) =
         width: "100%",
         fontSize: "0.75rem",
         padding: "0px 2px",
-        minHeight: "20px",
-        maxHeight: "26px",
+        minHeight: "16px",
+        maxHeight: "24px",
         textAlign: "center",
         ...sx,
       }}

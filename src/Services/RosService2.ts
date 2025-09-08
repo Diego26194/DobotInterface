@@ -30,9 +30,9 @@ export function initRos() {
     messageType: 'niryo_controladores/punto_web',
   });
 
-  topics['puntoDB'] = new ROSLIB.Topic({
+  topics['puntodb'] = new ROSLIB.Topic({
     ros,
-    name: '/puntoDB',
+    name: '/puntodb',
     messageType: 'niryo_controladores/punto_web',
   });
 
@@ -45,6 +45,12 @@ export function initRos() {
   topics['lista_puntosdb'] = new ROSLIB.Topic({
     ros,
     name: '/lista_puntosdb',
+    messageType: 'niryo_controladores/nombresPuntos',
+  });
+
+  topics['lista_rutinasdb'] = new ROSLIB.Topic({
+    ros,
+    name: '/lista_rutinasdb',
     messageType: 'niryo_controladores/nombresPuntos',
   });
 

@@ -24,8 +24,12 @@ import Section3 from "../Components/Section3/Section3";
 
 import ToolBar from "../Components/Elements/ToolBar";
 import InputAng from "../Components/Elements/Inputs/InputCord";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
+
+import {initRos} from "../Services/RosService2";
+
+
 
 const Escritura = () => {
   const [angle, setAngle] = useState(0);
@@ -47,6 +51,11 @@ const Escritura = () => {
     setShowLibrarie(0)
   };
 */}
+
+  useEffect(() => {
+    // inicializa ROS solo una vez cuando el componente se monta
+    initRos();
+  }, []);
   return (
     <Stack
       sx={{

@@ -20,6 +20,7 @@ import RutineTable, { RutineTableRef } from '../../Pages/RutineTable';
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 import CompactsInputs from "../Elements/Inputs/CompactsInput";
 import Button1 from "../Elements/Buettons/Button1";
@@ -30,6 +31,8 @@ import ButtonSave from "../Elements/Buettons/ButtonSave";
 import SelectRutina from "../Elements/SelectRutina";
 import InputCord from "../Elements/Inputs/InputCord";
 import InputPositive from "../Elements/Inputs/InputPoisitive";
+
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 
 import Section4 from "../Section1/Section4";
@@ -105,7 +108,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
             sx={{
               width: '100%',
               padding: 0,
-              height: '10%'
+              height: '7%'
             }}
           >
           <Grid size={{xs: 10, md: 10}}>
@@ -130,24 +133,25 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
               <ButtonSave description={'Guardar Rutina'} onClick={handleAddRutineClick}/>
           
-              <Button1 sx={{width: '20%'}} variant="outlined" onClick={() => setOpen(true)}>
-                Correr Ruina
+              <Button1 title= "Ejecutar Rutina" sx={{width: '20%'}} variant="outlined" onClick={() => setOpen(true)}>
+                {<PlayArrowIcon />}Ejecutar
               </Button1>    
-              <ButtonAdd description={'Agregar Punto a la Rutina'} onClick={handleAddRutineClick}/>
+             {/*<ButtonAdd description={'Agregar Punto a la Rutina'} onClick={handleAddRutineClick}/> */}
               <ButtonDelete description={'Eliminar Puntos de la Rutina'}onClick={handleDeleteRutineClick}/>                          
                 
               <InputPositive
-                label="Wait"
+                label="Wait" 
                 valMin={0}
                 valMax={100}
                 value={wait}
                 onChange={handleWaitChange}
                 sx={{
-                  fontSize: "0.75rem",
+                  fontSize: "0.9rem",
                   padding: "0px 1px",
                   minHeight: "10px",
-                  maxHeight: "26px",
+                  maxHeight: "30px",
                   textAlign: "center",
+                  pt: 1,
                 }}
               />     
               <Button1 sx={{width: '20%'}} variant="outlined" onClick={handleWaitPassDatagrid}>
@@ -186,7 +190,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
           sx={{
             width: '100%',
             padding: 0,
-            height: '90%'
+            height: '93%'
           }}
         >
           <Grid size={{xs: showLibrarie ? 10 : 12, md: showLibrarie ? 10 : 12}} >

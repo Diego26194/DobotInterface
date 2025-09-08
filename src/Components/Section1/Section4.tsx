@@ -18,11 +18,12 @@ import ButtonDelete from "../Elements/Buettons/ButtonDelete";
 import ButtonEdit from "../Elements/Buettons/ButtonEdit";
 import ButtonAdd from "../Elements/Buettons/ButtonAdd";
 import ButtonReflesh from "../Elements/Buettons/ButtonReflesh";
+import ButtonRutineAdd from "../Elements/Buettons/ButtonRutineAdd";
 
 
 import RutineLibrarie from "../Elements/RutineLibrarie";
 
-import { cargarPuntosDB, elimiarPuntoDB, escucharPuntoDB } from "../../Services/Funciones";
+import { cargarRutinasDB, elimiarPuntoDB, escucharPuntoDB, elimiarRutinaDB, agregarRutinaTabla } from "../../Services/Funciones";
 
 
 interface Section4Props {
@@ -40,8 +41,9 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
   };
 
   const handleAddClick = () => {
-    setFlagAdd(true); // Esto activa el efecto en PointsTable
-    setFlagAddPoint(true);
+    //setFlagAdd(true); // Esto activa el efecto en PointsTable
+    //setFlagAddPoint(true);
+    agregarRutinaTabla(nombre);
   };
     
   const handleSeleccion = (name: string) => {
@@ -58,13 +60,14 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
         height: '100%', 
       }}
     >
-      {/*<Button variant="contained" onClick={cargarPuntosDB}>Cargar datos</Button>*/}
+      {/*<Button variant="contained" onClick={cargarRutinasDB}>Cargar datos</Button>*/}
       <Stack direction="row" spacing={0} sx={{height: '10%'}}>
         <Typography variant="h6"sx={{fontSize: '1.1rem'}}>Rutina</Typography>
-        <ButtonAdd onClick={handleAddClick}/>
+        {/*<ButtonAdd onClick={handleAddClick}/> */}
         <ButtonEdit onClick={() => setOpen(true)}/>
-        <ButtonDelete onClick={() => elimiarPuntoDB(nombre)}/>
-        <ButtonReflesh onClick={cargarPuntosDB}/>
+        <ButtonDelete onClick={() => elimiarRutinaDB(nombre)}/>
+        <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={handleAddClick}/>
+        <ButtonReflesh onClick={cargarRutinasDB}/>
       </Stack>
       <Paper sx={{
             width: '100%', 

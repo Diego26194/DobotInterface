@@ -59,6 +59,7 @@ const InputPositive: React.FC<InputPositiveProps> = ({
   return (
     <NoSpinnerInput
       size="small"
+      fullWidth      
       variant={variant}
       type="number"
       label={label}
@@ -72,7 +73,21 @@ const InputPositive: React.FC<InputPositiveProps> = ({
         max: valMax,
       }}
       error={isOutOfRange}
-      sx={{ ...(sx || {}) }}
+      sx={{
+        height: '100%',
+        '& .MuiInputBase-root': {
+          fontSize: '0.9rem',
+          padding: '0px 6px',
+          minHeight: '15px',
+        },
+        '& .MuiInputLabel-root': {
+          fontSize: '0.75rem',
+        },
+        '& input': {
+          padding: 0,
+        },
+        ...(sx || {}),
+      }}
     />
   );
 };

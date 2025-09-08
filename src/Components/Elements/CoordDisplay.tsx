@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, FormLabel, FormControl } from "@mui/material";
 import { escucharCordReal } from "../../Services/Funciones"; 
 
 // Definimos la estructura del mensaje esperado
 interface CordMsg {
   cart: number[];   
   ang: number[];    
-  error: number[];  
+  error: boolean[];  
 }
 
 const CoordDisplay: React.FC = () => {
   const [coords, setCoords] = useState<CordMsg>({
     cart: [200, 200, 200, 200, 200, 200],
     ang: [120, 120, 210, 120, 120, 120],
-    error: [0, 1, 2, 3, 4, 5], // por defecto todo en error → rojo
+    error: [false, false, false, false, false, false], // error: [false, false, false, false, false, false] error: [true, true, true, true, true, true]
   });
 
   useEffect(() => {
@@ -24,48 +24,62 @@ const CoordDisplay: React.FC = () => {
   }, []);
 
   return (
-    <Box
-      sx={{ fontFamily: "monospace",
-        border: '1px solid #000',
-        borderRadius: '5px',
-        padding: "1px 4px" 
+    <FormControl 
+      component="fieldset" 
+      sx={{ border: '1px solid #000', 
+          borderRadius: "5px", 
+          padding: "0px 0px",
+          fontFamily: "monospace" , 
+          width: '100%' , 
+          height: '100%',
       }}
     >
-      {/* Primera fila → coordenadas cartesianas */}
-      <Typography 
-       sx={{
-            fontSize: "0.65rem",   // más chico que body2
-            color: "#5c5b5bff",        // gris oscuro en vez de negro
-            
+      <FormLabel 
+        component="legend" 
+        sx={{ fontSize: "0.7rem", 
+          color: coords.error.includes(false) ? "red" : "green", 
         }}
       >
-        XYZ: {coords.cart[0]}, {coords.cart[1]}, {coords.cart[2]}{" / "}
-         {coords.cart[3]}º, {coords.cart[4]}º, {coords.cart[5]}º
-      </Typography>
+        Coordenadas Reales
+      </FormLabel>
 
-      {/* Segunda fila → ángulos de motores, cada uno coloreado */}
-      <Typography 
+      <Box sx={{ padding: "0px 3px"  }} >
+        {/* Primera fila → coordenadas cartesianas */}
+        <Typography 
         sx={{
-            fontSize: "0.65rem",   // más chico que body2
-            color: "#5c5b5bff",        // gris oscuro en vez de negro
-            
-         }}
-      >
-        Ang:{" "}
-        {coords.ang.map((val, i) => (
-          <span
-            key={i}
-            style={{
-              color: coords.error.includes(i) ? "red" : "black",
-              marginRight: "2px",
-            }}
-          >
-            {val}º
-            {i < coords.ang.length - 1 ? "," : ""}
-          </span>
-        ))}
-      </Typography>
-    </Box>
+              fontSize: "0.7rem",   // más chico que body2
+              color: "#5c5b5bff",        // gris oscuro en vez de negro
+              
+          }}
+        >
+          XYZ: {coords.cart[0]}, {coords.cart[1]}, {coords.cart[2]}{" / "}
+          {coords.cart[3]}º, {coords.cart[4]}º, {coords.cart[5]}º
+        </Typography>
+
+        {/* Segunda fila → ángulos de motores, cada uno coloreado */}
+        <Typography 
+          sx={{
+              fontSize: "0.7rem",   // más chico que body2
+              color: "#5c5b5bff",        // gris oscuro en vez de negro
+              
+          }}
+        >
+          Ang:{" "}
+          {coords.ang.map((val, i) => (
+            <span
+              key={i}
+              style={{
+                color: coords.error[i] ? "#5c5b5bff" : "red"  ,
+                marginRight: "2px",
+              }}
+            >
+              {val}º
+              {i < coords.ang.length - 1 ? "," : ""}
+            </span>
+          ))}
+        </Typography>
+      </Box>
+    </FormControl>
   );
 };
 

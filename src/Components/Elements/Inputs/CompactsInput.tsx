@@ -16,9 +16,9 @@ const CompactsInput: React.FC<CompactsInputProps> = ({ sx, ...props }) => {
       sx={{
         height: '100%',
         '& .MuiInputBase-root': {
-          fontSize: '1rem',
+          fontSize: '0.9rem',
           padding: '0px 6px',
-          minHeight: '24px',
+          minHeight: '15px',
         },
         '& .MuiInputLabel-root': {
           fontSize: '0.75rem',
