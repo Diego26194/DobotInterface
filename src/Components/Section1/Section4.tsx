@@ -23,7 +23,7 @@ import ButtonRutineAdd from "../Elements/Buettons/ButtonRutineAdd";
 
 import RutineLibrarie from "../Elements/RutineLibrarie";
 
-import { cargarRutinasDB, elimiarPuntoDB, escucharPuntoDB, elimiarRutinaDB, agregarRutinaTabla } from "../../Services/Funciones";
+import { cargarRutinasDB, elimiarPuntoDB, escucharPuntoDB, elimiarRutinaDB, agregarRutinaTabla, cargarRutinaRA } from "../../Services/Funciones";
 
 
 interface Section4Props {
@@ -49,6 +49,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
   const handleSeleccion = (name: string) => {
     console.log('Seleccionado:', name);
     setNombre(name)
+
   };
 
   return (
@@ -64,7 +65,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
       <Stack direction="row" spacing={0} sx={{height: '10%'}}>
         <Typography variant="h6"sx={{fontSize: '1.1rem'}}>Rutina</Typography>
         {/*<ButtonAdd onClick={handleAddClick}/> */}
-        <ButtonEdit onClick={() => setOpen(true)}/>
+        <ButtonEdit onClick={() => cargarRutinaRA(nombre)}/>
         <ButtonDelete onClick={() => elimiarRutinaDB(nombre)}/>
         <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={handleAddClick}/>
         <ButtonReflesh onClick={cargarRutinasDB}/>

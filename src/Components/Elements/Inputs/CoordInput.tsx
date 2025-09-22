@@ -52,7 +52,7 @@ const CoordInput: React.FC<CoordInputProps> = ({
   };
 
   const handleBlur = () => {
-    if (isNaN(value)) onChange(0); // si queda vacío o inválido → se pone en 0
+    if (isNaN(value)) onChange(0); // si queda vacío o inválido → se pone en 0    
   };
 
   const numericVal = parseInt(value.toString(), 10);

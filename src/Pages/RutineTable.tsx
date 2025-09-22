@@ -10,7 +10,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DoneIcon from "@mui/icons-material/Done";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
-import { resibirMsgRutina ,elimiarPuntoRutina, correrTAngular, msgEmergente } from "../Services/Funciones";
+import { resibirMsgRutina ,elimiarPuntoRutina, correrTAngular, msgEmergente, editarPuntoRutina } from "../Services/Funciones";
 import InputPoisitive from "../Components/Elements/Inputs/InputPoisitive";
 
 
@@ -101,9 +101,9 @@ type RowType = {
   posicion: number;           
   nombre: string;
   coordenadas: number[]; // 6 elementos
-  escV: number; 
-  ratio: number; 
-  plan: string;
+  escV: number ; 
+  ratio: number ; 
+  plan: string ;
   editable: boolean;
   wait: number; 
   rutine: boolean;
@@ -117,6 +117,7 @@ interface RutineTableProps {
 
 export type RutineTableRef = {
   updateWaitForSelectedRows: (valor: number) => void;
+  validarRutina: () => boolean; 
 };
 const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarPRut, setFlagEliminarPRut}, ref) => {
 
@@ -152,6 +153,62 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   useEffect(() => {
     resibirMsgRutina((msg) => {
       switch (msg.orden[0]) {
+        case 'editPR':
+          setRows((prev) =>
+            prev.map((row) =>
+              row.posicion === msg.coordenadas[9]
+                ? {
+                    ...row,
+                    nombre: msg.orden[1],
+                    plan: msg.orden[2],
+                    coordenadas: msg.coordenadas.slice(0, 6),
+                    escV: msg.coordenadas[6],
+                    ratio: msg.coordenadas[7],
+                    wait: msg.coordenadas[8] ?? row.wait, // por si lo mandás
+                    editable: false,
+                    rutine: false,
+                  }
+                : row
+            )
+          );
+          break;
+
+          
+        case 'addRT':
+          setRows((prev) => {
+            const newRow: RowType = {
+              id: Date.now(),      
+              posicion: msg.coordenadas[1], //prev.length + 1,         
+              nombre: msg.orden[1],
+              plan: '',
+              coordenadas: [],
+              escV: 0, 
+              ratio: 0, 
+              editable: false,
+              wait: msg.coordenadas[0],
+              rutine: true,                   
+            };
+            return [...prev, newRow];
+          });
+          break;
+
+        case 'errorPunRut':
+          //msgEmergente('ErrordelPR');
+          break;
+
+        case 'errorPunRut2':
+          // ejemplo: marcar fila en error
+          /*
+          setRows((prev) =>
+            prev.map((row) =>
+              row.posicion === msg.coordenadas[9]
+                ? { ...row, error: true }
+                : row
+            )
+          );
+          */
+          break;
+          
         case 'addP':
           addRowPunto(msg.orden, msg.coordenadas);
           break;
@@ -168,6 +225,10 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           msgEmergente('ErrordelPR');
           break;
 
+        case 'errorRR':
+          msgEmergente('errorRR');
+          break;
+
         case 'errorR':
           msgEmergente('errorR');
           break;
@@ -180,7 +241,17 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
 
   useImperativeHandle(ref, () => ({
     updateWaitForSelectedRows,
+    validarRutina: () => {
+      const algunEditable = rows.some((row) => row.editable === true);
+      return !algunEditable; 
+    },
   }));
+
+  {/* 
+  useImperativeHandle(ref, () => ({
+    updateWaitForSelectedRows,
+  }));
+  */}
 
   const updateWaitForSelectedRows = (newWait: number) => {
     console.log(newWait);
@@ -196,14 +267,14 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     setRows((prev) => {
       const newRow: RowType = {
         id: Date.now(),      
-        posicion: coordenadas[0], //prev.length + 1,         
+        posicion: coordenadas[9], //prev.length + 1,         
         nombre: orden[1],
         plan: orden[2],
-        coordenadas: coordenadas.slice(1, 7),
-        escV: coordenadas[7], 
-        ratio: coordenadas[8], 
+        coordenadas: coordenadas.slice(0, 6),
+        escV: coordenadas[6], 
+        ratio: coordenadas[7], 
         editable: false,
-        wait: 0,
+        wait: coordenadas[8],
         rutine: false,                   
       };
       return [...prev, newRow];
@@ -304,11 +375,23 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   };
 
   const handleConfirm = (id: number) => {
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, editable: false } : row
-      )
-    );
+    setRows((prev) => {
+      const row = prev.find(r => r.id === id);
+      if (!row) return prev;
+
+      const coord = [
+        ...row.coordenadas, // los 6 ángulos
+        row.escV,
+        row.ratio,
+        row.wait,
+        row.posicion,
+      ];
+
+      // Publicar en ROS, no tocar filas todavía
+      editarPuntoRutina(row.nombre, row.plan, coord);
+
+      return prev;
+    });
   };
 
   const handlePlayRow = (rowId: number) => {

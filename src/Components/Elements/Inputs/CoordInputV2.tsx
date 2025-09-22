@@ -19,6 +19,7 @@ type CoordInputV2Props = {
   value: number;
   onChange: (val: number) => void;
   disabled?: boolean;
+  onBlurCustom?: () => void;
 };
 
 const CoordInputV2: React.FC<CoordInputV2Props> = ({
@@ -28,8 +29,10 @@ const CoordInputV2: React.FC<CoordInputV2Props> = ({
   value,
   onChange,
   disabled = false,
+  onBlurCustom,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    
     let val = e.target.value;
 
     // Eliminar cualquier caracter que no sea dígito o el signo negativo al principio
@@ -53,6 +56,7 @@ const CoordInputV2: React.FC<CoordInputV2Props> = ({
 
   const handleBlur = () => {
     if (isNaN(value)) onChange(0); // si queda vacío o inválido → se pone en 0
+    if (onBlurCustom) onBlurCustom();
   };
 
   const numericVal = parseInt(value.toString(), 10);

@@ -2,17 +2,18 @@ import React, { useImperativeHandle, forwardRef, useState } from 'react';
 import { Grid, Stack } from '@mui/material';
 import Button1 from '../Buettons/Button1';
 import CoordInputV2 from './CoordInputV2';
+import { refreshCordCart } from "../../../Services/Funciones";
 
-export type InputsCartV2sRef = {
+export type InputsCartVRef = {
   getValues: () => number[];
   setValues: (newVals: number[]) => void; 
 };
 
-type InputsCartV2sProps = {
+type InputsCartVProps = {
   disabled?: boolean; 
 };
 
-const InputsCartV2s = forwardRef<InputsCartV2sRef, InputsCartV2sProps>(({ disabled = false }, ref) => {
+const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = false }, ref) => {
   const [values, setValues] = useState<number[]>(Array(5).fill(0));
 
   const handleChange = (index: number) => (val: number) => {
@@ -21,6 +22,10 @@ const InputsCartV2s = forwardRef<InputsCartV2sRef, InputsCartV2sProps>(({ disabl
       newVals[index] = val;
       return newVals;
     });
+  };
+  
+  const handleBlurGlobal = () => {
+    refreshCordCart(values);
   };
 
   useImperativeHandle(ref, () => ({
@@ -48,6 +53,7 @@ const InputsCartV2s = forwardRef<InputsCartV2sRef, InputsCartV2sProps>(({ disabl
                 value={values[idx]}        // usamos el índice para acceder al valor
                 onChange={handleChange(idx)}
                 disabled={disabled}
+                onBlurCustom={handleBlurGlobal}
             />
           ))}
         </Stack>
@@ -64,6 +70,7 @@ const InputsCartV2s = forwardRef<InputsCartV2sRef, InputsCartV2sProps>(({ disabl
               value={values[idx+3]}
               onChange={handleChange(idx+3)}
               disabled={disabled}
+              onBlurCustom={handleBlurGlobal}
             />
           ))}
         </Stack>
@@ -72,4 +79,4 @@ const InputsCartV2s = forwardRef<InputsCartV2sRef, InputsCartV2sProps>(({ disabl
   );
 });
 
-export default InputsCartV2s;
+export default InputsCartV;

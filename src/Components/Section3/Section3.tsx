@@ -28,15 +28,15 @@ import ButtonDelete from "../Elements/Buettons/ButtonDelete";
 import ButtonEdit from "../Elements/Buettons/ButtonEdit";
 import ButtonAdd from "../Elements/Buettons/ButtonAdd";
 import ButtonSave from "../Elements/Buettons/ButtonSave";
+import ButtonReflesh from "../Elements/Buettons/ButtonReflesh";
 import SelectRutina from "../Elements/SelectRutina";
 import InputCord from "../Elements/Inputs/InputCord";
 import InputPositive from "../Elements/Inputs/InputPoisitive";
 
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
-
 import Section4 from "../Section1/Section4";
-
+import { ejecutarRutina, refrescarRutina } from "../../Services/Funciones";
 
 
 interface Section3Props {
@@ -46,8 +46,9 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
   const [open, setOpen] = useState(false);
   const [flagEliminarPRut, setFlagEliminarPRut] = useState(false);
   const [wait, setWait] = useState(0);
-  const editwait = useRef<RutineTableRef>(null);
+  const tableRef = useRef<RutineTableRef>(null);
   const [showLibrarie, setShowLibrarie] = useState(false);
+  
 
   const [flagAddPoint, setFlagAddPoint] = useState(false);
 
@@ -78,8 +79,16 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
   
   // Handler que recibe el valor actualizado del hijo
   const handleWaitPassDatagrid = () => {
-    if (editwait.current) {
-      editwait.current.updateWaitForSelectedRows(wait); // llamamos la función del hijo
+    if (tableRef.current) {
+      tableRef.current.updateWaitForSelectedRows(wait); 
+    }
+  };
+
+  const handleEjecutarClick = () => {
+    if (tableRef.current?.validarRutina()) {
+      ejecutarRutina();
+    } else {
+      alert("⚠ Hay filas en modo edición. Confirme o cancele antes de ejecutar.");
     }
   };
 
@@ -133,7 +142,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
               <ButtonSave description={'Guardar Rutina'} onClick={handleAddRutineClick}/>
           
-              <Button1 title= "Ejecutar Rutina" sx={{width: '20%'}} variant="outlined" onClick={() => setOpen(true)}>
+              <Button1 title= "Ejecutar Rutina" sx={{width: '20%'}} variant="outlined" onClick={handleEjecutarClick}>
                 {<PlayArrowIcon />}Ejecutar
               </Button1>    
              {/*<ButtonAdd description={'Agregar Punto a la Rutina'} onClick={handleAddRutineClick}/> */}
@@ -157,6 +166,9 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
               <Button1 sx={{width: '20%'}} variant="outlined" onClick={handleWaitPassDatagrid}>
                 add
               </Button1>
+
+              
+              <ButtonReflesh description={'Refrescar tabla de rutina'}onClick={refrescarRutina }/> 
 
               
             </Stack>
@@ -197,7 +209,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
             <RutineTable 
               flagEliminarPRut={flagEliminarPRut} 
               setFlagEliminarPRut={setFlagEliminarPRut} 
-              ref={editwait} 
+              ref={tableRef} 
             />
           </Grid>
           {/* 

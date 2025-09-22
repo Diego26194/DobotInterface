@@ -23,13 +23,13 @@ import InputPositive from "../Elements/Inputs/InputPoisitive";
 import CoordDisplay from "../Elements/CoordDisplay";
 
 
-import InputsCartV2s, { InputsCartV2sRef } from "../Elements/Inputs/InputsCartV2";
+import InputsCartV, { InputsCartVRef } from "../Elements/Inputs/InputsCartV2";
 import InputsAngV2, { InputsAngV2Ref } from "../Elements/Inputs/InputsAngV2";
 
 import SelectPlan from "../Elements/SelectPlan";
 import { SelectChangeEvent } from "@mui/material/Select";
 
-import { agregarPuntoDB, correrTAngular, correrTCartesiano, escucharPuntoDB, agregarPuntoRutina } from "../../Services/Funciones";
+import { agregarPuntoDB, correrTAngular, correrTCartesiano, escucharPuntoDB, agregarPuntoRutina, publicar_informe} from "../../Services/Funciones";
 
 import CoordInput from "../Elements/Inputs/CoordInput";
 
@@ -59,10 +59,10 @@ const Section2V2: React.FC<Section2V2Props> =
     setFlagAddRutine 
   }) => {
 
-  const inputsRefCart = useRef<InputsCartV2sRef>(null);
+  const inputsRefCart = useRef<InputsCartVRef>(null);
   const inputsRefAng = useRef<InputsAngV2Ref>(null);
   const [bloquearInputsAngV2, setBloquearInputsAngV2] = useState(false);
-  const [bloquearInputsCartV2s, setBloquearInputsCartV2s] = useState(false);
+  const [bloquearInputsCartV, setBloquearInputsCartV] = useState(false);
   const [velocidad, setVelocidad] = useState(10);
   const [ratio, setRatio] = useState(0);
   //const [aceleracionPunto, setAceleracionPunto] = useState(0);
@@ -72,22 +72,39 @@ const Section2V2: React.FC<Section2V2Props> =
 
   useEffect(() => {
       escucharPuntoDB((msg) => {
-        if (msg.coordenadas.length===6) {
-          inputsRefAng.current?.setValues(msg.coordenadas);
-          setNombrePuntoCord(msg.orden[0])
-          blockAng();
-      }});
+        switch (msg.orden[0]) {
+          case 'Punto':
+            inputsRefAng.current?.setValues(msg.coordenadas.slice(0, 6));
+            inputsRefCart.current?.setValues(msg.coordenadas.slice(-6));
+            setNombrePuntoCord(msg.orden[1])
+            blockAng();
+            blockCart();
+            break;
+  
+          case 'Ang':
+            inputsRefAng.current?.setValues(msg.coordenadas);
+            break;
+  
+          case 'Cart':
+            inputsRefCart.current?.setValues(msg.coordenadas);
+            break;
+  
+          case 'EAng':
+            inputsRefAng.current?.setValues([999,999,999,999,999,999]);
+            //publicar_informe('Coodenada invalida');            
+            break;
+  
+          case 'ECart':
+            inputsRefCart.current?.setValues([999,999,999,999,999,999]);
+            //publicar_informe('Coodenada invalida');            
+            break;
+          
+          default:
+            console.warn("Acción no reconocida:", msg.orden[0]);
+        }});
   }, []);
 
-  useEffect(() => {
-      escucharPuntoDB((msg) => {
-        if (msg.coordenadas.length===5) {
-          inputsRefCart.current?.setValues(msg.coordenadas);
-          setNombrePuntoCord(msg.orden[0])
-          blockCart();
-      }});
-  }, []);
-
+  {/* 
   useEffect(() => {
     if (flagAddPoint) {
       if (inputsRefAng.current) {
@@ -97,6 +114,7 @@ const Section2V2: React.FC<Section2V2Props> =
       setFlagAddPoint(false);
     }
   }, [flagAddPoint, setFlagAddPoint]);
+  */}
 
   const agregarPuDB = () => {
     if (inputsRefAng.current) {
@@ -105,7 +123,7 @@ const Section2V2: React.FC<Section2V2Props> =
     }
   };
 
-
+{/* REVISAR BIEN PARA ELIMINAR, la funcion de abajo ya cumple esta funcion */}
   useEffect(() => {
     if (flagAddRutine) {
       if (inputsRefAng.current) {
@@ -117,6 +135,7 @@ const Section2V2: React.FC<Section2V2Props> =
       setFlagAddRutine(false);
     }
   }, [flagAddRutine, setFlagAddRutine]);
+  
 
   const agregarPuRutina = () => {
     if (inputsRefAng.current) {
@@ -159,10 +178,10 @@ const Section2V2: React.FC<Section2V2Props> =
   };
 
   const blockCart = () => {
-    setBloquearInputsCartV2s(true);
+    setBloquearInputsCartV(true);
   };
   const activarCart = () => {
-    setBloquearInputsCartV2s(false);
+    setBloquearInputsCartV(false);
     //inputsRefCart.current?.setValues([1,2,3,4,5]);
     //setNombrePuntoCord('pruebarcart1')
   };
@@ -271,7 +290,7 @@ const Section2V2: React.FC<Section2V2Props> =
             </Grid>
           </Grid>
 
-          <InputsCartV2s ref={inputsRefCart} disabled={bloquearInputsCartV2s}/>
+          <InputsCartV ref={inputsRefCart} disabled={bloquearInputsCartV}/>
 
         </Stack>
 

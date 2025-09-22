@@ -83,6 +83,12 @@ export function initRos() {
     name: '/tipo_modo_lectura',
     messageType: 'std_msgs/Bool',
   });
+
+  topics['rutina'] = new ROSLIB.Topic({
+    ros,
+    name: '/rutina',
+    messageType: 'std_msgs/Bool',
+  });
   
   /*
 // Si se desconecta, reintenta

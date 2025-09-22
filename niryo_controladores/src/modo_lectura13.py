@@ -20,9 +20,18 @@ from db_puntos3 import (
     obtener_rutina,
     agregar_rutina,
     agregar_rutina_rutina,
+    editar_punto_rutina,
+    verificar_rutinas_control,
+    actualizar_control,
+    leer_rutina_sin_quaterniones,
 )
 from niryo_controladores.msg import punto_web, nombresPuntos
 import numpy as np
+
+import tf
+from moveit_commander import MoveGroupCommander
+from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
+from geometry_msgs.msg import Pose, PoseStamped
 
 class ModoLectura:
     def bit_grados(self, bit):
@@ -63,7 +72,14 @@ class ModoLectura:
         # Eliminar todos los datos de la base de datos al inicio
         #################### Eliminar todos los datos de la base de datos ####################
         eliminar_todos_datos()
+        eliminar_todos_datos_rutina()
         #################### Aquí termina la sección de eliminación de la base de datos ####################
+        
+        
+        #################### Inicializa el conversor de coordenadas para un robot definido en MoveIt. ####################
+        self.move_group = MoveGroupCommander("niryo_arm")
+        self.group_name = "niryo_arm"
+        self.base_frame = "base_link"
         
     def callback(self, data):
         # Obtener el vector de coordenadas del mensaje recibido(bit)
@@ -76,11 +92,13 @@ class ModoLectura:
         
         # Convertir de bits a grados antes de guardar en la base de datos
         coordenadas_grad = self.bit_grados(coordenadas)
-        coordenadas_grad.append(self.velocidad)
-        coordenadas_grad.append(self.ratio)
+        #coordenadas_grad.append(self.velocidad)
+        #coordenadas_grad.append(self.ratio)
+        coorCartesianas_quat=self.AngulosArticulares_a_pose(coordenadas_grad)
+        coorCartesianas_euler=self.AngulosArticulares_a_cartesianasEuler(coordenadas_grad)
         
         
-        id=agregar_punto_rutina(coordenadas_grad, 'PTP', None) 
+        id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, self.velocidad, self.ratio, 'PTP', None) 
             
             
         punto = leer_punto_rutina(id)  
@@ -88,57 +106,100 @@ class ModoLectura:
             mensaje_puntoR = punto_web()
             mensaje_puntoR.orden = [punto['id'], punto['nombre'], punto['plan']]
             mensaje_puntoR.coordenadas = [
-                punto['ang1'],
-                punto['ang2'], 
-                punto['ang3'], 
-                punto['ang4'], 
-                punto['ang5'], 
-                punto['ang6'],
+                *punto['coordenadasCEuler'],
                 punto['vel_esc'],
                 punto['ratio'],
+                punto['wait'],
+                punto['pos'],
             ],
             self.puntos_rutina.publish(mensaje_puntoR)
 
-            mensaje_informe = "Punto {} con los datos {} agregado correctamente"['ver'].format(punto.id, punto.nombre, mensaje_puntoR.coordenadas)
+            mensaje_informe = "Punto {} con los datos {},{},{} agregado correctamente".format(punto.nombre, mensaje_puntoR.coordenadas, self.velocidad, self.ratio)
             self.informe_web.publish(mensaje_informe)
         else:
             self.informe_web.publish(f"Punto {id} no agregado correctamente.")
         
 
     # /////// pagina web ////////
+    
+    # Refresca los puntos de la rutina ingresada en la pagina web
+    def refrescarRutinaActual(self): # (self, rutina: list)
+        
+        rutina=leer_rutina_sin_quaterniones()
+       
+        for punto in rutina:
+            # Saltar la fila de control
+            if punto.get("id") == "control":
+                continue
+
+            if punto.get("rutina") is False:
+                # Punto normal
+                mensaje_puntoR = punto_web()
+                mensaje_puntoR.orden = [punto['id'], punto['nombre'], punto['plan']]
+                mensaje_puntoR.coordenadas = [
+                    *punto['coordenadasCEuler'],
+                    punto['vel_esc'],
+                    punto['ratio'],
+                    punto['wait'],
+                    punto['pos'],
+                ]
+                self.puntos_rutina.publish(mensaje_puntoR)
+
+            elif punto.get("rutina") is True:
+                # Sub-rutina
+                mensaje_rutinaR = punto_web()
+                mensaje_rutinaR.orden = ['addRT', punto['nombre']]
+                mensaje_rutinaR.coordenadas = [
+                    punto['wait'],
+                    punto['pos'],
+                ]
+                self.puntos_rutina.publish(mensaje_rutinaR)
+
     def acciones_web(self, data):
     # Extraer la acción y el nombre (si existe) desde el mensaje recibido
         accion = data.orden[0]
         nombre = data.orden[1] if len(data.orden) > 1 else None  # Asigna None si no hay segundo términonombre
-        id = data.orden[2] if len(data.orden) > 2 else None
-        plan= data.orden[3] if len(data.orden) > 3 else None
+        plan= data.orden[2] if len(data.orden) > 2 else None
         rospy.loginfo(accion)
         rospy.loginfo(nombre)
     
     # Diccionario para formatear mensajes
         mensajes_informe = {
+            #Tabla DB Puntos
             'agregar': "Punto {} con los datos {} agregado correctamente",
+            'Erroragregar': "Punto con los datos nombre {} ya existente",            
             'eliminar': "Punto {} eliminado correctamente",
             'errorP': "ERROR- punto {} no se encuentra el Base de datos",
             'modificar': "Punto {} con los datos {} modificado correctamente",
             'subir_db': "Puntos de la base de datos cargados correctamente",
-            'eliminarPunRut': "Punto {} de posicion {} eliminado correctamente",
-            'errorEliminarPunRut': "Punto NO ELIMINADO, ERROR en Punto {} de posicion {} ",
-            'addR': "Punto {} con los datos {} agregado correctamente",
             'ver': "Punto {} con los datos {}",
+            'ang-cart':"",
+            'cart-ang':"",
+            #Tabla Rutina actual
+            'eliminarPunRut': "Punto {} de posicion {} eliminado correctamente",
+            'errorPunRut': " ERROR en Punto {} de posicion {} ",
+            'addPT': "Punto {} con los datos {},{},{} agregado correctamente",  
+            'addRT':"Rutina {} agregada correctamente a la tabla",
+            'editPR': "Punto {} con los datos {} modificado correctamente",
+            'refreshRut':' Rutina actual refrescada ',
+                        
             'correr_rutina': "Punto de rutina agregado correctamente",
             'fin_rutina': "Rutina completada exitosamente",
             'comienzo_rutina': "Rutina iniciada, todos los puntos anteriores eliminados",
+            # Rutinas
             'eliminarRutina':"Rutina {} eliminada correctamente",
-            'ErrorR':'ERROR- Rutina {} no se encuentra en la base de datos',
-            'addRT':"Rutina {} agregada correctamente a la tabla", #agrega rutina a tabla de rutina actual
-            'subirR_db': "Rutinas de la base de datos cargados correctamente",
+            'ErrorR':'ERROR- Rutina {} no se encuentra en la base de datos', #agrega rutina a tabla de rutina actual
+            'subirR_db': "Rutinas de la base de datos cargados correctamente",            
+            'cargarRRA': "Rutinas {} cargados ",
         }
     # Switch que maneja las diferentes acciones en base al valor de 'accion'
         if accion == 'agregar':
             if nombre:
-                escribir_datos(data.coordenadas, nombre)  # Llamar a la función escribir_datos
-                mensaje_informe = mensajes_informe['agregar'].format(nombre, data.coordenadas)
+                if not leer_punto(nombre):                    
+                    escribir_datos(data.coordenadas, nombre)  # Llamar a la función escribir_datos
+                    mensaje_informe = mensajes_informe['agregar'].format(nombre, data.coordenadas)
+                else:
+                    mensaje_informe = mensajes_informe['Erroragregar'].format(nombre)                    
             else:
                 escribir_datos(data.coordenadas, None)  # Si no se especifica nombre, pasa None
                 mensaje_informe = "Punto agregado correctamente con nombre automático"
@@ -153,8 +214,9 @@ class ModoLectura:
                     mensaje_informe = mensajes_informe['eliminar'].format(nombre)                    
                 else:
                     mensaje_informe = mensajes_informe['errorModificar'].format(nombre)
-                    mensaje_errorAddP = punto_web()
-                    mensaje_errorAddP.orden=['errorP'].format(nombre)
+                    mensaje_error = punto_web()
+                    mensaje_error.orden=['errorP'].format(nombre)
+                    self.puntos_rutina.publish(mensaje_error)
                 self.informe_web.publish(mensaje_informe)
                 
 
@@ -165,8 +227,9 @@ class ModoLectura:
                     mensaje_informe = mensajes_informe['modificar'].format(nombre, data.coordenadas)                    
                 else:
                     mensaje_informe = mensajes_informe['errorModifica'].format(nombre, data.coordenadas)
-                    mensaje_errorAddP = punto_web()
-                    mensaje_errorAddP.orden=['errorP'].format(nombre)
+                    mensaje_error = punto_web()
+                    mensaje_error.orden=['errorP'].format(nombre)
+                    self.puntos_rutina.publish(mensaje_error)
                 self.informe_web.publish(mensaje_informe)
                     
 
@@ -183,12 +246,15 @@ class ModoLectura:
         # Publicar en el tópico 'informe_web'
             self.informe_web.publish(mensajes_informe['subir_db'])
             
-        elif accion == 'addR':
+        elif accion == 'addPT':
+            coorCartesianas_quat=self.AngulosArticulares_a_pose(data.coordenadas[:6])
+            coorCartesianas_euler=self.AngulosArticulares_a_cartesianasEuler(data.coordenadas[:6])
+            vel_esc=data.coordenadas[6]
+            ratio=data.coordenadas[7]
             if nombre:
-                id=agregar_punto_rutina(data.coordenadas, plan, nombre)  # Llamar a la función escribir_datos
-                mensaje_informe = mensajes_informe['addR'].format(nombre, data.coordenadas)
+                id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
             else:
-                id=agregar_punto_rutina(data.coordenadas, plan, None)  # Si no se especifica nombre, pasa None
+                id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
                 mensaje_informe = "Punto agregado correctamente con nombre automático"
                 
                 
@@ -197,26 +263,71 @@ class ModoLectura:
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
                 mensaje_puntoR.coordenadas = [
-                    punto['pos'],
-                    punto['ang1'],
-                    punto['ang2'], 
-                    punto['ang3'], 
-                    punto['ang4'], 
-                    punto['ang5'], 
-                    punto['ang6'],
+                    *punto['coordenadasCEuler'], 
                     punto['vel_esc'],
                     punto['ratio'],
                     punto['wait'],
+                    punto['pos'],
                 ],
                 self.puntos_rutina.publish(mensaje_puntoR)
 
-                mensaje_informe = mensajes_informe['ver'].format(id, nombre, mensaje_puntoR.coordenadas)
+                mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
                 self.informe_web.publish(mensaje_informe)
             else:
                 self.informe_web.publish(f"Punto {id} no agregado correctamente.")
 
 
         # Publicar en el tópico 'informe_web'
+            self.informe_web.publish(mensaje_informe)
+            
+
+        elif accion == 'editPR':            
+            coorCartesianas_euler=data.coordenadas[:6]
+            coorCartesianas_quat=self.cartesianasEuler_a_pose(coorCartesianas_euler)
+            vel_esc=data.coordenadas[6]
+            ratio=data.coordenadas[7]
+            wait=data.coordenadas[8]
+            posicion=data.coordenadas[9]
+            mensaje_puntoR = punto_web() 
+            if self.pose_a_AngulosArticulares(coorCartesianas_quat):
+                
+                if nombre:
+                    point=editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, nombre)  
+                    # mensaje_informe = mensajes_informe['editPR'].format(nombre, data.coordenadas)
+                else:
+                    point=editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, None)  # Si no se especifica nombre, pasa None
+                    # mensaje_informe = "Punto agregado correctamente con nombre automático"
+                   
+                if point:    
+                    #punto = leer_punto_rutina(posicion)  
+                                    
+                    mensaje_puntoR.orden = ['editPR']
+                    mensaje_puntoR.orden = ['editPR', point['nombre'], point['plan']]
+                    mensaje_puntoR.coordenadas = [
+                    *point['coordenadasCEuler'],
+                    point['vel_esc'],
+                    point['ratio'],
+                    point['wait'],
+                    point['pos'],
+                ],
+                    self.puntos_rutina.publish(mensaje_puntoR)
+
+                    mensaje_informe = mensajes_informe['editPR'].format(point['nombre'], mensaje_puntoR.coordenadas)
+                    self.informe_web.publish(mensaje_informe)
+                else:
+                    mensaje_puntoR.orden = ['errorPunRut']
+                    self.puntos_rutina.publish(mensaje_puntoR)
+                    mensaje_informe ='Rutina NO Editada,'+ mensajes_informe['errorPunRut'].format(nombre, posicion)
+                    self.informe_web.publish(mensaje_informe)
+            else:
+                mensaje_puntoR.orden = ['errorPunRut2']
+                self.puntos_rutina.publish(mensaje_puntoR)
+                self.informe_web.publish(f"Error Coordenadas fuera de limites")
+
+        
+        elif accion == 'refreshRut':          
+            self.refrescarRutinaActual()
+            mensaje_informe = mensajes_informe['refreshRut']
             self.informe_web.publish(mensaje_informe)
 
         
@@ -228,7 +339,8 @@ class ModoLectura:
               punto = leer_punto_rutina(data.coordenadas[i])        
               if not punto or punto.nombre != data.orden[i+1]:
                 mensaje_puntoR.coordenadas.append(data.coordenadas[i])
-                mensaje_informe = mensajes_informe['errorEliminarPunRut'].format(data.orden[i+1], item)                
+                mensaje_informe ='Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], item)
+                self.informe_web.publish(mensaje_informe)                
                 errores = True
             if not errores:
               mensaje_puntoR.orden=['delPR']
@@ -237,7 +349,7 @@ class ModoLectura:
                 eliminar_punto_rutina(item)
                 mensaje_informe = mensajes_informe['eliminarPunRut'].format(punto.nombre, item)
               mensaje_puntoR.coordenadas=data.coordenadas
-            self.puntos_rutina.publish(mensaje_puntoR)
+              self.informe_web.publish(mensaje_informe)
              
              
 
@@ -245,17 +357,54 @@ class ModoLectura:
             if nombre:
                 punto = leer_punto(nombre)  # Llamar a la función leer_punto
                 if punto:
-                    mensaje_puntodb = punto_web()
-                    mensaje_puntodb.orden = [nombre]
-                    mensaje_puntodb.coordenadas = [punto['ang1'], punto['ang2'], punto['ang3'], punto['ang4'], punto['ang5'], punto['ang6']]
-                    self.puntos_web.publish(mensaje_puntodb)
+                    CoordenadasCartesianas=self.AngulosArticulares_a_cartesianasEuler(punto['coordenadasAngulares'])
+                    if CoordenadasCartesianas:
+                        mensaje_puntodb = punto_web()
+                        mensaje_puntodb.orden = ['Punto', nombre]                        
+                        mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
+                        self.puntos_web.publish(mensaje_puntodb)
 
-                    mensaje_informe = mensajes_informe['ver'].format(nombre, mensaje_puntodb.coordenadas)
-                    self.informe_web.publish(mensaje_informe)
+                        mensaje_informe = mensajes_informe['ver'].format(nombre, mensaje_puntodb.coordenadas)
+                        self.informe_web.publish(mensaje_informe)
+                    else:
+                        self.informe_web.publish(f"Coordenadas no validas")
                 else:
                     self.informe_web.publish(f"Punto {nombre} no encontrado.")
             else:
-                self.informe_web.publish("Error: no se ha proporcionado un nombre para el punto.")
+                self.informe_web.publish("Error: no se ha proporcionado un nombre para el punto.")             
+             
+
+        elif accion == 'ang-cart':            
+            CoordenadasCartesianas=self.AngulosArticulares_a_cartesianasEuler(data.coordenadas)
+            mensaje_puntodb = punto_web()
+            if CoordenadasCartesianas:
+                mensaje_puntodb.orden = ['Ang']                        
+                mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
+                self.puntos_web.publish(mensaje_puntodb)
+
+                #mensaje_informe = mensajes_informe['ang-cart'].format(nombre, mensaje_puntodb.coordenadas)
+                self.informe_web.publish(mensaje_informe)
+            else:
+                mensaje_puntodb.orden = ['EAng']                        
+                self.puntos_web.publish(mensaje_puntodb)
+                self.informe_web.publish(f"Coordenadas no validas")             
+             
+
+        elif accion == 'cart-ang':
+            CoordenadasCartesianas=self.cartesianaEuler_a_AngulosArticulares(data.coordenadas)
+            mensaje_puntodb = punto_web()
+            if CoordenadasCartesianas:
+                mensaje_puntodb.orden = ['Cart']                        
+                mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
+                self.puntos_web.publish(mensaje_puntodb)
+
+                #mensaje_informe = mensajes_informe['ang-cart'].format(nombre, mensaje_puntodb.coordenadas)
+                self.informe_web.publish(mensaje_informe)
+            else:
+                mensaje_puntodb.orden = ['ECart']                        
+                self.puntos_web.publish(mensaje_puntodb)
+                self.informe_web.publish(f"Coordenadas no validas")
+
 
         elif accion == 'eliminarRutina':
             if nombre:
@@ -263,10 +412,62 @@ class ModoLectura:
                 if resultado:
                     mensaje_informe = mensajes_informe['eliminarRutina'].format(nombre)
                 else:
-                    mensaje_informe = mensajes_informe['eliminarRutina'].format(nombre)
+                    mensaje_informe = mensajes_informe['ErrorR'].format(nombre)
                     mensaje_errorDelR = punto_web()
                     mensaje_errorDelR.orden=['errorR']
-                self.informe_web.publish(mensaje_informe)     
+                    self.puntos_rutina.publish(mensaje_errorDelR)
+                self.informe_web.publish(mensaje_informe)  
+        
+        
+        elif accion == 'cargarRRA':
+            if nombre:
+                rutina=obtener_rutina(nombre)
+                faltantes = verificar_rutinas_control()
+                
+                if rutina:
+                    if faltantes:  
+                        # Al menos una rutina declarada en control no existe en DB
+                        mensaje_informe = f"⚠️ Rutinas faltantes: {', '.join(faltantes)}"
+                        mensaje_errorDelR = punto_web()
+                        mensaje_errorDelR.orden = ['errorRR'] #['errorRR', *faltantes]  #cambiar por esto al agregar el cambio de color en la tabla
+                        self.puntos_rutina.publish(mensaje_errorDelR)  
+                        self.informe_web.publish(mensaje_informe)                       
+                    for doc in rutina:
+                        if doc.get("id") == "control":
+                            actualizar_control(
+                                doc.get("rutinas", []),
+                                doc.get("fechas", [])
+                            )
+
+                        elif doc.get("rutina") == False:
+                            coorCartesianas_quat = doc.get("coordenadasCQuaterniones", [])
+                            coorCartesianas_euler = self.pose_a_cartesianasEuler(coorCartesianas_quat)
+                            vel_esc = doc.get("vel_esc", 0)
+                            ratio = doc.get("ratio", 0)
+                            plan = doc.get("plan", "")
+                            identificador = doc.get("nombre")
+                            pos = doc.get("pos")
+
+                            agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler,
+                                                vel_esc, ratio, plan,
+                                                identificador, pos)
+
+                        elif doc.get("rutina") == True:
+                            identificador = doc.get("nombre")
+                            pos = doc.get("pos")
+                            agregar_rutina_rutina(identificador, pos)
+                            
+                    self.refrescarRutinaActual()                            
+                            
+                    mensaje_informe = mensajes_informe['cargarRRA'].format(nombre)
+                    
+                else:
+                    mensaje_informe = mensajes_informe['ErrorR'].format(nombre)
+                    mensaje_errorDelR = punto_web()
+                    mensaje_errorDelR.orden=['errorR']
+                    self.puntos_rutina.publish(mensaje_errorDelR)
+                self.informe_web.publish(mensaje_informe)                
+                  
 
         elif accion == 'addRT':
             if data.coordenadas:
@@ -282,10 +483,11 @@ class ModoLectura:
                 mensaje_rutinaR.orden = ['addRT', punto['nombre']]
                 mensaje_rutinaR.coordenadas = [
                     punto['wait'],
+                    punto['pos'],
                 ],
                 self.puntos_rutina.publish(mensaje_rutinaR)
 
-                mensaje_informe = mensajes_informe['ver'].format(id, nombre, mensaje_rutinaR.coordenadas)
+                mensaje_informe = mensajes_informe['addRT'].format(nombre)
                 self.informe_web.publish(mensaje_informe)
             else:
                 self.informe_web.publish(f"Rutina {nombre} no agregado correctamente.")
@@ -298,6 +500,116 @@ class ModoLectura:
         
         # Publicar en el tópico 'informe_web'
             self.informe_web.publish(mensajes_informe['subirR_db'])
+            
+            
+  ###### ConversorCoordenadas ########        
+    
+    # ===============================
+    # 1. Ángulos articulares -> Pose
+    # ===============================
+    def AngulosArticulares_a_pose(self, cord_ang):
+        """
+        cord_ang: lista [j1..j6] en rad
+        return: geometry_msgs/Pose
+        """
+        self.move_group.set_joint_value_target(cord_ang)
+        return self.move_group.get_current_pose().pose
+
+    # ===============================
+    # 2. Pose -> Ángulos articulares
+    # ===============================
+    def pose_a_AngulosArticulares(self, pose: Pose):
+        """
+        pose: geometry_msgs/Pose
+        return: lista [j1..j6] en rad o None si falla
+        """
+        rospy.wait_for_service('/compute_ik')
+        compute_ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
+
+        pose_stamped = PoseStamped()
+        pose_stamped.header.frame_id = self.base_frame
+        pose_stamped.pose = pose
+
+        ik_req = GetPositionIKRequest()
+        ik_req.ik_request.group_name = self.group_name
+        ik_req.ik_request.pose_stamped = pose_stamped
+
+        resp = compute_ik(ik_req)
+
+        if resp.error_code.val == 1:  # SUCCESS
+            return list(resp.solution.joint_state.position)
+        else:
+            rospy.logerr(f"IK falló con código: {resp.error_code.val}")
+            return None
+
+    # ===============================
+    # 3. Cartesianas + Euler -> Pose
+    # ===============================
+    def cartesianasEuler_a_pose(self, coord):
+        """
+        coord: [x,y,z,roll,pitch,yaw] (m, rad)
+        return: geometry_msgs/Pose
+        """
+        quat = tf.transformations.quaternion_from_euler(
+            coord[3], coord[4], coord[5]
+        )
+
+        pose = Pose()
+        pose.position.x = coord[0]
+        pose.position.y = coord[1]
+        pose.position.z = coord[2]
+        pose.orientation.x = quat[0]
+        pose.orientation.y = quat[1]
+        pose.orientation.z = quat[2]
+        pose.orientation.w = quat[3]
+
+        return pose
+
+    # ===============================
+    # 4. Pose -> Cartesianas + Euler
+    # ===============================
+    def pose_a_cartesianasEuler(self, pose: Pose):
+        """
+        return: [x,y,z,roll,pitch,yaw] en rad
+        """
+        quat = [
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w,
+        ]
+        roll, pitch, yaw = tf.transformations.euler_from_quaternion(quat)
+
+        return [
+            pose.position.x,
+            pose.position.y,
+            pose.position.z,
+            roll,
+            pitch,
+            yaw,
+        ]
+
+    # ===============================
+    # 5. Ángulos articulares -> Cartesianas + Euler
+    # ===============================
+    def AngulosArticulares_a_cartesianasEuler(self, cord_ang):
+        """
+        cord_ang: lista [j1..j6] en rad
+        return: [x,y,z,roll,pitch,yaw] en rad
+        """
+        pose = self.AngulosArticulares_a_pose(cord_ang)
+        return self.pose_a_cartesianasEuler(pose)
+
+    # ===============================
+    # 6. Cartesianas + Euler -> Ángulos articulares
+    # ===============================
+    def cartesianaEuler_a_AngulosArticulares(self, coord):
+        """
+        coord: [x,y,z,roll,pitch,yaw] en (m, rad)
+        return: lista [j1..j6] en rad o None si falla
+        """
+        pose = self.cartesianasEuler_a_pose(coord)
+        return self.pose_a_AngulosArticulares(pose)
                     
 
 

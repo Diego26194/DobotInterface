@@ -47,18 +47,44 @@ export function elimiarPuntoDB(nombrePunto:string) {
   }    
 }
 
+// Mostrar punto
+export function mostrarPuntoDB(nombrePunto:string) {
+  if (nombrePunto){
+    const msg = {
+      orden: ['ver', nombrePunto],
+      coordenadas: []
+    };
+    console.log(" Enviando a /orden_web: ELIMIAR", msg);
+
+    // Publica en ROS
+    pubTopic('orden_web', msg);
+  } 
+}
+
+// carga rutina en "rutina_actual"
+export function cargarRutinaRA(nombreRutina:string) {
+  if (nombreRutina){
+    const msg = {
+      orden: ['cargarRRA', nombreRutina],
+      coordenadas: []
+    };
+    console.log(" Enviando a /orden_web: ELIMIAR", msg);
+
+    // Publica en ROS
+    pubTopic('orden_web', msg);
+  } 
+}
+
 //Resibe lista con todos los puntos de la libreria
 export function nombrePuntoDB(callback: (msg: any) => void) {
   subTopic("lista_puntosdb", callback);
-
-  // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
+  
 }
 
 //Resibe lista con todos los puntos de la libreria
 export function nombreRutinaDB(callback: (msg: any) => void) {
   subTopic("lista_rutinasdb", callback);
 
-  // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
 }
 
 // Elimina Punto seleccionado
@@ -151,7 +177,7 @@ export function escucharCordReal(callback: (msg: any) => void) {
 
 export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {
   const msg = {
-    orden: ['addR', nombrePunto,plan],
+    orden: ['addPT', nombrePunto,plan],
     coordenadas: coord
   };
 
@@ -169,10 +195,10 @@ export function resibirMsgRutina(callback: (msg: any) => void) {
 }
 
 //Elimina Punto de Rutina
-export function elimiarPuntoRutina(nombrePunto:string[], ids:number[]) {
+export function elimiarPuntoRutina(nombrePunto:string[], posiciones:number[]) {
   const msg = {
     orden: ['eliminarPunRut', ...nombrePunto],
-    coordenadas: ids
+    coordenadas: posiciones
   };
 
   console.log("del", msg);
@@ -181,8 +207,74 @@ export function elimiarPuntoRutina(nombrePunto:string[], ids:number[]) {
   pubTopic('orden_web', msg);
 }
 
+//Refresca Rutina actual
+export function refrescarRutina() {
+  const msg = {
+    orden: ['refresRut'],
+    coordenadas:[]
+  };
+
+  console.log("refrescar", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+export function editarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {
+  const msg = {
+    orden: ['editPR', nombrePunto,plan],
+    coordenadas: coord
+  };
+
+  console.log(" Enviando a /orden_web: editando punto rutina", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+export function ejecutarRutina() {
+  const msg = { data: true };
+
+  console.log(" Correr rutina", msg);
+
+  // Publica en ROS
+  pubTopic('rutina', msg);
+}
+
 //////////////////////////    General     ////////////////////////////
 
+export function refreshCordAng(coord:number[]) {
+  const msg = {
+    orden: ['ang-cart'],
+    coordenadas: coord
+  };
+
+  console.log(" Enviando a /orden_web: editando punto rutina", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+export function refreshCordCart(coord:number[]) {
+  const msg = {
+    orden: ['cart-ang'],
+    coordenadas: coord
+  };
+
+  console.log(" Enviando a /orden_web: editando punto rutina", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+export function publicar_informe(informe: string) {
+  const msg = { data: informe };
+
+  console.log(" informar", msg);
+
+  // Publica en ROS
+  pubTopic('informe_web', msg);
+}
 
 export function msgEmergente(tipoMsg: string) {
   let mensaje: string = "";   // inicializado en vacío
@@ -192,6 +284,12 @@ export function msgEmergente(tipoMsg: string) {
       mensaje = [
         "⚠ Rutina no encontrada en base de datos lo que infiere una desincronizacion con esta.",
           "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
+      ].join("\n");
+      break;
+
+    case 'errorRR':
+      mensaje = [
+        "⚠ La rutina cargada contiene rutinas no existentes entre sus instrucciones.",
       ].join("\n");
       break;
 

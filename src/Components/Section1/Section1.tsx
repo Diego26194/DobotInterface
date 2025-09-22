@@ -22,7 +22,7 @@ import ButtonReflesh from "../Elements/Buettons/ButtonReflesh";
 
 import PointsTable from "../Elements/PointsTable";
 
-import { cargarPuntosDB, elimiarPuntoDB, escucharPuntoDB } from "../../Services/Funciones";
+import { cargarPuntosDB, elimiarPuntoDB, mostrarPuntoDB } from "../../Services/Funciones";
 
 
 interface Section1Props {
@@ -47,6 +47,7 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
   const handleSeleccion = (name: string) => {
     console.log('Seleccionado:', name);
     setNombre(name)
+    mostrarPuntoDB(name)
   };
 
 

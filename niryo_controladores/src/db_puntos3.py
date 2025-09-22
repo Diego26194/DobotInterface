@@ -17,8 +17,7 @@ Puntos_editables=db.table('Puntos_editables')
 # Función para escribir datos en la base de datos
 def escribir_datos(coordenadas, identificador=None):
     # Convertir array de Float32 a un diccionario con claves 'ang1', 'ang2', 'ang3', 'ang4', 'ang5', 'ang6'
-    coordenadas_dict = {'ang1': coordenadas[0], 'ang2': coordenadas[1], 'ang3': coordenadas[2], 
-                        'ang4': coordenadas[3], 'ang5': coordenadas[4], 'ang6': coordenadas[5]}
+    coordenadas_dict = {'coordenadasAngulares': coordenadas}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
     doc_id = Puntos_editables.insert(coordenadas_dict)
@@ -55,10 +54,8 @@ def leer_punto(nombre):
 # Función para cambiar los datos de un punto específico en la base de datos usando 'nombre'
 def cambiar_punto(nombre, nuevas_coordenadas):
     Punto = Query()
-    if Puntos_editables.get(Punto.nombre == nombre):
-    # Convertir array de Float32 a un diccionario con claves 'ang1', 'ang2', etc.
-        nuevas_coordenadas_dict = {'ang1': nuevas_coordenadas[0], 'ang2': nuevas_coordenadas[1], 'ang3': nuevas_coordenadas[2], 
-                                'ang4': nuevas_coordenadas[3], 'ang5': nuevas_coordenadas[4], 'ang6': nuevas_coordenadas[5]}
+    if Puntos_editables.get(Punto.nombre == nombre):    
+        nuevas_coordenadas_dict = {'coordenadasAngulares': nuevas_coordenadas}
     
     # Actualizar los datos del punto que tiene el nombre dado
         Puntos_editables.update(nuevas_coordenadas_dict, Punto.nombre == nombre)
@@ -87,13 +84,12 @@ def eliminar_todos_datos():
 
 ############# Rutina actual #############
 
-# Función para escribir datos en la base de datos
-def agregar_punto_rutina(coordenadas, plan , identificador=None, pos=None):
+# Función para escribir punto en "rutina_actual"
+def agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None):
     # Convertir array de Float32 a un diccionario con claves 'x', 'y', 'z', 'a', 'b', 'c'
     coordenadas_dict = {
-        'ang1': coordenadas[0],'ang2': coordenadas[1],'ang3': coordenadas[2],
-        'ang4': coordenadas[3],'ang5': coordenadas[4],'ang6': coordenadas[5],
-        'vel_esc': coordenadas[6],'ratio': coordenadas[7],'wait': 0,'plan': plan , 'tipo':'punto'}
+        'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
+        'vel_esc': vel_esc, 'ratio': ratio,'wait': 0,'plan': plan , 'rutina': False}
     
     # --- Manejo del campo "pos" ---
     if pos is None:
@@ -125,7 +121,7 @@ def agregar_punto_rutina(coordenadas, plan , identificador=None, pos=None):
     coordenadas_dict["nombre"] = nombre
     return doc_id
 
-# Función para escribir datos en la base de datos
+# Función para agregar una rutina como instruccion en la rutina actual
 def agregar_rutina_rutina(identificador, pos=None):
         
     # --- Manejo del campo "pos" ---
@@ -138,7 +134,7 @@ def agregar_rutina_rutina(identificador, pos=None):
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    posicion = {'pos': pos, 'tipo':'rutina', 'wait': 0}
+    posicion = {'pos': pos, 'rutina': False, 'wait': 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
     doc_id = rutina_actual.insert(posicion)
@@ -156,7 +152,36 @@ def agregar_rutina_rutina(identificador, pos=None):
     # Agregar el doc_id y nombre al diccionario original para referencia
     posicion["id"] = doc_id
     posicion["nombre"] = nombre
+    agregar_rutina_control(nombre)
     return doc_id
+
+def editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
+    Punto = Query()
+    pos=posicion
+    # Buscar el punto por pos
+    punto = rutina_actual.get(Punto.pos == pos)
+    if not punto or (identificador is not None and punto.get('nombre') != identificador):
+        return None  # No coincide posición o nombre
+    
+    # Crear diccionario con los nuevos valores
+    nuevas_coordenadas_dict = {
+        'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
+        'vel_esc': vel_esc, 'ratio': ratio,'wait': wait,'plan': plan
+    }
+    
+    # Manejo de nombre
+    if identificador is not None:
+        nuevas_coordenadas_dict['nombre'] = identificador
+    else:
+        # Generar uno único basado en el doc_id
+        doc_id = rutina_actual.get(doc_id=punto.doc_id).doc_id
+        nuevas_coordenadas_dict['nombre'] = f"rut{doc_id}"
+    
+    # Actualizar en la base de datos
+    rutina_actual.update(nuevas_coordenadas_dict, doc_ids=[punto.doc_id])
+    
+    # Recuperar y devolver el punto actualizado
+    return rutina_actual.get(doc_id=punto.doc_id)
 
 # Función para eliminar los datos de un punto específico en la base de datos usando 'nombre'
 def eliminar_punto_rutina(posicion):
@@ -173,7 +198,7 @@ def eliminar_punto_rutina(posicion):
 # Función para leer datos de un punto específico en la base de datos
 def leer_punto_rutina(n):
     # Buscar en la base de datos el punto con el doc_id igual a n
-    punto = rutina_actual.get(doc_id=n)
+    punto = rutina_actual.get(pos=n)
     if punto:  # Verifica si se encontró el punto
         # Devolver solo las coordenadas sin el doc_id
         #del punto.doc_id
@@ -190,11 +215,126 @@ def leer_punto_rutina(n):
 def eliminar_todos_datos_rutina():
     #db.purge()
     rutina_actual.truncate()
+    rutina_actual.insert({
+    "id": "control",       # clave fija para poder buscarlo
+    "rutinas": [],         # vector de rutinas guardadas
+    "error": False,        # bandera de error
+    "fechas": []           # lista de fechas o timestamps
+})
 
 # Función para leer datos de la base de datos
 def leer_rutina_completa():
     return rutina_actual.all()
 
+def leer_rutina_sin_euler():
+    """Devuelve la rutina completa pero excluyendo 'coordenadasCEuler' """
+    docs = rutina_actual.all()
+    resultado = []
+
+    for doc in docs:
+        doc_copy = dict(doc)  # copiamos para no modificar el original
+        doc_copy.pop('coordenadasCEuler', None)  # elimina si existe
+        resultado.append(doc_copy)
+
+    # ordenar: control primero, luego por pos
+    resultado.sort(key=lambda d: (0 if d.get("id") == "control" else 1, d.get("pos", float('inf'))))
+    return resultado
+
+
+def leer_rutina_sin_quaterniones():
+    """Devuelve la rutina completa pero excluyendo 'coordenadasCQuaterniones' """
+    docs = rutina_actual.all()
+    resultado = []
+
+    for doc in docs:
+        doc_copy = dict(doc)
+        doc_copy.pop('coordenadasCQuaterniones', None)  # elimina si existe
+        resultado.append(doc_copy)
+
+    resultado.sort(key=lambda d: (0 if d.get("id") == "control" else 1, d.get("pos", float('inf'))))
+    return resultado
+
+############# Registro_control #############
+
+def agregar_rutina_control(nombre_rutina: str):
+    Control = Query()
+    # Obtenemos el documento de control
+    doc = rutina_actual.get(Control.id == "control")
+    if not doc:
+        raise Exception("No existe documento de control en la tabla")
+
+    # Actualizamos el campo 'rutinas' agregando el nuevo nombre
+    nuevas_rutinas = doc["rutinas"] + [nombre_rutina]
+    rutina_actual.update({"rutinas": nuevas_rutinas}, Control.id == "control")
+    
+def eliminar_rutina_control(nombre_rutina: str):
+    Control = Query()
+    doc = rutina_actual.get(Control.id == "control")
+    if not doc:
+        raise Exception("No existe documento de control en la tabla")
+
+    rutinas = doc["rutinas"].copy()  # copiamos para no modificar en vivo
+
+    try:
+        rutinas.remove(nombre_rutina)  # elimina solo la primera coincidencia
+    except ValueError:
+        return False  # no estaba en la lista
+
+    rutina_actual.update({"rutinas": rutinas}, Control.id == "control")
+    return True
+
+def error_true_control():
+    Control = Query()
+    # Obtenemos el documento de control
+    doc = rutina_actual.get(Control.id == "control")
+    if not doc:
+        raise Exception("No existe documento de control en la tabla")
+    rutina_actual.update({"error": True}, Control.id == "control")
+    
+def error_false_control():
+    Control = Query()
+    # Obtenemos el documento de control
+    doc = rutina_actual.get(Control.id == "control")
+    if not doc:
+        raise Exception("No existe documento de control en la tabla")
+    rutina_actual.update({"error": False}, Control.id == "control")
+
+# actualiza linea de control en rutina actual
+def actualizar_control(rutinas: list, fechas: list):
+    Control = Query()
+    doc = rutina_actual.get(Control.id == "control")
+    if not doc:
+        raise Exception("No existe documento de control en la tabla rutina_actual")
+
+    rutina_actual.update({
+        "rutinas": rutinas,
+        "fechas": fechas
+    }, Control.id == "control")
+
+# Verifica que las rutinas registradas en el control existan en la DB.       
+def verificar_rutinas_control():
+    Control = Query()
+    doc_control = rutina_actual.get(Control.id == "control")
+    if not doc_control:
+        raise Exception("No existe documento de control en la tabla")
+
+    # Rutinas registradas en control (puede haber duplicados)
+    rutinas_control = doc_control.get("rutinas", [])
+
+    # Rutinas efectivamente existentes
+    rutinas_existentes = obtener_todas_rutinas()
+
+    # Detectamos las faltantes (sin repetidos → usamos set)
+    rutinas_faltantes = list(set(rutinas_control) - set(rutinas_existentes))
+
+    if rutinas_faltantes: # Si faltan, activa error y devuelve lista de faltantes
+        error_true_control()
+    else:                 # Si todas existen, desactiva error y devuelve lista vacía.
+        error_false_control() 
+
+    return rutinas_faltantes
+
+    
 ############# Manejar Rutinas #############
 
 def eliminar_rutina(rutina):

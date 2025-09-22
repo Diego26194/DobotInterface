@@ -3,11 +3,12 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 
 interface ButtonRefleshProps {
   onClick: () => void;
+  description?: string;
 }
 
-const ButtonReflesh = ({ onClick }: ButtonRefleshProps) => {
+const ButtonReflesh = ({ onClick, description  }: ButtonRefleshProps) => {
   return (
-    <MenuItem onClick={onClick}
+    <MenuItem title={description} onClick={onClick}
       sx={{
         minHeight: "28px",  // baja la altura mínima
         padding: "2px 1px", // menos espacio interno

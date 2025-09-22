@@ -2,6 +2,7 @@ import React, { useImperativeHandle, forwardRef, useState, useEffect } from 'rea
 import { Grid, Stack } from '@mui/material';
 import Button1 from '../Buettons/Button1';
 import CoordInputV2 from './CoordInputV2';
+import { refreshCordAng } from "../../../Services/Funciones";
 
 //import { cargarPuntosDB, elimiarPuntoDB, escucharPuntoDB } from "../../Services/Funciones";
 
@@ -26,6 +27,10 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
       newVals[index] = val;
       return newVals;
     });
+  };
+
+  const handleBlurGlobal = () => {
+    refreshCordAng(values);  // siempre tiene los 6 valores actualizados
   };
 
   useImperativeHandle(ref, () => ({
@@ -53,6 +58,7 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}
+              onBlurCustom={handleBlurGlobal}
             />
           ))}
         </Stack>
@@ -69,6 +75,7 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}
+              onBlurCustom={handleBlurGlobal}
             />
           ))}
         </Stack>
