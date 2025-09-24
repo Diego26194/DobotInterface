@@ -168,7 +168,7 @@ export function escucharPuntoDB(callback: (msg: any) => void) {
 }
 
 export function escucharCordReal(callback: (msg: any) => void) {
-  subTopic("pos_dy", callback);
+  subTopic("pos_real", callback);
 
   // ❌ Luego analizar si conviene cerrarlo o cuando hacerlo
 }

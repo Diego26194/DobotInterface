@@ -134,7 +134,7 @@ def agregar_rutina_rutina(identificador, pos=None):
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    posicion = {'pos': pos, 'rutina': False, 'wait': 0}
+    posicion = {'pos': pos, 'rutina': True, 'wait': 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
     doc_id = rutina_actual.insert(posicion)

@@ -66,6 +66,12 @@ export function initRos() {
     messageType: 'std_msgs/Int16MultiArray',
   });
 
+  topics['pos_real'] = new ROSLIB.Topic({
+    ros,
+    name: '/pos_real',
+    messageType: 'niryo_controladores/punto_real',
+  });
+
   topics['p_dy'] = new ROSLIB.Topic({
     ros,
     name: '/p_dy',
