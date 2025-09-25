@@ -14,7 +14,7 @@ import numpy as np
 import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
-from niryo_controladores.msg import actionSAction, actionSGoal, actionSResult
+from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult
 
 
 class ControladorRobot:
@@ -22,7 +22,7 @@ class ControladorRobot:
         rospy.init_node('modo_control')
 
         # Inicializar MoveGroupCommander para el grupo de articulaciones del robot
-        self.move_group = MoveGroupCommander("niryo_arm")
+        self.move_group = MoveGroupCommander("cobot_arm")
         self.move_group.set_planner_id("PTP")
 
         # Suscribirse al tópico pos_dy para obtener la realimentación de la posición de los motores
@@ -252,7 +252,7 @@ class ControladorRobot:
 
         # Item inicial con pose actual (para asegurar inicio desde la pose real)
         init_item = MotionSequenceItem()
-        init_item.req.group_name = "niryo_arm"
+        init_item.req.group_name = "cobot_arm"
         init_item.req.planner_id = "PTP"
         init_item.req.max_velocity_scaling_factor = 0.1
         init_item.req.max_acceleration_scaling_factor = 0.1
@@ -275,7 +275,7 @@ class ControladorRobot:
             pose.pose.orientation.w = float(coords[6])
 
             item = MotionSequenceItem()
-            item.req.group_name = "niryo_arm"
+            item.req.group_name = "cobot_arm"
             item.req.planner_id = p.get('plan', 'PTP')  # PTP, LIN, CIRC
             item.req.max_velocity_scaling_factor = float(p.get('vel_esc', 100)) / 100.0
             item.req.max_acceleration_scaling_factor = 1.0

@@ -25,7 +25,7 @@ from db_puntos3 import (
     actualizar_control,
     leer_rutina_sin_quaterniones,
 )
-from niryo_controladores.msg import punto_web, nombresPuntos, punto_real
+from cobot_controladores.msg import punto_web, nombresPuntos, punto_real
 import numpy as np
 
 import tf
@@ -91,8 +91,8 @@ class ModoLectura:
         
         
         #################### Inicializa el conversor de coordenadas para un robot definido en MoveIt. ####################
-        self.move_group = MoveGroupCommander("niryo_arm")
-        self.group_name = "niryo_arm"
+        self.move_group = MoveGroupCommander("cobot_arm")
+        self.group_name = "cobot_arm"
         self.base_frame = "base_link"
         
     def pasar_punto_real(self, data):        

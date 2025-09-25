@@ -27,31 +27,31 @@ export function initRos() {
   topics['orden_web'] = new ROSLIB.Topic({
     ros,
     name: '/orden_web',
-    messageType: 'niryo_controladores/punto_web',
+    messageType: 'cobot_controladores/punto_web',
   });
 
   topics['puntodb'] = new ROSLIB.Topic({
     ros,
     name: '/puntodb',
-    messageType: 'niryo_controladores/punto_web',
+    messageType: 'cobot_controladores/punto_web',
   });
 
   topics['puntoRutina'] = new ROSLIB.Topic({
     ros,
     name: '/puntoRutina',
-    messageType: 'niryo_controladores/punto_web',
+    messageType: 'cobot_controladores/punto_web',
   });
 
   topics['lista_puntosdb'] = new ROSLIB.Topic({
     ros,
     name: '/lista_puntosdb',
-    messageType: 'niryo_controladores/nombresPuntos',
+    messageType: 'cobot_controladores/nombresPuntos',
   });
 
   topics['lista_rutinasdb'] = new ROSLIB.Topic({
     ros,
     name: '/lista_rutinasdb',
-    messageType: 'niryo_controladores/nombresPuntos',
+    messageType: 'cobot_controladores/nombresPuntos',
   });
 
   topics['informe_web'] = new ROSLIB.Topic({
@@ -69,7 +69,7 @@ export function initRos() {
   topics['pos_real'] = new ROSLIB.Topic({
     ros,
     name: '/pos_real',
-    messageType: 'niryo_controladores/punto_real',
+    messageType: 'cobot_controladores/punto_real',
   });
 
   topics['p_dy'] = new ROSLIB.Topic({

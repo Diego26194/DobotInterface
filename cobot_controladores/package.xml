@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>niryo_controladores</name>
+  <name>cobot_controladores</name>
   <version>0.0.0</version>
-  <description>The niryo_controladores package</description>
+  <description>The cobot_controladores package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 import rospy
 import actionlib
-from niryo_controladores.msg import actionSAction, actionSFeedback, actionSResult
+from cobot_controladores.msg import actionSAction, actionSFeedback, actionSResult
 import sys
 import numpy as np
 from moveit_commander import MoveGroupCommander, roscpp_initialize
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Int16MultiArray
+import time
 
 class EjecucionTrayectoriaServer:
     def __init__(self):
@@ -16,10 +17,13 @@ class EjecucionTrayectoriaServer:
         rospy.init_node('ejecutar_trayectoria_server')
         
         self.server = actionlib.SimpleActionServer('ejecutar_trayectoria_server', actionSAction, self.execute_callback, False)
-        self.move_group = MoveGroupCommander("niryo_arm")
+        self.move_group = MoveGroupCommander("cobot_arm")
         
         # Publicar en el tópico de coordenadas Dynamixel
         self.cord_dy_pub = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
+        
+        # Publicar en el tópico de coordenadas Dynamixel
+        self.cord_dy_pub2 = rospy.Publisher('ErroresRos', Int16MultiArray, queue_size=10)
         
         self.server.start()
         
@@ -37,17 +41,11 @@ class EjecucionTrayectoriaServer:
 
             # Ejecutar la trayectoria planificada
             self.move_group.execute(goal.traj, wait=True)  # Cambiar a wait=False si es necesario
+
+
             
-
-            rate = rospy.Rate(20)  # 20 Hz
-            for punto in goal.traj.joint_trajectory.points:
-                posiciones_bits = self.rad_bit(punto.positions)  # Asumimos que devuelve List[int]
-                msg = Int16MultiArray()
-                msg.data = posiciones_bits
-
-                self.cord_dy_pub.publish(msg)
-                rate.sleep()
     
+            
             
             self.server.set_succeeded()   #esto me indica que el proceso termino
         except rospy.ROSException as e:

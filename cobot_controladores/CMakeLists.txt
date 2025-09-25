@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(niryo_controladores)
+project(cobot_controladores)
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -22,6 +22,8 @@ add_message_files(
   msg_estados.msg
   msg_web.msg
   punto_web.msg
+  nombresPuntos.msg
+  punto_real.msg
 )
 
 generate_messages(

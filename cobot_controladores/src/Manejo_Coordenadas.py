@@ -12,7 +12,7 @@ import numpy as np
 import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
-from niryo_controladores.msg import actionSAction, actionSGoal, actionSResult
+from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult
 
 import rospy
 import tf
