@@ -561,7 +561,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
             sx={{ 
               height: '25%',              
               minHeight: '2px',
-              "&:focus": { outline: "none" },   // saca el borde de focus
+              "&:focus": { outline: "none" },   
               "&:focus-visible": { outline: "none" },
             }}
           >
