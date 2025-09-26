@@ -14,7 +14,7 @@ type InputsCartVProps = {
 };
 
 const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = false }, ref) => {
-  const [values, setValues] = useState<number[]>(Array(5).fill(0));
+  const [values, setValues] = useState<number[]>(Array(6).fill(0));
 
   const handleChange = (index: number) => (val: number) => {
     setValues((prev) => {
@@ -61,7 +61,7 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
 
       <Grid size={{xs: 6, md: 6}}>
         <Stack spacing={1}>
-          {['q', 'rad'].map((e, idx) => (
+          {['qx', 'qy', 'qz'].map((e, idx) => (
             <CoordInputV2
               key={idx+3}
               label={e}

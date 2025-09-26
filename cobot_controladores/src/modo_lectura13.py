@@ -74,7 +74,7 @@ class ModoLectura:
         
         self.nombres_rutinas_tabla = rospy.Publisher('lista_rutinasdb', nombresPuntos, queue_size=10)
         
-        self.nombres_rutinas_tabla = rospy.Publisher('pos_real', punto_real, queue_size=10)
+        self.pub_pos_real = rospy.Publisher('pos_real', punto_real, queue_size=10)
         
         rospy.Subscriber('pos_dy', Int16MultiArray, self.pasar_punto_real)
         
@@ -412,30 +412,30 @@ class ModoLectura:
             CoordenadasCartesianas=self.AngulosArticulares_a_cartesianasEuler(data.coordenadas)
             mensaje_puntodb = punto_web()
             if CoordenadasCartesianas:
-                mensaje_puntodb.orden = ['Ang']                        
-                mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
-                self.puntos_web.publish(mensaje_puntodb)
-
-                #mensaje_informe = mensajes_informe['ang-cart'].format(nombre, mensaje_puntodb.coordenadas)
-                self.informe_web.publish(mensaje_informe)
-            else:
-                mensaje_puntodb.orden = ['EAng']                        
-                self.puntos_web.publish(mensaje_puntodb)
-                self.informe_web.publish(f"Coordenadas no validas")             
-             
-
-        elif accion == 'cart-ang':
-            CoordenadasCartesianas=self.cartesianaEuler_a_AngulosArticulares(data.coordenadas)
-            mensaje_puntodb = punto_web()
-            if CoordenadasCartesianas:
                 mensaje_puntodb.orden = ['Cart']                        
-                mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
+                mensaje_puntodb.coordenadas = [CoordenadasCartesianas]
                 self.puntos_web.publish(mensaje_puntodb)
 
                 #mensaje_informe = mensajes_informe['ang-cart'].format(nombre, mensaje_puntodb.coordenadas)
                 self.informe_web.publish(mensaje_informe)
             else:
                 mensaje_puntodb.orden = ['ECart']                        
+                self.puntos_web.publish(mensaje_puntodb)
+                self.informe_web.publish(f"Coordenadas no validas")             
+             
+
+        elif accion == 'cart-ang':
+            CoordenadasAngulares=self.cartesianaEuler_a_AngulosArticulares(data.coordenadas)
+            mensaje_puntodb = punto_web()
+            if CoordenadasCartesianas:
+                mensaje_puntodb.orden = ['Ang']                        
+                mensaje_puntodb.coordenadas = [CoordenadasAngulares]
+                self.puntos_web.publish(mensaje_puntodb)
+
+                #mensaje_informe = mensajes_informe['ang-cart'].format(nombre, mensaje_puntodb.coordenadas)
+                self.informe_web.publish(mensaje_informe)
+            else:
+                mensaje_puntodb.orden = ['EAng']                        
                 self.puntos_web.publish(mensaje_puntodb)
                 self.informe_web.publish(f"Coordenadas no validas")
 
@@ -536,121 +536,121 @@ class ModoLectura:
             self.informe_web.publish(mensajes_informe['subirR_db'])
             
             
-  ###### ConversorCoordenadas ########        
-    
-# ===============================
-# 1. Ángulos articulares -> Pose
-# ===============================
-def AngulosArticulares_a_pose(self, cord_ang_grados):
-    """
-    cord_ang_grados: lista [j1..j6] en grados
-    return: geometry_msgs/Pose
-    """
-    cord_ang_rad = self.grados_rad(cord_ang_grados)
-    self.move_group.set_joint_value_target(cord_ang_rad)
-    return self.move_group.get_current_pose().pose
+    ###### ConversorCoordenadas ########        
+        
+    # ===============================
+    # 1. Ángulos articulares -> Pose
+    # ===============================
+    def AngulosArticulares_a_pose(self, cord_ang_grados):
+        """
+        cord_ang_grados: lista [j1..j6] en grados
+        return: geometry_msgs/Pose
+        """
+        cord_ang_rad = self.grados_rad(cord_ang_grados)
+        self.move_group.set_joint_value_target(cord_ang_rad)
+        return self.move_group.get_current_pose().pose
 
 
-# ===============================
-# 2. Pose -> Ángulos articulares
-# ===============================
-def pose_a_AngulosArticulares(self, pose: Pose):
-    """
-    pose: geometry_msgs/Pose
-    return: lista [j1..j6] en grados o None si falla
-    """
-    rospy.wait_for_service('/compute_ik')
-    compute_ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
+    # ===============================
+    # 2. Pose -> Ángulos articulares
+    # ===============================
+    def pose_a_AngulosArticulares(self, pose: Pose):
+        """
+        pose: geometry_msgs/Pose
+        return: lista [j1..j6] en grados o None si falla
+        """
+        rospy.wait_for_service('/compute_ik')
+        compute_ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
 
-    pose_stamped = PoseStamped()
-    pose_stamped.header.frame_id = self.base_frame
-    pose_stamped.pose = pose
+        pose_stamped = PoseStamped()
+        pose_stamped.header.frame_id = self.base_frame
+        pose_stamped.pose = pose
 
-    ik_req = GetPositionIKRequest()
-    ik_req.ik_request.group_name = self.group_name
-    ik_req.ik_request.pose_stamped = pose_stamped
+        ik_req = GetPositionIKRequest()
+        ik_req.ik_request.group_name = self.group_name
+        ik_req.ik_request.pose_stamped = pose_stamped
 
-    resp = compute_ik(ik_req)
+        resp = compute_ik(ik_req)
 
-    if resp.error_code.val == 1:  # SUCCESS
-        cord_ang_rad = list(resp.solution.joint_state.position)
-        return self.rad_grados(cord_ang_rad)
-    else:
-        rospy.logerr(f"IK falló con código: {resp.error_code.val}")
-        return None
-
-
-# ===============================
-# 3. Cartesianas + Euler -> Pose
-# ===============================
-def cartesianasEuler_a_pose(self, coord_grados):
-    """
-    coord_grados: [x,y,z,roll,pitch,yaw] (m, grados)
-    return: geometry_msgs/Pose
-    """
-    coord_rad = coord_grados[:3] + self.grados_rad(coord_grados[3:])
-    quat = tf.transformations.quaternion_from_euler(
-        coord_rad[3], coord_rad[4], coord_rad[5]
-    )
-
-    pose = Pose()
-    pose.position.x = coord_rad[0]
-    pose.position.y = coord_rad[1]
-    pose.position.z = coord_rad[2]
-    pose.orientation.x = quat[0]
-    pose.orientation.y = quat[1]
-    pose.orientation.z = quat[2]
-    pose.orientation.w = quat[3]
-
-    return pose
+        if resp.error_code.val == 1:  # SUCCESS
+            cord_ang_rad = list(resp.solution.joint_state.position)
+            return self.rad_grados(cord_ang_rad)
+        else:
+            rospy.logerr(f"IK falló con código: {resp.error_code.val}")
+            return None
 
 
-# ===============================
-# 4. Pose -> Cartesianas + Euler
-# ===============================
-def pose_a_cartesianasEuler(self, pose: Pose):
-    """
-    return: [x,y,z,roll,pitch,yaw] en grados
-    """
-    quat = [
-        pose.orientation.x,
-        pose.orientation.y,
-        pose.orientation.z,
-        pose.orientation.w,
-    ]
-    roll, pitch, yaw = tf.transformations.euler_from_quaternion(quat)
+    # ===============================
+    # 3. Cartesianas + Euler -> Pose
+    # ===============================
+    def cartesianasEuler_a_pose(self, coord_grados):
+        """
+        coord_grados: [x,y,z,roll,pitch,yaw] (m, grados)
+        return: geometry_msgs/Pose
+        """
+        coord_rad = list(coord_grados[:3]) + self.grados_rad(coord_grados[3:])
+        quat = tf.transformations.quaternion_from_euler(
+            coord_rad[3], coord_rad[4], coord_rad[5]
+        )
 
-    return [
-        pose.position.x,
-        pose.position.y,
-        pose.position.z,
-        *self.rad_grados([roll, pitch, yaw]),
-    ]
+        pose = Pose()
+        pose.position.x = coord_rad[0]
+        pose.position.y = coord_rad[1]
+        pose.position.z = coord_rad[2]
+        pose.orientation.x = quat[0]
+        pose.orientation.y = quat[1]
+        pose.orientation.z = quat[2]
+        pose.orientation.w = quat[3]
 
-
-# ===============================
-# 5. Ángulos articulares -> Cartesianas + Euler
-# ===============================
-def AngulosArticulares_a_cartesianasEuler(self, cord_ang_grados):
-    """
-    cord_ang_grados: lista [j1..j6] en grados
-    return: [x,y,z,roll,pitch,yaw] en grados
-    """
-    pose = self.AngulosArticulares_a_pose(cord_ang_grados)
-    return self.pose_a_cartesianasEuler(pose)
+        return pose
 
 
-# ===============================
-# 6. Cartesianas + Euler -> Ángulos articulares
-# ===============================
-def cartesianaEuler_a_AngulosArticulares(self, coord_grados):
-    """
-    coord_grados: [x,y,z,roll,pitch,yaw] en (m, grados)
-    return: lista [j1..j6] en grados o None si falla
-    """
-    pose = self.cartesianasEuler_a_pose(coord_grados)
-    return self.pose_a_AngulosArticulares(pose)
-                    
+    # ===============================
+    # 4. Pose -> Cartesianas + Euler
+    # ===============================
+    def pose_a_cartesianasEuler(self, pose: Pose):
+        """
+        return: [x,y,z,roll,pitch,yaw] en grados
+        """
+        quat = [
+            pose.orientation.x,
+            pose.orientation.y,
+            pose.orientation.z,
+            pose.orientation.w,
+        ]
+        roll, pitch, yaw = tf.transformations.euler_from_quaternion(quat)
+
+        return [
+            pose.position.x,
+            pose.position.y,
+            pose.position.z,
+            *self.rad_grados([roll, pitch, yaw]),
+        ]
+
+
+    # ===============================
+    # 5. Ángulos articulares -> Cartesianas + Euler
+    # ===============================
+    def AngulosArticulares_a_cartesianasEuler(self, cord_ang_grados):
+        """
+        cord_ang_grados: lista [j1..j6] en grados
+        return: [x,y,z,roll,pitch,yaw] en grados
+        """
+        pose = self.AngulosArticulares_a_pose(cord_ang_grados)
+        return self.pose_a_cartesianasEuler(pose)
+
+
+    # ===============================
+    # 6. Cartesianas + Euler -> Ángulos articulares
+    # ===============================
+    def cartesianaEuler_a_AngulosArticulares(self, coord_grados):
+        """
+        coord_grados: [x,y,z,roll,pitch,yaw] en (m, grados)
+        return: lista [j1..j6] en grados o None si falla
+        """
+        pose = self.cartesianasEuler_a_pose(coord_grados)
+        return self.pose_a_AngulosArticulares(pose)
+                        
 
 
 
