@@ -31,7 +31,7 @@ import numpy as np
 import tf
 from moveit_commander import MoveGroupCommander
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
 class ModoLectura:
     def bit_grados(self, bit):
@@ -101,7 +101,8 @@ class ModoLectura:
         errores = []
         for i, valor in enumerate(entrada):
             if valor == -1:
-                errores.append(False)       
+                errores.append(False)
+            else:       
                 errores.append(True)        
                 self.angulos[i] = self.bit_grados([valor])[0]  
         
@@ -124,17 +125,35 @@ class ModoLectura:
             rospy.logwarn("El mensaje recibido no tiene el tamaño esperado (6)")
             return
         
-        # Convertir de bits a grados antes de guardar en la base de datos
-        coordenadas_grad = self.bit_grados(coordenadas)
-        #coordenadas_grad.append(self.velocidad)
-        #coordenadas_grad.append(self.ratio)
-        coorCartesianas_quat=self.AngulosArticulares_a_pose(coordenadas_grad)
-        coorCartesianas_euler=self.AngulosArticulares_a_cartesianasEuler(coordenadas_grad)
-        
-        
-        id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, self.velocidad, self.ratio, 'PTP', None) 
-            
-            
+        # Filtrar valores -1 (motores desconectados)
+        for i, valor in enumerate(coordenadas):
+            if valor != -1:        
+                self.angulos[i] = self.bit_grados([valor])[0]
+
+        # Intentar convertir ángulos a pose
+        coorCartesianas_quat = self.AngulosArticulares_a_pose(self.angulos)
+
+        # Si los ángulos están fuera de los límites, cortar el proceso
+        if coorCartesianas_quat is None:
+            msg = "Ángulos fuera de los límites de trabajo"
+            rospy.logwarn(msg)
+            self.informe_web.publish(msg)
+            return
+
+        # Si pasó el chequeo, calculamos coordenadas en Euler
+        coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler(self.angulos)
+
+        # Guardar el punto en la rutina
+        id = agregar_punto_rutina(
+            coorCartesianas_quat,
+            coorCartesianas_euler,
+            self.velocidad,
+            self.ratio,
+            'PTP',
+            None
+        ) 
+
+        # Recuperar el punto recién agregado
         punto = leer_punto_rutina(id)  
         if punto:
             mensaje_puntoR = punto_web()
@@ -148,10 +167,14 @@ class ModoLectura:
             ],
             self.puntos_rutina.publish(mensaje_puntoR)
 
-            mensaje_informe = "Punto {} con los datos {},{},{} agregado correctamente".format(punto.nombre, mensaje_puntoR.coordenadas, self.velocidad, self.ratio)
+            mensaje_informe = (
+                f"Punto {punto['nombre']} agregado correctamente "
+                f"con datos {mensaje_puntoR.coordenadas}, {self.velocidad}, {self.ratio}"
+            )
             self.informe_web.publish(mensaje_informe)
         else:
             self.informe_web.publish(f"Punto {id} no agregado correctamente.")
+
         
 
     # /////// pagina web ////////
@@ -232,6 +255,18 @@ class ModoLectura:
                 if not leer_punto(nombre):                    
                     escribir_datos(data.coordenadas, nombre)  # Llamar a la función escribir_datos
                     mensaje_informe = mensajes_informe['agregar'].format(nombre, data.coordenadas)
+                    
+                    #### Refresco la lista de puntos ####
+                    puntos = leer_datos()  # Esto retorna db.all()
+                    nombres = [punto['nombre'] for punto in puntos]  # Extraer todos los nombres
+                
+                # Publicar los nombres de los puntos en el tópico 'puntodb'
+                    mensaje_puntodb = nombresPuntos()
+                    mensaje_puntodb.nombres = nombres
+                    self.nombres_puntos_tabla.publish(mensaje_puntodb)
+                
+                # Publicar en el tópico 'informe_web'
+                    self.informe_web.publish(mensajes_informe['subir_db'])
                 else:
                     mensaje_informe = mensajes_informe['Erroragregar'].format(nombre)                    
             else:
@@ -395,7 +430,7 @@ class ModoLectura:
                     if CoordenadasCartesianas:
                         mensaje_puntodb = punto_web()
                         mensaje_puntodb.orden = ['Punto', nombre]                        
-                        mensaje_puntodb.coordenadas = [*punto['coordenadasAngulares'],*CoordenadasCartesianas]
+                        mensaje_puntodb.coordenadas = [*(punto['coordenadasAngulares']),*CoordenadasCartesianas]
                         self.puntos_web.publish(mensaje_puntodb)
 
                         mensaje_informe = mensajes_informe['ver'].format(nombre, mensaje_puntodb.coordenadas)
@@ -474,7 +509,7 @@ class ModoLectura:
                             )
 
                         elif doc.get("rutina") == False:
-                            coorCartesianas_quat = doc.get("coordenadasCQuaterniones", [])
+                            coorCartesianas_quat = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
                             coorCartesianas_euler = self.pose_a_cartesianasEuler(coorCartesianas_quat)
                             vel_esc = doc.get("vel_esc", 0)
                             ratio = doc.get("ratio", 0)
@@ -536,7 +571,23 @@ class ModoLectura:
             self.informe_web.publish(mensajes_informe['subirR_db'])
             
             
-    ###### ConversorCoordenadas ########        
+    ###### ConversorCoordenadas ######## 
+    
+    def dict_to_pose(pose_dict):
+        
+        pose = Pose()
+        pose.position = Point(
+            x=pose_dict["position"]["x"],
+            y=pose_dict["position"]["y"],
+            z=pose_dict["position"]["z"]
+        )
+        pose.orientation = Quaternion(
+            x=pose_dict["orientation"]["x"],
+            y=pose_dict["orientation"]["y"],
+            z=pose_dict["orientation"]["z"],
+            w=pose_dict["orientation"]["w"]
+        )
+        return pose       
         
     # ===============================
     # 1. Ángulos articulares -> Pose
@@ -547,7 +598,11 @@ class ModoLectura:
         return: geometry_msgs/Pose
         """
         cord_ang_rad = self.grados_rad(cord_ang_grados)
-        self.move_group.set_joint_value_target(cord_ang_rad)
+        if self.move_group.set_joint_value_target(cord_ang_rad):
+            pass  
+        else:
+            rospy.logwarn("Los ángulos están fuera de los límites permitidos.")
+            return None
         return self.move_group.get_current_pose().pose
 
 
@@ -574,7 +629,8 @@ class ModoLectura:
 
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
-            return self.rad_grados(cord_ang_rad)
+            #return self.rad_grados(cord_ang_rad)
+            return [int(round(ang)) for ang in self.rad_grados(cord_ang_rad)]
         else:
             rospy.logerr(f"IK falló con código: {resp.error_code.val}")
             return None
@@ -583,27 +639,31 @@ class ModoLectura:
     # ===============================
     # 3. Cartesianas + Euler -> Pose
     # ===============================
-    def cartesianasEuler_a_pose(self, coord_grados):
+    def cartesianasEuler_a_pose(self, coord):
         """
-        coord_grados: [x,y,z,roll,pitch,yaw] (m, grados)
+        coord: [x,y,z,roll,pitch,yaw] con x,y,z en mm y ángulos en grados
         return: geometry_msgs/Pose
         """
-        coord_rad = list(coord_grados[:3]) + self.grados_rad(coord_grados[3:])
+        # 1. Separar parte cartesiana y angular
+        coord_cart = [c / 1000.0 for c in coord[:3]]   # mm → m
+        coord_ang  = self.grados_rad(coord[3:])        # grados → radianes
+
+        # 2. Calcular cuaternión a partir de las coordenadas angulares
         quat = tf.transformations.quaternion_from_euler(
-            coord_rad[3], coord_rad[4], coord_rad[5]
+            coord_ang[0], coord_ang[1], coord_ang[2]
         )
 
+        # 3. Construir objeto Pose
         pose = Pose()
-        pose.position.x = coord_rad[0]
-        pose.position.y = coord_rad[1]
-        pose.position.z = coord_rad[2]
+        pose.position.x = coord_cart[0]
+        pose.position.y = coord_cart[1]
+        pose.position.z = coord_cart[2]
         pose.orientation.x = quat[0]
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
         pose.orientation.w = quat[3]
 
         return pose
-
 
     # ===============================
     # 4. Pose -> Cartesianas + Euler
@@ -621,9 +681,9 @@ class ModoLectura:
         roll, pitch, yaw = tf.transformations.euler_from_quaternion(quat)
 
         return [
-            pose.position.x,
-            pose.position.y,
-            pose.position.z,
+            int(round(pose.position.x * 1000)),
+            int(round(pose.position.y * 1000)),
+            int(round(pose.position.z * 1000)),
             *self.rad_grados([roll, pitch, yaw]),
         ]
 

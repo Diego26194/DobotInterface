@@ -19,6 +19,10 @@ const CoordDisplay: React.FC = () => {
   useEffect(() => {
     // suscribirse al tópico
     escucharCordReal((msg: CordMsg) => {
+      console.log(msg.cart);
+      console.log(msg.ang);
+      console.log(msg.error);
+
       setCoords(msg);
     });
   }, []);

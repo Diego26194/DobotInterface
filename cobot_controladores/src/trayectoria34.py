@@ -3,7 +3,7 @@
 import rospy
 from std_msgs.msg import String, Bool, Int16, Int16MultiArray, Float64MultiArray
 from moveit_commander import MoveGroupCommander, roscpp_initialize, RobotCommander
-from geometry_msgs.msg import Pose, Point, PoseStamped
+from geometry_msgs.msg import Pose, Point, PoseStamped, Point, Quaternion
 from moveit_msgs.msg import RobotTrajectory, RobotState, MotionSequenceRequest, MotionSequenceItem, MotionPlanRequest, MoveGroupSequenceAction, Constraints, MoveGroupSequenceGoal, GenericTrajectory, JointConstraint, DisplayTrajectory
 from moveit_msgs.msg import PositionConstraint, OrientationConstraint
 from shape_msgs.msg import SolidPrimitive
@@ -15,6 +15,13 @@ import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
 from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult
+
+
+# Bounding volume
+from shape_msgs.msg import SolidPrimitive, Mesh, MeshTriangle
+from geometry_msgs.msg import PointStamped
+# Construir bounding volume simple (usaremos solo el solid primitive)
+from moveit_msgs.msg import BoundingVolume
 
 
 class ControladorRobot:
@@ -84,6 +91,22 @@ class ControladorRobot:
     def grados_rad(self, grad):
         rad = [g * np.pi / 180 for g in grad]
         return rad
+    
+    def dict_to_pose(pose_dict):
+        
+        pose = Pose()
+        pose.position = Point(
+            x=pose_dict["position"]["x"],
+            y=pose_dict["position"]["y"],
+            z=pose_dict["position"]["z"]
+        )
+        pose.orientation = Quaternion(
+            x=pose_dict["orientation"]["x"],
+            y=pose_dict["orientation"]["y"],
+            z=pose_dict["orientation"]["z"],
+            w=pose_dict["orientation"]["w"]
+        )
+        return pose
 
     def anular_ejecucion(self, msg):
         if self.planear_Rutina:
@@ -175,11 +198,6 @@ class ControladorRobot:
         sphere.type = SolidPrimitive.SPHERE
         sphere.dimensions = [float(ratio if ratio > 0 else 0.001)]
 
-        # Bounding volume
-        from shape_msgs.msg import SolidPrimitive, Mesh, MeshTriangle
-        from geometry_msgs.msg import PointStamped
-        # Construir bounding volume simple (usaremos solo el solid primitive)
-        from moveit_msgs.msg import BoundingVolume
         bv = BoundingVolume()
         bv.primitives.append(sphere)
         # Centramos el bounding volume en la posición deseada
@@ -262,7 +280,7 @@ class ControladorRobot:
         for p in puntos:
             pose = PoseStamped()
             pose.header.frame_id = "base_link"
-            coords = p.get('coordenadasCQuaterniones')
+            coords = self.dict_to_pose( p.get('coordenadasCQuaterniones') )
             if not coords or len(coords) < 7:
                 rospy.logwarn(f"Punto con coordenadas inválidas: {p}")
                 continue

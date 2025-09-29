@@ -44,8 +44,7 @@ def leer_punto(nombre):
     Punto = Query()
     # Buscar en la base de datos el punto con el nombre dado
     punto = Puntos_editables.get(Punto.nombre == nombre)
-    if punto:
-        # Devolver solo las coordenadas sin el campo 'doc_id'
+    if punto is not None and isinstance(punto, dict):
         punto.pop('doc_id', None)  # Elimina el doc_id si existe
         return punto
     else:
@@ -85,8 +84,9 @@ def eliminar_todos_datos():
 ############# Rutina actual #############
 
 # Función para escribir punto en "rutina_actual"
-def agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None):
+def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None):
     # Convertir array de Float32 a un diccionario con claves 'x', 'y', 'z', 'a', 'b', 'c'
+    coorCartesianas_quat=pose_to_dict(pose)
     coordenadas_dict = {
         'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
         'vel_esc': vel_esc, 'ratio': ratio,'wait': 0,'plan': plan , 'rutina': False}
@@ -155,9 +155,10 @@ def agregar_rutina_rutina(identificador, pos=None):
     agregar_rutina_control(nombre)
     return doc_id
 
-def editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
+def editar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
     Punto = Query()
     pos=posicion
+    coorCartesianas_quat=pose_to_dict(pose)
     # Buscar el punto por pos
     punto = rutina_actual.get(Punto.pos == pos)
     if not punto or (identificador is not None and punto.get('nombre') != identificador):
@@ -197,11 +198,10 @@ def eliminar_punto_rutina(posicion):
 
 # Función para leer datos de un punto específico en la base de datos
 def leer_punto_rutina(n):
-    # Buscar en la base de datos el punto con el doc_id igual a n
-    punto = rutina_actual.get(pos=n)
-    if punto:  # Verifica si se encontró el punto
-        # Devolver solo las coordenadas sin el doc_id
-        #del punto.doc_id
+    Punto = Query()
+    punto = rutina_actual.get(Punto.pos == n)  # Busca donde 'pos' == n
+    if punto:
+        punto.pop('doc_id', None)  # Por si existe, lo eliminamos
         return punto
     else:
         return None  # Retorna None si no se encuentra el punto
@@ -369,6 +369,22 @@ def agregar_rutina(nombre):
         datos = rutina_actual.all()
         db.table(nombre).insert_multiple(datos)
         return True
+    
+### Extras ###
+def pose_to_dict(pose):
+    return {
+        "position": {
+            "x": pose.position.x,
+            "y": pose.position.y,
+            "z": pose.position.z
+        },
+        "orientation": {
+            "x": pose.orientation.x,
+            "y": pose.orientation.y,
+            "z": pose.orientation.z,
+            "w": pose.orientation.w
+        }
+    }
 
     
 
