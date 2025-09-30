@@ -173,6 +173,9 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           );
           break;
 
+        case 'vaciarTabla':
+          setRows([]);
+          break;
           
         case 'addRT':
           setRows((prev) => {

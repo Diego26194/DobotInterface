@@ -3,7 +3,7 @@
   <!-- By default, we do not start a database (it can be large) -->
   <arg name="db" default="true" /> <!-- Cambiado a true para iniciar la base de datos -->
   <!-- Allow user to specify database location -->
-  <arg name="db_path" default="$(find niryo_moveit_config)/default_warehouse_mongo_db" />
+  <arg name="db_path" default="$(find cobot_moveit_config)/default_warehouse_mongo_db" />
   
   <!-- specify the planning pipeline -->
   <arg name="pipeline" default="pilz_industrial_motion_planner" /> <!-- Planificador Pilz añadido -->
@@ -52,7 +52,7 @@
   </group>
 
   <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
-  <include file="$(find niryo_moveit_config)/launch/move_group.launch">
+  <include file="$(find cobot_moveit_config)/launch/move_group.launch">
     <arg name="allow_trajectory_execution" value="true"/>
     <arg name="moveit_controller_manager" value="$(arg moveit_controller_manager)" />
     <arg name="fake_execution_type" value="$(arg fake_execution_type)"/>
@@ -63,15 +63,15 @@
   </include>
 
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find niryo_description)/config/default_config.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cobot_description)/config/default_config.rviz" />
 
 
   <!-- If database loading was enabled, start the Python node to interact with the database -->
-  <node name="coordenadas_node" pkg="niryo_controladores" type="db_puntos2.py" output="screen">
+  <node name="coordenadas_node" pkg="cobot_controladores" type="db_puntos2.py" output="screen">
     <param name="db" value="$(arg db)" />
     <param name="db_path" value="$(arg db_path)" />
   </node>
   
-  <node name="ejecutar_trayectoria_server" pkg="niryo_controladores" type="action_server_ejec_trayectoria4.py" output="screen"/>
+  <node name="ejecutar_trayectoria_server" pkg="cobot_controladores" type="action_server_ejec_trayectoria4.py" output="screen"/>
 </launch>
 

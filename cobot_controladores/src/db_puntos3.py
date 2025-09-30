@@ -201,7 +201,6 @@ def leer_punto_rutina(n):
     Punto = Query()
     punto = rutina_actual.get(Punto.pos == n)  # Busca donde 'pos' == n
     if punto:
-        punto.pop('doc_id', None)  # Por si existe, lo eliminamos
         return punto
     else:
         return None  # Retorna None si no se encuentra el punto

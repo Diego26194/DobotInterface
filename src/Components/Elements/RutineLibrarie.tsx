@@ -48,7 +48,8 @@ const RutineLibrarie: React.FC<RutineLibrarieProps> = ({ onSelect, flagDelete, s
   
     useEffect(() => {
       nombreRutinaDB((msg) => {
-        const nuevosPuntos = msg.nombres.map((nombre: string) => ({
+        const nuevosPuntos = msg.nombres.map((nombre: string, index: number) => ({
+          num: index,
           nombre,
         }));
         setPuntos(nuevosPuntos);
