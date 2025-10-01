@@ -138,12 +138,16 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       const nombresArray = rows
       .filter((row) => idsArray.includes(row.id)) 
       .map((row) => row.nombre);
+
+      const posicionesArray = rows
+      .filter((row) => idsArray.includes(row.id))
+      .map((row) => row.posicion);
       
       if (idsArray.length > 0) {
-        elimiarPuntoRutina(nombresArray, idsArray.map(Number));
+        elimiarPuntoRutina(nombresArray, posicionesArray);
         //eliminarInstruccionRutina(idsArray.map(Number),['delPR','Punto A','Ir a Torno']);
         eliminarInstruccionRutina(idsArray.map(Number));
-        msgEmergente('ErrordelPR');
+        //msgEmergente('ErrordelPR');
       }
 
       setFlagEliminarPRut(false);
@@ -271,7 +275,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   const addRowPunto = (orden: string[], coordenadas: number[]) => { //orden [id,noombre,plan] coordenadas[a1,a2,a3,a4,a5,a6,vel, ratio]
     setRows((prev) => {
       const newRow: RowType = {
-        id: Date.now(),      
+        id: Date.now() + Math.floor(Math.random() * 1000), //Date.now(),      
         posicion: coordenadas[9], //prev.length + 1,         
         nombre: orden[1],
         plan: orden[2],

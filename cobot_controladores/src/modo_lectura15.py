@@ -185,6 +185,9 @@ class ModoLectura:
     def refrescarRutinaActual(self): # (self, rutina: list)
         
         rutina=leer_rutina_sin_quaterniones()
+        
+        rospy.logwarn(rutina)
+        
         mensaje_puntoR = punto_web()
         mensaje_puntoR.orden = ['vaciarTabla']
         self.puntos_rutina.publish(mensaje_puntoR)
@@ -195,16 +198,21 @@ class ModoLectura:
                 continue
 
             if punto.get("rutina") is False:
+                
+                rospy.logwarn(punto)
+                
                 # Punto normal
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
-                mensaje_puntoR.coordenadas = [
-                    *punto['coordenadasCEuler'],
-                    punto['vel_esc'],
-                    punto['ratio'],
-                    punto['wait'],
-                    punto['pos'],
+                mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
+                    int(punto['vel_esc']),
+                    int(punto['ratio']),
+                    int(punto['wait']),
+                    int(punto['pos']),
                 ]
+                
+                rospy.logwarn(mensaje_puntoR.coordenadas)
+                
                 self.puntos_rutina.publish(mensaje_puntoR)
 
             elif punto.get("rutina") is True:
@@ -446,6 +454,7 @@ class ModoLectura:
                 mensaje_informe = mensajes_informe['eliminarPunRut'].format(punto['nombre'], item)
               mensaje_puntoR.coordenadas=data.coordenadas
               self.informe_web.publish(mensaje_informe)
+              self.refrescarRutinaActual() #ver si dejar esto o no
              
              
 
