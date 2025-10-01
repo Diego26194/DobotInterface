@@ -119,7 +119,7 @@ def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , ide
     # Agregar el doc_id y nombre al diccionario original para referencia
     coordenadas_dict["id"] = doc_id
     coordenadas_dict["nombre"] = nombre
-    return doc_id
+    return pos
 
 # Función para agregar una rutina como instruccion en la rutina actual
 def agregar_rutina_rutina(identificador, pos=None):

@@ -27,7 +27,7 @@ import InputAng from "../Components/Elements/Inputs/InputCord";
 import { useState,useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import {initRos} from "../Services/RosService2";
-
+import {msgInforme} from "../Services/Funciones";
 const Lectura = () => {
   const [angle, setAngle] = useState(0);
   const [flagAddPoint, setFlagAddPoint] = useState(false);
@@ -35,6 +35,8 @@ const Lectura = () => {
   const [showSection1, setShowSection1] = useState(true);
   const [showLibrariePuntos, setShowLibrariePuntos] = useState(false);
   const [showLibrarieRutina, setShowLibrarieRutinas] = useState(false);
+
+  const [mensajes, setMensajes] = useState<string[]>([]);
 {/* 
   const handleRutinas = () => {
     setShowLibrarie(2)
@@ -48,6 +50,15 @@ const Lectura = () => {
     setShowLibrarie(0)
   };
 */}
+useEffect(() => {
+  msgInforme((msg: any) => {
+    if (typeof msg === "string") {
+      setMensajes((prev) => [...prev, msg]);  // agrega el nuevo mensaje a la lista
+    } else {
+      console.warn("Mensaje no es string:", msg);
+    }
+  });
+}, []);
 useEffect(() => {
   // inicializa ROS solo una vez cuando el componente se monta
   initRos();
@@ -182,13 +193,22 @@ useEffect(() => {
       </Grid>
       <Box
         sx={{
-          width: '100%', 
-          height: '10%',
-          display: 'flex',
-          border: '1px solid #000',
-          backgroundColor: '#dbdbdbe5',
+          width: "100%",
+          height: "10%",
+          display: "flex",
+          flexDirection: "column",  // para que los mensajes se apilen
+          overflowY: "auto",        // scroll si hay muchos
+          border: "1px solid #000",
+          backgroundColor: "#dbdbdbe5",
+          p: 1,
         }}
-      ></Box>
+      >
+        {mensajes.map((m, idx) => (
+          <Typography key={idx} variant="body2">
+            - {m}
+          </Typography>
+        ))}
+      </Box>
     </Stack>
   );
 };

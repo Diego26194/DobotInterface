@@ -252,7 +252,8 @@ class ModoLectura:
             'eliminarRutina':"Rutina {} eliminada correctamente",
             'ErrorR':'ERROR- Rutina {} no se encuentra en la base de datos', #agrega rutina a tabla de rutina actual
             'subirR_db': "Rutinas de la base de datos cargados correctamente",            
-            'cargarRRA': "Rutinas {} cargados ",
+            'cargarRRA': "Rutinas {} cargados ",        
+            'addRutina': "Rutinas {} agregada correctamente ",
         }
     # Switch que maneja las diferentes acciones en base al valor de 'accion'
         if accion == 'agregar':
@@ -277,6 +278,18 @@ class ModoLectura:
             else:
                 escribir_datos(data.coordenadas, None)  # Si no se especifica nombre, pasa None
                 mensaje_informe = "Punto agregado correctamente con nombre automático"
+                
+                 #### Refresco la lista de puntos ####
+                puntos = leer_datos()  # Esto retorna db.all()
+                nombres = [punto['nombre'] for punto in puntos]  # Extraer todos los nombres
+            
+            # Publicar los nombres de los puntos en el tópico 'puntodb'
+                mensaje_puntodb = nombresPuntos()
+                mensaje_puntodb.nombres = nombres
+                self.nombres_puntos_tabla.publish(mensaje_puntodb)
+            
+            # Publicar en el tópico 'informe_web'
+                self.informe_web.publish(mensajes_informe['subir_db'])
 
         # Publicar en el tópico 'informe_web'
             self.informe_web.publish(mensaje_informe)
@@ -326,13 +339,13 @@ class ModoLectura:
             vel_esc=data.coordenadas[6]
             ratio=data.coordenadas[7]
             if nombre:
-                id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
+                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
             else:
-                id=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
+                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
                 mensaje_informe = "Punto agregado correctamente con nombre automático"
                 self.informe_web.publish(mensaje_informe)
                 
-            punto = leer_punto_rutina(id)  
+            punto = leer_punto_rutina(posicion)  
             if punto:
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
@@ -343,12 +356,14 @@ class ModoLectura:
                     punto['wait'],
                     punto['pos'],
                 ],
+                rospy.logwarn(mensaje_puntoR.orden)
+                rospy.logwarn(mensaje_puntoR.coordenadas)
                 self.puntos_rutina.publish(mensaje_puntoR)
 
                 mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
                 self.informe_web.publish(mensaje_informe)
             else:
-                self.informe_web.publish(f"Punto {id} no agregado correctamente.")
+                self.informe_web.publish(f"Punto {posicion} no agregado correctamente.")
 
 
         # Publicar en el tópico 'informe_web'
@@ -384,6 +399,13 @@ class ModoLectura:
                     point['wait'],
                     point['pos'],
                 ],
+                    
+                    
+                    rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
+                    for i, c in enumerate(mensaje_puntoR.coordenadas):
+                        rospy.logwarn("%d: %s (%s)", i, c, type(c))
+                        
+                        
                     self.puntos_rutina.publish(mensaje_puntoR)
 
                     mensaje_informe = mensajes_informe['editPR'].format(point['nombre'], mensaje_puntoR.coordenadas)
@@ -574,6 +596,43 @@ class ModoLectura:
         
         # Publicar en el tópico 'informe_web'
             self.informe_web.publish(mensajes_informe['subirR_db'])
+        
+                
+        elif accion == 'addRutina':
+        # Publicar los nombres de los puntos en el tópico 'puntodb'
+            if not nombre:
+                rutinas = obtener_todas_rutinas()
+                
+                # Filtrar solo las que son "rutina N"
+                genericas = []
+                for r in rutinas:
+                    m = re.match(r"rutina(\d+)$", r)
+                    if m:
+                        genericas.append(int(m.group(1)))
+                
+                # Encontrar el próximo número disponible
+                if genericas:
+                    nuevo_num = max(genericas) + 1
+                else:
+                    nuevo_num = 1
+                nombre=f"rutina{nuevo_num}"
+                        
+            if agregar_rutina(nombre):
+                mensaje_informe = mensajes_informe['addRutina'].format(nombre)
+                self.informe_web.publish(mensaje_informe)
+                
+                ###### Refrescar tabla de rutinas ########
+                
+                # Publicar los nombres de los puntos en el tópico 'puntodb'
+                mensaje_puntodb = nombresPuntos()
+                mensaje_puntodb.nombres = obtener_todas_rutinas()
+                self.nombres_rutinas_tabla.publish(mensaje_puntodb)
+            
+            # Publicar en el tópico 'informe_web'
+                self.informe_web.publish(mensajes_informe['subirR_db'])
+            else:                
+                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")
+            
             
             
     ###### ConversorCoordenadas ######## 
@@ -601,10 +660,7 @@ class ModoLectura:
     
     
     	
-        try:
-            rospy.logwarn("coordenadas en grados")
-            rospy.logwarn(cord_ang_grados)
-            
+        try:                     
             
             cord_ang_rad = self.grados_rad(cord_ang_grados)
             

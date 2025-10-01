@@ -276,6 +276,12 @@ export function publicar_informe(informe: string) {
   pubTopic('informe_web', msg);
 }
 
+//Resibe mensaje de informe
+export function msgInforme(callback: (msg: any) => void) {
+  subTopic("informe_web", callback);
+  
+}
+
 export function msgEmergente(tipoMsg: string) {
   let mensaje: string = "";   // inicializado en vacío
 

@@ -213,6 +213,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           break;
           
         case 'addP':
+           console.log(msg.orden);
+           console.log(msg.coordenadas);
           addRowPunto(msg.orden, msg.coordenadas);
           break;
 
