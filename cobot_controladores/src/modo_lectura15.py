@@ -160,13 +160,12 @@ class ModoLectura:
         if punto:
             mensaje_puntoR = punto_web()
             mensaje_puntoR.orden = [punto.doc_id, punto['nombre'], punto['plan']]
-            mensaje_puntoR.coordenadas = [
-                *punto['coordenadasCEuler'],
-                punto['vel_esc'],
-                punto['ratio'],
-                punto['wait'],
-                punto['pos'],
-            ],
+            mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
+                int(punto['vel_esc']),
+                int(punto['ratio']),
+                int(punto['wait']),
+                int(punto['pos']),
+            ]
             self.puntos_rutina.publish(mensaje_puntoR)
 
             mensaje_informe = (
@@ -212,6 +211,13 @@ class ModoLectura:
                 ]
                 
                 rospy.logwarn(mensaje_puntoR.coordenadas)
+                rospy.logwarn('hasta aca todo bien')
+                rospy.logwarn('hasta aca todo bien')
+                rospy.logwarn('hasta aca todo bien')
+                
+                rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
+                for i, c in enumerate(mensaje_puntoR.coordenadas):
+                    rospy.logwarn("%d: %s (%s)", i, c, type(c))
                 
                 self.puntos_rutina.publish(mensaje_puntoR)
 
@@ -357,15 +363,17 @@ class ModoLectura:
             if punto:
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
-                mensaje_puntoR.coordenadas = [
-                    *punto['coordenadasCEuler'], 
-                    punto['vel_esc'],
-                    punto['ratio'],
-                    punto['wait'],
-                    punto['pos'],
-                ],
+                mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
+                    int(punto['vel_esc']),
+                    int(punto['ratio']),
+                    int(punto['wait']),
+                    int(punto['pos']),
+                ]
                 rospy.logwarn(mensaje_puntoR.orden)
                 rospy.logwarn(mensaje_puntoR.coordenadas)
+                rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
+                for i, c in enumerate(mensaje_puntoR.coordenadas):
+                    rospy.logwarn("%d: %s (%s)", i, c, type(c))
                 self.puntos_rutina.publish(mensaje_puntoR)
 
                 mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
@@ -400,13 +408,12 @@ class ModoLectura:
                                     
                     mensaje_puntoR.orden = ['editPR']
                     mensaje_puntoR.orden = ['editPR', point['nombre'], point['plan']]
-                    mensaje_puntoR.coordenadas = [
-                    *point['coordenadasCEuler'],
-                    point['vel_esc'],
-                    point['ratio'],
-                    point['wait'],
-                    point['pos'],
-                ],
+                    mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
+                        int(punto['vel_esc']),
+                        int(punto['ratio']),
+                        int(punto['wait']),
+                        int(punto['pos']),
+                    ]
                     
                     
                     rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
@@ -498,7 +505,7 @@ class ModoLectura:
         elif accion == 'cart-ang':
             CoordenadasAngulares=self.cartesianaEuler_a_AngulosArticulares(data.coordenadas)
             mensaje_puntodb = punto_web()
-            if CoordenadasCartesianas:
+            if CoordenadasAngulares:
                 mensaje_puntodb.orden = ['Ang']                        
                 mensaje_puntodb.coordenadas = CoordenadasAngulares
                 self.puntos_web.publish(mensaje_puntodb)
@@ -724,6 +731,9 @@ class ModoLectura:
         ik_req.ik_request.pose_stamped = pose_stamped
 
         resp = compute_ik(ik_req)
+        
+        rospy.logerr('confirmacion final')
+        rospy.logerr(resp )
 
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
@@ -750,6 +760,9 @@ class ModoLectura:
         quat = tf.transformations.quaternion_from_euler(
             coord_ang[0], coord_ang[1], coord_ang[2]
         )
+        
+        rospy.logerr(coord_cart)
+        rospy.logerr(coord_ang)
 
         # 3. Construir objeto Pose
         pose = Pose()
@@ -760,6 +773,9 @@ class ModoLectura:
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
         pose.orientation.w = quat[3]
+        
+        rospy.logerr('pose1')
+        rospy.logerr(pose)
 
         return pose
 
@@ -810,6 +826,8 @@ class ModoLectura:
         return: lista [j1..j6] en grados o None si falla
         """
         pose = self.cartesianasEuler_a_pose(coord_grados)
+        rospy.logerr('pose2')
+        rospy.logerr(pose)
         return self.pose_a_AngulosArticulares(pose)
                         
 

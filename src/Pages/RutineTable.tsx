@@ -156,6 +156,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
 
   useEffect(() => {
     resibirMsgRutina((msg) => {
+      console.log('sigue todo bien');
       switch (msg.orden[0]) {
         case 'editPR':
           setRows((prev) =>
@@ -217,6 +218,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           break;
           
         case 'addP':
+           console.log('aun estoy parece');
            console.log(msg.orden);
            console.log(msg.coordenadas);
           addRowPunto(msg.orden, msg.coordenadas);

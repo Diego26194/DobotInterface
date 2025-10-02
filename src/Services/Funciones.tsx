@@ -191,6 +191,7 @@ export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[
 
 
 export function resibirMsgRutina(callback: (msg: any) => void) {
+  console.log("verificando");
   subTopic("puntoRutina", callback);
 }
 
