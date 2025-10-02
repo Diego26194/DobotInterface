@@ -23,7 +23,7 @@ import ButtonRutineAdd from "../Elements/Buettons/ButtonRutineAdd";
 
 import RutineLibrarie from "../Elements/RutineLibrarie";
 
-import { cargarRutinasDB, elimiarPuntoDB, escucharPuntoDB, elimiarRutinaDB, agregarRutinaTabla, cargarRutinaRA } from "../../Services/Funciones";
+import { cargarRutinasDB, agregarRutina, elimiarPuntoDB, escucharPuntoDB, elimiarRutinaDB, agregarRutinaTabla, cargarRutinaRA } from "../../Services/Funciones";
 
 
 interface Section4Props {
@@ -68,7 +68,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
         <ButtonEdit onClick={() => cargarRutinaRA(nombre)}/>
         <ButtonDelete onClick={() => elimiarRutinaDB(nombre)}/>
         <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={handleAddClick}/>
-        <ButtonReflesh onClick={cargarRutinasDB}/>
+        <ButtonReflesh onClick={() =>agregarRutina(nombre)}/>
       </Stack>
       <Paper sx={{
             width: '100%', 

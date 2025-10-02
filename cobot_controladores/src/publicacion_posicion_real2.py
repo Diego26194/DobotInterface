@@ -26,6 +26,8 @@ class PublicacionPosicionReal:
         rospy.loginfo("Nodo 'publicacion_posicion_real' iniciado.")
         rospy.spin()
         self.positionPos_dy = [2047, 2047, 2047, 2047, 2047, 2047]
+        
+        self.publicar_joint_states(self.positionPos_dy)
 
     def bit_rad(self, bit):
         rad = [((b * (2 * np.pi) / 4095) - np.pi) for b in bit]
@@ -43,11 +45,12 @@ class PublicacionPosicionReal:
             #VERRIFICAR si esto es necesario, el indicativo tal ves solo deberia ir en la interfaz
             else:
                 rospy.loginfo("Motor %s desconectado o error", i+1)
-                
-
-        # Conversión bit -> radianes
-            
-        posiciones_rad = self.bit_rad(msg.data)
+        
+        self.publicar_joint_states(self.positionPos_dy)             
+        
+    def publicar_joint_states(self, positionPos_dy):  
+        # Conversión bit -> radianes     
+        posiciones_rad = self.bit_rad(positionPos_dy)
 
         # Emparejar con nombres de articulaciones (por si hay menos)
         nombres = self.joint_names[:len(posiciones_rad)]

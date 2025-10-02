@@ -672,10 +672,8 @@ class ModoLectura:
     # ===============================
     # 1. Ángulos articulares -> Pose
     # ===============================
-    def AngulosArticulares_a_pose(self, cord_ang_grados):
-    
-    
-    	
+    def AngulosArticulares_a_pose(self, cord_ang_grados):   
+        	
         try:                     
             
             cord_ang_rad = self.grados_rad(cord_ang_grados)
@@ -828,7 +826,10 @@ class ModoLectura:
         pose = self.cartesianasEuler_a_pose(coord_grados)
         rospy.logerr('pose2')
         rospy.logerr(pose)
-        return self.pose_a_AngulosArticulares(pose)
+        if pose:
+            return self.pose_a_AngulosArticulares(pose)
+        else: 
+            None
                         
 
 

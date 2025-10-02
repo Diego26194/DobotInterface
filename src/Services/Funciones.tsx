@@ -213,7 +213,7 @@ export function refrescarRutina() {
   const msg = {
     orden: ['refresRut'],
     coordenadas:[]
-  };
+  };  
 
   console.log("refrescar", msg);
 
@@ -240,6 +240,19 @@ export function ejecutarRutina() {
 
   // Publica en ROS
   pubTopic('rutina', msg);
+}
+
+//Agregar una rutina(la rutina actual la guarda asignandole nombre)
+export function agregarRutina(nombreRutina:string) {
+  const msg = {
+    orden: ['addRutina', nombreRutina],
+    coordenadas:[]
+  };  
+
+  console.log("addRutina", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
 }
 
 //////////////////////////    General     ////////////////////////////
