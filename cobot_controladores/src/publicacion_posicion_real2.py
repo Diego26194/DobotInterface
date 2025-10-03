@@ -4,18 +4,25 @@
 import rospy
 from std_msgs.msg import Int16MultiArray, Header
 from sensor_msgs.msg import JointState
+from moveit_commander import RobotCommander, MoveGroupCommander
 import numpy as np
 
 class PublicacionPosicionReal:
     def __init__(self):
         # Inicializa el nodo
         rospy.init_node('publicacion_posicion_real', anonymous=True)
+        self.robot = RobotCommander()
+        self.group = MoveGroupCommander("cobot_arm")
 
         # Nombres de las articulaciones (ajustalos a los tuyos)
         self.joint_names = [
             "joint_1", "joint_2", "joint_3", 
             "joint_4", "joint_5", "joint_6"
         ]
+        
+        state_ini = self.robot.get_current_state()
+        state_ini.joint_state.position = [0.6981, 0.7156, 0.0, 0.0, 0.0, 0.1571]
+        self.group.set_start_state(state_ini)
 
         # Publicador a joint_states
         self.joint_pub = rospy.Publisher('joint_states', JointState, queue_size=10)

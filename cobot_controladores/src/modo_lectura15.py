@@ -95,7 +95,7 @@ class ModoLectura:
         #################### Inicializa el conversor de coordenadas para un robot definido en MoveIt. ####################
         self.move_group = MoveGroupCommander("cobot_arm")
         self.group_name = "cobot_arm"
-        self.base_frame = "base_link"
+        self.base_frame = self.move_group.get_planning_frame()
         
     def pasar_punto_real(self, data):        
         entrada = data.data
