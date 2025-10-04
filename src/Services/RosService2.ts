@@ -95,6 +95,13 @@ export function initRos() {
     name: '/rutina',
     messageType: 'std_msgs/Bool',
   });
+
+  ////////////// Eliminar-Prueba de emulacion arduino///////
+  topics['pos_dy'] = new ROSLIB.Topic({
+    ros,
+    name: '/pos_dy',
+    messageType: 'std_msgs/Int16MultiArray',
+  });
   
   /*
 // Si se desconecta, reintenta

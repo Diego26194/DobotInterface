@@ -408,11 +408,11 @@ class ModoLectura:
                                     
                     mensaje_puntoR.orden = ['editPR']
                     mensaje_puntoR.orden = ['editPR', point['nombre'], point['plan']]
-                    mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
-                        int(punto['vel_esc']),
-                        int(punto['ratio']),
-                        int(punto['wait']),
-                        int(punto['pos']),
+                    mensaje_puntoR.coordenadas = list(point['coordenadasCEuler']) + [
+                        int(point['vel_esc']),
+                        int(point['ratio']),
+                        int(point['wait']),
+                        int(point['pos']),
                     ]
                     
                     
@@ -653,7 +653,7 @@ class ModoLectura:
             
     ###### ConversorCoordenadas ######## 
     
-    def dict_to_pose(pose_dict):
+    def dict_to_pose(self, pose_dict):
         
         pose = Pose()
         pose.position = Point(

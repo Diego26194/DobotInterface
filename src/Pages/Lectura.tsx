@@ -50,19 +50,23 @@ const Lectura = () => {
     setShowLibrarie(0)
   };
 */}
-useEffect(() => {
-  msgInforme((msg: any) => {
-    if (typeof msg === "string") {
-      setMensajes((prev) => [...prev, msg]);  // agrega el nuevo mensaje a la lista
-    } else {
-      console.warn("Mensaje no es string:", msg);
-    }
-  });
-}, []);
+
 useEffect(() => {
   // inicializa ROS solo una vez cuando el componente se monta
   initRos();
 }, [])
+
+useEffect(() => {
+  msgInforme((msg: any) => {
+    // Si el mensaje es std_msgs/String, viene como { data: "..." }
+    if (msg && typeof msg.data === "string") {
+      setMensajes((prev) => [...prev, msg.data]);  
+    } else {
+      console.warn("Mensaje recibido no es string:", msg);
+    }
+  });
+}, []);
+
   return (
     <Stack
       sx={{

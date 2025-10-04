@@ -1,5 +1,6 @@
 import Escritura from "./Pages/Escritura";
 import Lectura from "./Pages/Lectura";
+import Arduino from "./Pages/arduino";
 import ToolBar from "./Components/Elements/ToolBar";
 
 import RutineTable from "./Pages/RutineTable";
@@ -33,6 +34,7 @@ function App() {
             <Route path="/" element={<Escritura />} />
             <Route path="/2" element={<Lectura />} />
             <Route path="/p2" element={<Prueba2 />} />
+            <Route path="/arduino" element={<Arduino />} />
           </Routes>
         </Box>
       </Router>
