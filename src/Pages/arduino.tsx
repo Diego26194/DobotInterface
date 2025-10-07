@@ -38,6 +38,12 @@ const Arduino = () => {
   const [cordDy, setCordDy] = useState(Array(6).fill(0));
   const [posDy, setPosDy] = useState(Array(6).fill(0));
   const [pDy, setPDy] = useState(Array(6).fill(0));
+  
+  
+useEffect(() => {
+  // inicializa ROS solo una vez cuando el componente se monta
+  initRos();
+}, [])
 
 
   //resibir msgs coordenadas de ROS

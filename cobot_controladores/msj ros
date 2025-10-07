@@ -1,0 +1,64 @@
+rostopic pub -1 /cord_ros std_msgs/Float64MultiArray "data: [130, 0.0, 0.0, 0.0, 0.0, -90]"
+
+ls -l /dev | grep ACM
+
+sudo chmod 666 /dev/ttyACM0
+
+rosrun rosserial_python serial_node.py /dev/ttyACM0 _baud:=115200
+
+ls -l /dev | grep ACM
+
+
+
+rostopic echo puntos_dy
+rostopic echo joint_states
+rostopic echo cord_dy
+rostopic echo pos_dy
+
+python3 trayectoria34.py
+python3 modo_lectura15.py
+python3 publicacion_posicion_real2.py
+python3 controlador_rutina_prueba.py
+
+roslaunch cobot_controladores preubaInicio8.launch
+
+
+roslaunch rosbridge_server rosbridge_websocket.launch _port:=9091
+
+Para correr la pagina
+	npm run dev 				//local
+	npm run dev -- --host			//Servidor
+	
+para darle permiso a todas las carpetas
+
+	find . -type f -name "*.py" -exec chmod +x {} \;
+	
+Subir a git
+
+	git add .
+	git commit -m ""
+	git push origin main
+	
+	
+bajar cambios de github:
+forzar (por si he hecho cambios locales y no me interesa perderlo forzando el repositorio bajado)
+
+# asegurate de estar en la rama correcta, por ej. main
+	git fetch origin				//descarga la última información del remoto.
+	git reset --hard origin/main			//descarta cualquier cambio local y deja tu copia idéntica al remoto
+	
+bajar normal:
+	git pull
+	
+	
+	
+roscd pilz_industrial_motion_planner
+
+
+sudo apt update
+sudo apt install ros-noetic-pilz-industrial-motion
+
+rostopic pub -1 /rutina std_msgs/Bool "data: true"
+
+
+move_group/display_planned_path

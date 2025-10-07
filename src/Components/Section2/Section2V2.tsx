@@ -90,7 +90,7 @@ const Section2V2: React.FC<Section2V2Props> =
             break;
   
           case 'EAng':
-            inputsRefAng.current?.setValues([999,999,999,999,999,999]);
+            //inputsRefAng.current?.setValues([999,999,999,999,999,999]);
             //publicar_informe('Coodenada invalida');            
             break;
   
