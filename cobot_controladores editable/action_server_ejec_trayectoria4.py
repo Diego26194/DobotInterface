@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import rospy
+import actionlib
+from cobot_controladores.msg import actionSAction, actionSFeedback, actionSResult
+import sys
+import numpy as np
+from moveit_commander import MoveGroupCommander, roscpp_initialize
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Int16MultiArray
+import time
+
+class EjecucionTrayectoriaServer:
+    def __init__(self):
+        
+        roscpp_initialize(sys.argv)  # Inicializa MoveIt
+        rospy.init_node('ejecutar_trayectoria_server')
+        
+        self.server = actionlib.SimpleActionServer('ejecutar_trayectoria_server', actionSAction, self.execute_callback, False)
+        self.move_group = MoveGroupCommander("cobot_arm")
+        
+        # Publicar en el tópico de coordenadas Dynamixel
+        self.cord_dy_pub = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
+        
+        # Publicar en el tópico de coordenadas Dynamixel
+        self.cord_dy_pub2 = rospy.Publisher('ErroresRos', Int16MultiArray, queue_size=10)
+        
+        self.server.start()
+        
+    def rad_bit(self, rad):
+        bit = [(int((r + np.pi) * 4095 / (2 * np.pi))) for r in rad]
+        return np.int16(bit)
+
+    def execute_callback(self, goal):
+        try:
+            # Aquí puedes iniciar la publicación de feedback si es necesario
+            # esta publicacion se puede poner en cualquier parte del proceso para enviar un msje al cliente de como se abansa
+            feedback = actionSFeedback()
+            feedback.is_running = True
+            self.server.publish_feedback(feedback)  # si quiero enviar un feeedback ponerlo dentro del parentesis
+
+            # Ejecutar la trayectoria planificada
+            self.move_group.execute(goal.traj, wait=True)  # Cambiar a wait=False si es necesario
+
+
+            
+    
+            
+            
+            self.server.set_succeeded()   #esto me indica que el proceso termino
+        except rospy.ROSException as e:
+            rospy.logerr("Error al ejecutar la trayectoria: {}".format(e))
+            self.server.set_aborted()
+
+if __name__ == '__main__':
+    server = EjecucionTrayectoriaServer()
+    rospy.spin()
