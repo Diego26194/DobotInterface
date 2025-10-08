@@ -20,30 +20,7 @@ interface RutineLibrarieProps {
 const RutineLibrarie: React.FC<RutineLibrarieProps> = ({ onSelect, flagDelete, setFlagDelete,flagAdd,setFlagAdd }) => {
   const [rows, setRows] = useState<Point[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
-  const [puntos, setPuntos] = useState<{ nombre: string }[]>([
-    { nombre: 'Rutina A' },
-    { nombre: 'Rutina B' },
-    { nombre: 'Rutina C' },
-    { nombre: 'Rutina 1' },
-    { nombre: 'Rutina 2' },
-    { nombre: 'Rutina 3' },
-    { nombre: 'Rutina 4' },
-    { nombre: 'Rutina 5' },
-    { nombre: 'Rutina 6' },
-    { nombre: 'Rutina 7' },
-    { nombre: 'Rutina 8' },
-    { nombre: 'Rutina 9' },
-    { nombre: 'Rutina 0' },
-    { nombre: 'Rutina 10' },
-    { nombre: 'Rutina 11' },
-    { nombre: 'Rutina 12' },
-    { nombre: 'Rutina 31' },
-    { nombre: 'Rutina B11' },
-    { nombre: 'Rutina C54' },
-    { nombre: 'Rutina A55' },
-    { nombre: 'Rutina B77' },
-    { nombre: 'Rutina C5' },
-  ]);
+  const [puntos, setPuntos] = useState<{ nombre: string }[]>([]);
   
   
     useEffect(() => {

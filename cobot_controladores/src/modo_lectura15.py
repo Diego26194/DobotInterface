@@ -96,6 +96,7 @@ class ModoLectura:
         self.move_group = MoveGroupCommander("cobot_arm")
         self.group_name = "cobot_arm"
         self.base_frame = self.move_group.get_planning_frame()
+        self.move_group.set_planner_id("PTP")
         
     def pasar_punto_real(self, data):        
         entrada = data.data
@@ -720,19 +721,23 @@ class ModoLectura:
         rospy.wait_for_service('/compute_ik')
         compute_ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
 
+        self.move_group.set_goal_tolerance(0.001)
+        self.move_group.set_goal_position_tolerance(0.001)
+        self.move_group.set_goal_orientation_tolerance(0.01)
+        
         pose_stamped = PoseStamped()
         pose_stamped.header.frame_id = self.base_frame
         pose_stamped.pose = pose
+        pose_stamped.header.stamp = rospy.Time.now()
 
         ik_req = GetPositionIKRequest()
         ik_req.ik_request.group_name = self.group_name
         ik_req.ik_request.pose_stamped = pose_stamped
+        ik_req.ik_request.robot_state = self.move_group.get_current_state()
+        ik_req.ik_request.avoid_collisions = False
 
         resp = compute_ik(ik_req)
         
-        rospy.logerr('confirmacion final')
-        rospy.logerr(resp )
-
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
             #return self.rad_grados(cord_ang_rad)
@@ -759,9 +764,6 @@ class ModoLectura:
             coord_ang[0], coord_ang[1], coord_ang[2]
         )
         
-        rospy.logerr(coord_cart)
-        rospy.logerr(coord_ang)
-
         # 3. Construir objeto Pose
         pose = Pose()
         pose.position.x = coord_cart[0]
@@ -771,10 +773,7 @@ class ModoLectura:
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
         pose.orientation.w = quat[3]
-        
-        rospy.logerr('pose1')
-        rospy.logerr(pose)
-
+       
         return pose
 
     # ===============================
@@ -801,8 +800,6 @@ class ModoLectura:
         return coordenadas
         
        
-
-
     # ===============================
     # 5. Ángulos articulares -> Cartesianas + Euler
     # ===============================
@@ -824,8 +821,7 @@ class ModoLectura:
         return: lista [j1..j6] en grados o None si falla
         """
         pose = self.cartesianasEuler_a_pose(coord_grados)
-        rospy.logerr('pose2')
-        rospy.logerr(pose)
+        
         if pose:
             return self.pose_a_AngulosArticulares(pose)
         else: 

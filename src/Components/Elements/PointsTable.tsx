@@ -20,29 +20,7 @@ interface PointsTableProps {
 const PointsTable: React.FC<PointsTableProps> = ({ onSelect, flagDelete, setFlagDelete,flagAdd,setFlagAdd }) => {
   const [rows, setRows] = useState<Point[]>([]);
   const [selectedName, setSelectedName] = useState<string | null>(null);
-  const [puntos, setPuntos] = useState<{ num?: number; nombre: string }[]>([
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-    { nombre: 'Punto A' },
-    { nombre: 'Punto B' },
-    { nombre: 'Punto C' },
-  ]);
+  const [puntos, setPuntos] = useState<{ num?: number; nombre: string }[]>([]);
   
   
     useEffect(() => {

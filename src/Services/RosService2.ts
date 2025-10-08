@@ -21,7 +21,7 @@ export function initRos() {
   topics['cord_ros'] = new ROSLIB.Topic({
     ros,
     name: '/cord_ros',
-    messageType: 'std_msgs/Float64MultiArray',
+    messageType: 'std_msgs/punto_correr',
   });
 
   topics['orden_web'] = new ROSLIB.Topic({

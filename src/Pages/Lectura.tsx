@@ -60,7 +60,10 @@ useEffect(() => {
   msgInforme((msg: any) => {
     // Si el mensaje es std_msgs/String, viene como { data: "..." }
     if (msg && typeof msg.data === "string") {
-      setMensajes((prev) => [...prev, msg.data]);  
+      setMensajes((prev) => {
+        const updated = [...prev, msg.data];
+        return updated.length > 50 ? updated.slice(-50) : updated; // mantiene solo últimos 50
+      });
     } else {
       console.warn("Mensaje recibido no es string:", msg);
     }

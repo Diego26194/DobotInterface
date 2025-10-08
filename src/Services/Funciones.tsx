@@ -139,9 +139,10 @@ export function cargarRutinasDB() {
 //////////////////////////    Section2     ////////////////////////////
 
 
-export function correrTAngular( coord:number[]) {
+export function correrTAngular( coord:number[],descriptcion:number[]) {
   const msg = {
-    data: coord
+    descriocion:descriptcion,
+    coordenadas: coord
   };
 
   console.log(" Enviando a /cord_ros: correr angulos", msg);

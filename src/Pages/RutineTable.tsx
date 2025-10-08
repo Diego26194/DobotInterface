@@ -124,12 +124,14 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
 //const RutineTable = () => {
   const [rowSelectionModel, setRowSelectionModel] =
     React.useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
-  const [rows, setRows] = useState([
-    { id: 1, posicion: 1 , nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
-    { id: 2, posicion: 2 , nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
-    { id: 3, posicion: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true},
-    { id: 4, posicion: 4 , nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
-  ]);
+  //const [rows, setRows] = useState<RowType[]>([]);
+  
+  const [rows, setRows] = useState([ { id: 1, posicion: 1 , nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
+     { id: 2, posicion: 2 , nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
+     { id: 3, posicion: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true}, 
+     { id: 4, posicion: 4 , nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false }, 
+    ]);
+    
     //const [wite, setShoWite] = useState(0);
 
   useEffect(() => {
@@ -409,9 +411,31 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     // Buscamos la fila correspondiente en el estado `rows`
     const row = rows.find(r => r.id === rowId);
     if (row) {
-      console.log("Coordenadas:", row.coordenadas);
-      alert(`Coordenadas: [${row.coordenadas.join(', ')}]`);
-      correrTAngular(row.coordenadas)
+      if (row.rutine){
+        console.log("No es un punto,por el momento no se puede correr la rutina: ", row.nombre);
+      }
+      else{
+        console.log("Coordenadas:", row.coordenadas);
+        alert(`Coordenadas: [${row.coordenadas.join(', ')}]`);
+
+        switch (row.plan) {
+                
+          case "PTP":
+            correrTAngular([row.posicion],[2,1,row.escV]);
+            break;          
+          
+          case "LIN":
+            correrTAngular([row.posicion],[2,2,row.escV]);
+            break;
+
+          case "CIRC":
+            correrTAngular([row.posicion],[2,3,row.escV]);
+            break;
+
+          default:
+            console.warn("Acción no reconocida:", row.plan);
+        }
+      }
     }
   };
 
@@ -565,20 +589,21 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       field: "correr",
       headerName: "Correr",
       width: 40,
-      renderCell: (params) => (
+       renderCell: (params) =>
+        !params.row.editable ? (
           <IconButton
             onClick={() => handlePlayRow(params.row.id)}
-            color="primary"       
-            sx={{ 
-              height: '25%',              
+            color="primary"
+            sx={{
+              height: '25%',
               minHeight: '2px',
-              "&:focus": { outline: "none" },   
+              "&:focus": { outline: "none" },
               "&:focus-visible": { outline: "none" },
             }}
           >
-            <PlayArrowIcon fontSize="small"/>
+            <PlayArrowIcon fontSize="small" />
           </IconButton>
-        ),
+        ) : null,
     },
     {
       field: "wait",

@@ -9,12 +9,12 @@ from moveit_msgs.msg import PositionConstraint, OrientationConstraint
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from db_puntos3 import  leer_rutina_sin_euler, obtener_rutina
+from db_puntos3 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
 import numpy as np
 import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
-from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult
+from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult, punto_correr
 
 
 # Bounding volume
@@ -22,6 +22,8 @@ from shape_msgs.msg import SolidPrimitive, Mesh, MeshTriangle
 from geometry_msgs.msg import PointStamped
 # Construir bounding volume simple (usaremos solo el solid primitive)
 from moveit_msgs.msg import BoundingVolume
+
+from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionFK, GetPositionFKRequest
 
 
 class ControladorRobot:
@@ -123,11 +125,13 @@ class ControladorRobot:
             except Exception as e:
                 rospy.logerr(f"Error inesperado al cancelar metas: {e}")
 
-    def ejecutar_trayectoria(self, joint_angles):
+    def ejecutar_trayectoria_position(self, joint_angles,velocidad):
         try:
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
+            
+            self.move_group.set_max_velocity_scaling_factor(velocidad)
 
             self.move_group.set_planner_id("PTP")
             self.move_group.set_joint_value_target(joint_angles)
@@ -139,8 +143,34 @@ class ControladorRobot:
         except rospy.ROSException as e:
             rospy.logerr("Error al ejecutar la trayectoria: {}".format(e))
             self.ejecutando_rutina = False
+        
+        
+        self.rutina_corriendo = False
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        
+    def ejecutar_trayectoria_pose(self, pose,velocidad,plan):
+        try:
+            # Activar la bandera rutina_corriendo
+            self.rutina_corriendo = True
+            self.planear_Rutina = False
+            
+            self.move_group.set_max_velocity_scaling_factor(velocidad)
+
+            self.move_group.set_planner_id(plan)
+            self.move_group.set_pose_target(pose,self.move_group.get_end_effector_link())
+
+            success, traj, planning_time, error_code = self.move_group.plan()
+
+            self.rutina_corriendo = False
+
+        except rospy.ROSException as e:
+            rospy.logerr("Error al ejecutar la trayectoria: {}".format(e))
+            self.ejecutando_rutina = False
 
         self.rutina_corriendo = False
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
 
     # callback del topico planificacion_A_trayectoria
     def _planificacion_callback(self, msg):
@@ -414,15 +444,94 @@ class ControladorRobot:
 
     def ejecutar_cord_ros(self, data):
         F = Bool(False)
+        #data.descripcion[orgien_de_orden,plan,velocidad,radio]
         if not self.ejecutando_rutina:
             self.ejecutando_rutina = True
             self.rutina_pub.publish(F)
             try:
-                # Obtener los datos de cord_ros (pose en este caso)
-                joint_angles = self.grados_rad(list(data.data)) 
-                # Ejecutar la trayectoria con los datos de cord_ros
-                self.ejecutar_trayectoria(joint_angles)
-                rospy.loginfo("Ejecutando trayectoria desde cord_ros: {}".format(joint_angles))
+                if data.descriocion[1]==1:
+                    plan="PTP"
+                elif data.descriocion[1]==2:
+                    plan="LIN"
+                elif data.descriocion[1]==3:
+                    plan="CIRC"
+                else:
+                    rospy.logerr("Eror,Plan no especificado: {}".format(data.descriocion[1]))
+                    
+                velocidad=data.descriocion[2]/100
+                pose = None
+                if data.descriocion[0] == 1:
+                    # Obtener los datos de cord_ros (pose en este caso)
+                    joint_angles = self.grados_rad(list(data.coordenadas))
+                    
+                    if data.descriocion[1] == 1:  
+                        self.ejecutar_trayectoria_position(joint_angles,velocidad)
+                    else:
+                        
+                        #transformar coordenadas angulares a pose                        
+                        try:                     
+            
+                            cord_ang_rad = self.grados_rad(joint_angles)
+                            
+                            rospy.wait_for_service('/compute_fk')
+                            fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+
+                            req = GetPositionFKRequest()
+                            req.header.frame_id = self.move_group.get_planning_frame()
+                            #req.header.frame_id = "world" 
+                            req.fk_link_names = [self.move_group.get_end_effector_link()]
+
+                            # Estado articular
+                            robot_state = RobotState()
+                            js = JointState()
+                            js.name = self.move_group.get_active_joints()
+                            js.position = cord_ang_rad
+                            
+                            print("Joints activos:", self.move_group.get_active_joints())
+                            
+                            robot_state.joint_state = js
+                            req.robot_state = robot_state
+
+                            resp = fk(req)
+                            
+                            if resp.error_code.val == 1:  # SUCCESS
+                                pose=resp.pose_stamped[0].pose
+                            else:
+                                rospy.logerr(f"FK falló con código {resp.error_code.val}")
+                        except Exception as e:
+                            rospy.logerr(f"Error en FK: {e}")
+                        
+                        
+                        if data.descriocion[1]==3:
+                            radio=data.descriocion[3]/1000
+                            self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
+                        else:
+                            self.ejecutar_trayectoria_pose(pose,velocidad,plan)
+                            
+                elif data.descriocion[0] == 2 or data.descriocion[0] == 3:
+                    instruccion=leer_punto_rutina(data.coordenadas[0])
+                    punto = instruccion.get("coordenadasCQuaterniones", {})
+                    position = punto.get("position", {})
+                    orientation = punto.get("orientation", {})
+
+                    pose = Pose()
+                    pose.position.x = position.get("x", 0.0)
+                    pose.position.y = position.get("y", 0.0)
+                    pose.position.z = position.get("z", 0.0)
+                    pose.orientation.x = orientation.get("x", 0.0)
+                    pose.orientation.y = orientation.get("y", 0.0)
+                    pose.orientation.z = orientation.get("z", 0.0)
+                    pose.orientation.w = orientation.get("w", 1.0)
+                    
+                    if data.descriocion[1]==3:
+                        radio=data.descriocion[3]/1000
+                        self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
+                    else:
+                        self.ejecutar_trayectoria_pose(pose,velocidad,plan) 
+                else:                    
+                    rospy.logerr("Eror,en el origen de la instruccion: {}".format(data.descriocion[0]))                       
+                    
+                rospy.loginfo("Ejecutando trayectoria desde cord_ros: {}".format(data.coordenadas))
                 self.ejecutando_rutina = False
             except Exception as e:
                 rospy.logerr("Error al ejecutar trayectoria desde cord_ros: {}".format(e))
@@ -434,7 +543,7 @@ if __name__ == '__main__':
         roscpp_initialize(sys.argv)
         controlador = ControladorRobot()
         # Suscribirse al tópico cord_ros
-        rospy.Subscriber('cord_ros', Float64MultiArray, controlador.ejecutar_cord_ros)
+        rospy.Subscriber('cord_ros', punto_correr, controlador.ejecutar_cord_ros)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("Se ha interrumpido la ejecución del nodo.")

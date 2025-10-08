@@ -68,7 +68,7 @@ const Section2V2: React.FC<Section2V2Props> =
   //const [aceleracionPunto, setAceleracionPunto] = useState(0);
   const [nombrePuntoCord, setNombrePuntoCord] = useState("");
   const [plan, setPlan] = useState("PTP");
-  const [diametroPuntoCord, setDiametroPuntoCord] = useState(0);
+  const [diametroPuntoCord, setDiametroPuntoCord] = useState(1);
 
   useEffect(() => {
       escucharPuntoDB((msg) => {
@@ -148,12 +148,35 @@ const Section2V2: React.FC<Section2V2Props> =
     }
   };
 
-  const correrCordAng = () => {
+  const correr = () => {
     if (inputsRefAng.current) {
       const cordAngs = inputsRefAng.current.getValues();
-      correrTAngular(cordAngs);
+      switch (plan) {
+        
+        case "PTP":
+          correrTAngular(cordAngs,[1,1,velocidad]);
+          break;          
+        
+        case "LIN":
+          correrTAngular(cordAngs,[1,2,velocidad]);
+          break;
+
+        case "CIRC":
+          correrTAngular(cordAngs,[1,3,velocidad,diametroPuntoCord]);
+          break;
+
+        default:
+          console.warn("Acción no reconocida:", plan);
+      }
       //console.log("Tipo de plan", plan);
       //blockAng();
+    }
+
+    //console.log("Verificar:", inputsRefCart.current);
+    if (inputsRefCart.current) {
+      const CordCart = inputsRefCart.current.getValues();
+      correrTCartesiano(CordCart);
+      //blockCart();
     }
   };
 
@@ -170,8 +193,9 @@ const Section2V2: React.FC<Section2V2Props> =
     setBloquearInputsAngV2(true);
   };
 
-  const activarAng = () => {
+  const activar = () => {
     setBloquearInputsAngV2(false);
+    setBloquearInputsCartV(false);
     //inputsRefAng.current?.setValues([90, 45, 30, 50, 120, 60]);
     //setNombrePuntoCord('PruebaAng2')
     //setPlan('LIN');
@@ -219,7 +243,7 @@ const Section2V2: React.FC<Section2V2Props> =
         maxHeight: "100%"           
       }}
     >
-      <Stack direction="row" spacing={2}
+      <Stack direction="row" spacing={1}
         sx={{
           width: '100%',
           height: '4%',
@@ -249,6 +273,23 @@ const Section2V2: React.FC<Section2V2Props> =
       >
         <CoordDisplay/>
       </Box>  
+
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          width: '100%',
+          py: 0,
+          px: 1,
+        }}
+      >
+        <Grid size={{xs: 6, md: 6}}>
+          <Button1 variant="contained" onClick={activar}>Modificar</Button1>
+        </Grid>
+        <Grid size={{xs: 6, md: 6}}>
+          <Button1 variant="contained" onClick={correr}>Ejecutar</Button1>
+        </Grid>
+      </Grid>
       
       {/*Coordenadas a Cartesianas */}
       <FormControl 
@@ -271,28 +312,7 @@ const Section2V2: React.FC<Section2V2Props> =
           Coordenadas Cartesianas
         </FormLabel>
 
-        <Stack spacing={0.5} sx={{ padding: "0px 0px"  }}>
-
-          <Grid
-            container
-            spacing={2}
-            sx={{
-              width: '100%',
-              py: 0,
-              px: 1,
-            }}
-          >
-            <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={activarCart}>Modificar</Button1>
-            </Grid>
-            <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={correrCordCart}>Ejecutar</Button1>
-            </Grid>
-          </Grid>
-
-          <InputsCartV ref={inputsRefCart} disabled={bloquearInputsCartV}/>
-
-        </Stack>
+        <InputsCartV ref={inputsRefCart} disabled={bloquearInputsCartV}/>
 
       </FormControl>
 
@@ -319,29 +339,12 @@ const Section2V2: React.FC<Section2V2Props> =
           Coordenadas Angulares
         </FormLabel>
 
-        <Stack spacing={0.5} sx={{ padding: "0px 0px"  }}>
+        {/* 
+              //<Button1 variant="contained" onClick={activarAng}>Modificar</Button1>
+             // <Button1 variant="contained" onClick={correrCordAng}>Ejecutar</Button1>
+        */}
 
-          <Grid
-            container
-            spacing={2}
-            sx={{
-              width: '100%',
-              py: 0,
-              px: 1,
-            }}
-          >
-            <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={activarAng}>Modificar</Button1>
-            </Grid>
-            <Grid size={{xs: 6, md: 6}}>
-              <Button1 variant="contained" onClick={correrCordAng}>Ejecutar</Button1>
-            </Grid>
-          </Grid>
-
-          <InputsAngV2 ref={inputsRefAng} disabled={bloquearInputsAngV2}/>
-
-        </Stack>
-
+        <InputsAngV2 ref={inputsRefAng} disabled={bloquearInputsAngV2}/>
       </FormControl>
 
       {/*Caracteristicas de coordenadas */}

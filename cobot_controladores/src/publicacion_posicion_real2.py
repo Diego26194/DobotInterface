@@ -11,18 +11,12 @@ class PublicacionPosicionReal:
     def __init__(self):
         # Inicializa el nodo
         rospy.init_node('publicacion_posicion_real', anonymous=True)
-        self.robot = RobotCommander()
-        self.group = MoveGroupCommander("cobot_arm")
 
         # Nombres de las articulaciones (ajustalos a los tuyos)
         self.joint_names = [
             "joint_1", "joint_2", "joint_3", 
             "joint_4", "joint_5", "joint_6"
         ]
-        
-        state_ini = self.robot.get_current_state()
-        state_ini.joint_state.position = [0.6981, 0.7156, 0.0, 0.0, 0.0, 0.1571]
-        self.group.set_start_state(state_ini)
 
         # Publicador a joint_states
         self.joint_pub = rospy.Publisher('joint_states', JointState, queue_size=10)
@@ -30,11 +24,16 @@ class PublicacionPosicionReal:
         # Suscriptor al tópico que recibe los valores de Arduino
         rospy.Subscriber('pos_dy', Int16MultiArray, self.callback_pos_dy)
 
-        rospy.loginfo("Nodo 'publicacion_posicion_real' iniciado.")
-        rospy.spin()
-        self.positionPos_dy = [2047, 2047, 2047, 2047, 2047, 2047]
+        rospy.loginfo("Nodo 'publicacion_posicion_real' iniciado.")        
         
-        self.publicar_joint_states(self.positionPos_dy)
+        self.positionPos_dy = [2090, 2090, 2090, 2090, 2090, 2090]        
+        while self.joint_pub.get_num_connections() == 0 and not rospy.is_shutdown():
+            rospy.sleep(0.1)
+
+        # Ahora sí, publicar la posición inicial
+        self.publicar_joint_states(self.positionPos_dy)       
+        
+        rospy.spin()
 
     def bit_rad(self, bit):
         rad = [((b * (2 * np.pi) / 4095) - np.pi) for b in bit]
