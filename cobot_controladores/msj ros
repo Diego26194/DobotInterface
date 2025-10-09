@@ -20,7 +20,7 @@ python3 modo_lectura15.py
 python3 publicacion_posicion_real2.py
 python3 controlador_rutina_prueba.py
 
-roslaunch cobot_controladores preubaInicio8.launch
+roslaunch cobot_controladores preubaInicio9.launch
 
 
 roslaunch rosbridge_server rosbridge_websocket.launch _port:=9091

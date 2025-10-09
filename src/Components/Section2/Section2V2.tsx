@@ -151,6 +151,8 @@ const Section2V2: React.FC<Section2V2Props> =
   const correr = () => {
     if (inputsRefAng.current) {
       const cordAngs = inputsRefAng.current.getValues();
+      
+      console.log("Verificar:", [cordAngs,velocidad,diametroPuntoCord]);
       switch (plan) {
         
         case "PTP":
@@ -172,12 +174,7 @@ const Section2V2: React.FC<Section2V2Props> =
       //blockAng();
     }
 
-    //console.log("Verificar:", inputsRefCart.current);
-    if (inputsRefCart.current) {
-      const CordCart = inputsRefCart.current.getValues();
-      correrTCartesiano(CordCart);
-      //blockCart();
-    }
+    
   };
 
   const correrCordCart = () => {

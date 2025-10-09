@@ -35,9 +35,9 @@ function bitsToDegrees(bits: number): number {
 
 const Arduino = () => {
   // Estados para cada grupo de inputs (arrays de enteros)
-  const [cordDy, setCordDy] = useState(Array(6).fill(0));
-  const [posDy, setPosDy] = useState(Array(6).fill(0));
-  const [pDy, setPDy] = useState(Array(6).fill(0));
+  const [cordDy, setCordDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
+  const [posDy, setPosDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
+  const [pDy, setPDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
   
   
 useEffect(() => {
@@ -49,9 +49,18 @@ useEffect(() => {
   //resibir msgs coordenadas de ROS
   useEffect(() => {
       ResibirCord((msg) => {  
+        setPosDy(msg.data);
+        setPDy(msg.data);
         setCordDy(msg.data);
       });
     }, []);
+    
+    
+  useEffect(() => {
+    if (posDy.length > 0) {
+      enviarEstadoReal();
+    }
+  }, [cordDy]);
 
   // Handler genérico para inputs
   const handleInputChange = (

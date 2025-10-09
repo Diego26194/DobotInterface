@@ -32,10 +32,8 @@ import tf
 from moveit_commander import MoveGroupCommander
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionFK, GetPositionFKRequest
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-import geometry_msgs.msg
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
-from tf.transformations import quaternion_from_euler
 
 class ModoLectura:
     def bit_grados(self, bit):
@@ -715,28 +713,22 @@ class ModoLectura:
     # ===============================
     # 2. Pose -> Ángulos articulares
     # ===============================
-    def pose_a_AngulosArticulares(self, poseIn: Pose):
+    def pose_a_AngulosArticulares(self, pose: Pose):
         """
         pose: geometry_msgs/Pose
         return: lista [j1..j6] en grados o None si falla
         """
         rospy.wait_for_service('/compute_ik')
         compute_ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
-        
+
         self.move_group.set_goal_tolerance(0.001)
         self.move_group.set_goal_position_tolerance(0.001)
         self.move_group.set_goal_orientation_tolerance(0.01)
         
-        #rospy.logerr('pose que se usa')
-        #rospy.logerr(poseIn )
-        #rospy.logwarn(f"Tipo real del poseIn: {type(poseIn)}")
-        #rospy.logwarn(f"Pose válida? {isinstance(poseIn, geometry_msgs.msg.Pose)}")
-
         pose_stamped = PoseStamped()
-        pose_stamped.header.frame_id = self.move_group.get_planning_frame()
-        pose_stamped.pose = poseIn
-        
-        #rospy.logwarn(pose_stamped)
+        pose_stamped.header.frame_id = self.base_frame
+        pose_stamped.pose = pose
+        pose_stamped.header.stamp = rospy.Time.now()
 
         ik_req = GetPositionIKRequest()
         ik_req.ik_request.group_name = self.group_name
@@ -746,9 +738,6 @@ class ModoLectura:
 
         resp = compute_ik(ik_req)
         
-        #rospy.logerr('confirmacion final')
-        #rospy.logerr(resp )
-
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
             #return self.rad_grados(cord_ang_rad)
@@ -769,19 +758,12 @@ class ModoLectura:
         # 1. Separar parte cartesiana y angular
         coord_cart = [c / 1000.0 for c in coord[:3]]   # mm → m
         coord_ang  = self.grados_rad(coord[3:])        # grados → radianes
-        
-        prueba1=self.cartesian_to_joint_angles(coord_cart[0],coord_cart[1],coord_cart[2],coord_ang[0], coord_ang[1], coord_ang[2])
-        rospy.loginfo('a ver que pasa')
-        rospy.loginfo(prueba1)
 
         # 2. Calcular cuaternión a partir de las coordenadas angulares
         quat = tf.transformations.quaternion_from_euler(
             coord_ang[0], coord_ang[1], coord_ang[2]
         )
         
-        #rospy.logerr(coord_cart)
-        #rospy.logerr(coord_ang)
-
         # 3. Construir objeto Pose
         pose = Pose()
         pose.position.x = coord_cart[0]
@@ -791,12 +773,7 @@ class ModoLectura:
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
         pose.orientation.w = quat[3]
-        
-        
-        
-        #rospy.logerr('pose1')
-        #rospy.logerr(pose)
-
+       
         return pose
 
     # ===============================
@@ -823,8 +800,6 @@ class ModoLectura:
         return coordenadas
         
        
-
-
     # ===============================
     # 5. Ángulos articulares -> Cartesianas + Euler
     # ===============================
@@ -846,59 +821,11 @@ class ModoLectura:
         return: lista [j1..j6] en grados o None si falla
         """
         pose = self.cartesianasEuler_a_pose(coord_grados)
-        #rospy.logerr('pose2')
-        #rospy.logerr(pose)
+        
         if pose:
             return self.pose_a_AngulosArticulares(pose)
         else: 
             None
-            
-    def cartesian_to_joint_angles(self, x, y, z, roll, pitch, yaw, group_name="cobot_arm"):
-        pose_target = Pose()
-        q = quaternion_from_euler(roll, pitch, yaw)
-        
-        pose_target = self.move_group.get_current_pose()
-        pose_target.pose.position.x -=0.02
-        pose_target.pose.position.y +=0.066
-        pose_target.pose.position.z -= 0.0657494282890567
-        
-        
-        pose_target.pose.position.x = x
-        pose_target.pose.position.y = y
-        pose_target.pose.position.z = z
-        pose_target.pose.orientation.x = q[0]
-        pose_target.pose.orientation.y = q[1]
-        pose_target.pose.orientation.z = q[2]
-        pose_target.pose.orientation.w = q[3]
-        
-        rospy.logwarn('target de prueba')
-        rospy.logwarn(pose_target)
-        
-
-    # Establecer el objetivo
-      # self.move_group.set_pose_target(pose_target)
-        self.move_group.set_pose_target(pose_target,self.move_group.get_end_effector_link())
-        #self.move_group.set_position_target ([x, y, z],self.move_group.get_end_effector_link())
-        
-        
-        rospy.logwarn(self.move_group.get_end_effector_link())
-
-    # Intentar planificar
-        success, plan, planning_time, error_code = self.move_group.plan()
-        
-        angulos = self.move_group.get_joint_value_target()
-        rospy.logwarn('angulos prueba')
-        rospy.logwarn(angulos)
-
-        if not success or not plan.joint_trajectory.points:
-            rospy.logwarn(f"No se encontró solución de IK o plan fallido. Error: {error_code}")
-            return None
-
-    # Si hay puntos, tomar el último
-        joint_positions = plan.joint_trajectory.points[-1].positions
-        joint_names = plan.joint_trajectory.joint_names
-
-        return dict(zip(joint_names, joint_positions))
                         
 
 

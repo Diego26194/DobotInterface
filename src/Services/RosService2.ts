@@ -21,7 +21,7 @@ export function initRos() {
   topics['cord_ros'] = new ROSLIB.Topic({
     ros,
     name: '/cord_ros',
-    messageType: 'std_msgs/punto_correr',
+    messageType: 'cobot_controladores/punto_correr',
   });
 
   topics['orden_web'] = new ROSLIB.Topic({
@@ -97,9 +97,9 @@ export function initRos() {
   });
 
   ////////////// Eliminar-Prueba de emulacion arduino///////
-  topics['pos_dy'] = new ROSLIB.Topic({
+  topics['cord_dy'] = new ROSLIB.Topic({
     ros,
-    name: '/pos_dy',
+    name: '/cord_dy',
     messageType: 'std_msgs/Int16MultiArray',
   });
   
