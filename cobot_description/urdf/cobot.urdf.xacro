@@ -190,7 +190,7 @@
         <child link="elbow_link" />
         <origin xyz="-0.00035 0.00735 0.22543" rpy="0 0 0" />
 		<limit effort="1" velocity="1.0" lower="${limit_low_elbow_rotation}" upper="${limit_up_elbow_rotation}" />
-		<axis xyz="0 1 0" />	
+		<axis xyz="0 -1 0" />	
 	</joint>
 
 	<joint name="joint_4" type="revolute">

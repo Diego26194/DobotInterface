@@ -85,7 +85,7 @@ class ModoLectura:
         
         # Eliminar todos los datos de la base de datos al inicio
         #################### Eliminar todos los datos de la base de datos ####################
-        eliminar_todos_datos()
+        #eliminar_todos_datos()
         eliminar_todos_datos_rutina()
         #################### Aquí termina la sección de eliminación de la base de datos ####################
         
@@ -147,7 +147,7 @@ class ModoLectura:
         coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler(self.angulos)
 
         # Guardar el punto en la rutina
-        id = agregar_punto_rutina(
+        pos = agregar_punto_rutina(
             coorCartesianas_quat,
             coorCartesianas_euler,
             self.velocidad,
@@ -157,10 +157,10 @@ class ModoLectura:
         ) 
 
         # Recuperar el punto recién agregado
-        punto = leer_punto_rutina(id)  
+        punto = leer_punto_rutina(pos)  
         if punto:
             mensaje_puntoR = punto_web()
-            mensaje_puntoR.orden = [punto.doc_id, punto['nombre'], punto['plan']]
+            mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
             mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
                 int(punto['vel_esc']),
                 int(punto['ratio']),
@@ -693,7 +693,7 @@ class ModoLectura:
             js.name = self.move_group.get_active_joints()
             js.position = cord_ang_rad
             
-            print("Joints activos:", self.move_group.get_active_joints())
+            #print("Joints activos:", self.move_group.get_active_joints())
             
             robot_state.joint_state = js
             req.robot_state = robot_state

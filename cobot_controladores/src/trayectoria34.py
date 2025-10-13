@@ -94,7 +94,7 @@ class ControladorRobot:
         rad = [g * np.pi / 180 for g in grad]
         return rad
     
-    def dict_to_pose(pose_dict):
+    def dict_to_pose(sel,pose_dict):
         
         pose = Pose()
         pose.position = Point(
@@ -131,14 +131,21 @@ class ControladorRobot:
             self.rutina_corriendo = True
             self.planear_Rutina = False
             
+            rospy.logwarn(velocidad)
             self.move_group.set_max_velocity_scaling_factor(velocidad)
 
             self.move_group.set_planner_id("PTP")
+            
             self.move_group.set_joint_value_target(joint_angles)
+            
 
             success, traj, planning_time, error_code = self.move_group.plan()
+            
+            
+            
 
             self.rutina_corriendo = False
+            
 
         except rospy.ROSException as e:
             rospy.logerr("Error al ejecutar la trayectoria: {}".format(e))
@@ -358,7 +365,7 @@ class ControladorRobot:
 
         # buscar registro control por id
         control = next((r for r in rutina if r.get('id') == 'control'), None)
-        if control and control.get('error', False):
+        if control and control.get('error', True):
             rospy.logwarn("Rutina inválida (control con error=true), abortando.")
             self.ejecutando_rutina = False
             return
@@ -370,7 +377,21 @@ class ControladorRobot:
         puntos = self.expandir_rutina(rutina)
 
         rospy.loginfo(f"Puntos expandidos: {len(puntos)}")
-
+        
+        goal = self.crear_goal(puntos)
+        if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
+            rospy.logerr("El servidor de secuencia no está disponible.")
+            self.ejecutando_rutina = False
+            return
+        self.sequence_action_client.cancel_all_goals()
+        self.sequence_action_client.send_goal(goal)
+        self.sequence_action_client.wait_for_result()
+        
+        if not self.esperar_confirmacion(0, timeout=30.0):
+            rospy.logerr("Error ,rutina no ejecutable. Abortando.")
+            self.ejecutando_rutina = False
+            return                  
+        
         # Verificar si hay algún wait != 0
         tiene_wait = any(int(p.get('wait', 0)) != 0 for p in puntos)
 
@@ -379,14 +400,7 @@ class ControladorRobot:
             rospy.loginfo("Rutina sin waits: enviando -1 a planificación y mandando goal completo")
             self.trayectoria_pub.publish(Int16(-1))
 
-            goal = self.crear_goal(puntos)
-            if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
-                rospy.logerr("El servidor de secuencia no está disponible.")
-                self.ejecutando_rutina = False
-                return
-            self.sequence_action_client.cancel_all_goals()
-            self.sequence_action_client.send_goal(goal)
-            self.sequence_action_client.wait_for_result()
+            
 
         else:
             # --- CASO 2: rutina segmentada por waits ---
@@ -419,6 +433,28 @@ class ControladorRobot:
                     rospy.loginfo(f"Enviando wait {wait_val} a planificación")
                     self.trayectoria_pub.publish(Int16(wait_val))
 
+                    # esperar confirmacion 2
+                    if not self.esperar_confirmacion(2, timeout=30.0):
+                        rospy.logerr("No se recibió confirmación de guardado (2). Abortando.")
+                        self.ejecutando_rutina = False
+                        return
+
+                    bloque = []  # resetear bloque
+                    
+                #por si quedan puntos despues del ultimo wait
+                if bloque:
+                    rospy.loginfo("Creando goal para bloque hasta wait")
+                    goal = self.crear_goal(bloque)
+
+                    if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
+                        rospy.logerr("El servidor de secuencia no está disponible.")
+                        self.ejecutando_rutina = False
+                        return
+
+                    self.sequence_action_client.cancel_all_goals()
+                    self.sequence_action_client.send_goal(goal)
+                    self.sequence_action_client.wait_for_result()
+                    
                     # esperar confirmacion 2
                     if not self.esperar_confirmacion(2, timeout=30.0):
                         rospy.logerr("No se recibió confirmación de guardado (2). Abortando.")

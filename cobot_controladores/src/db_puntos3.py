@@ -370,7 +370,7 @@ def agregar_rutina(nombre):
         return True
     
 ### Extras ###
-def pose_to_dict(pose):
+def pose_to_dict(self,pose):
     return {
         "position": {
             "x": pose.position.x,
