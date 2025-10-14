@@ -17,8 +17,8 @@ rostopic echo pos_dy
 
 python3 trayectoria34.py
 python3 modo_lectura15.py
-python3 publicacion_posicion_real2.py
-python3 controlador_rutina_prueba.py
+python3 publicacion_posicion_real3.py
+python3 controlador_rutina_prueba2.py
 
 roslaunch cobot_controladores preubaInicio9.launch
 

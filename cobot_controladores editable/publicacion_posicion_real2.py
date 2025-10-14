@@ -4,6 +4,7 @@
 import rospy
 from std_msgs.msg import Int16MultiArray, Header
 from sensor_msgs.msg import JointState
+from moveit_commander import RobotCommander, MoveGroupCommander
 import numpy as np
 
 class PublicacionPosicionReal:

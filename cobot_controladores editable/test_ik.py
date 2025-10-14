@@ -4,7 +4,6 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from moveit_commander import MoveGroupCommander, roscpp_initialize
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest
-from geometry_msgs.msg import Pose, Point, PoseStamped, Point, Quaternion
 
 def test_ik():
     roscpp_initialize([])
@@ -13,12 +12,9 @@ def test_ik():
     group = MoveGroupCommander("cobot_arm")  # cambia por tu grupo si es necesario
     planning_frame = group.get_planning_frame()
     rospy.logwarn(f"Planning frame: {planning_frame}")
-    rospy.logwarn("Posicion actual")
-    rospy.logwarn(group.get_current_pose().pose)
 
     # 1. Tomamos la pose actual del robot (debería ser alcanzable sí o sí)
     current_pose = group.get_current_pose().pose
-    
     rospy.logwarn("Current pose:")
     rospy.logwarn(current_pose)
 
@@ -29,8 +25,6 @@ def test_ik():
     pose_stamped = PoseStamped()
     pose_stamped.header.frame_id = planning_frame
     pose_stamped.pose = current_pose
-    
-    rospy.logwarn(pose_stamped)
 
     ik_req = GetPositionIKRequest()
     ik_req.ik_request.group_name = "cobot_arm"
@@ -50,4 +44,3 @@ def test_ik():
 
 if __name__ == "__main__":
     test_ik()
-
