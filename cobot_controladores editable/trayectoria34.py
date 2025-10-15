@@ -372,13 +372,15 @@ class ControladorRobot:
         rospy.loginfo(puntos)
         
         goal = self.crear_goal(puntos)
+        
+        
+        self.trayectoria_pub.publish(Int16(-4)) 
         if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
             rospy.logerr("El servidor de secuencia no está disponible.")
             self.ejecutando_rutina = False
             return
-        #self.sequence_action_client.cancel_all_goals()
+        self.sequence_action_client.cancel_all_goals()
         
-        rospy.loginfo(goal)
         
         self.sequence_action_client.send_goal(goal)
         self.sequence_action_client.wait_for_result()

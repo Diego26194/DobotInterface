@@ -18,7 +18,7 @@ rostopic echo pos_dy
 python3 trayectoria34.py
 python3 modo_lectura15.py
 python3 publicacion_posicion_real3.py
-python3 controlador_rutina_prueba2.py
+python3 controlador_rutina_prueba3.py
 
 roslaunch cobot_controladores preubaInicio9.launch
 
@@ -62,3 +62,14 @@ rostopic pub -1 /rutina std_msgs/Bool "data: true"
 
 
 move_group/display_planned_path
+
+
+
+[ERROR] [1760460027.520426]: bad callback: <function callback_sequence_result at 0x7fea94efe3a0>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "controlador_rutina_prueba_rutina.py", line 41, in callback_sequence_result
+    sequence = msg.result.response.planned_trajectory_sequence
+AttributeError: 'MotionSequenceResponse' object has no attribute 'planned_trajectory_sequence'
+
