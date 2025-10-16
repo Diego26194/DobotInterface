@@ -716,7 +716,7 @@ class ModoLectura:
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
             #return self.rad_grados(cord_ang_rad)
-            return [int(round(ang)) for ang in self.rad_grados(cord_ang_rad)]
+            return [int(ang) for ang in self.rad_grados(cord_ang_rad)]
         else:
             rospy.logerr(f"IK falló con código: {resp.error_code.val}")
             return None
@@ -767,10 +767,10 @@ class ModoLectura:
         roll, pitch, yaw = tf.transformations.euler_from_quaternion(quat)
         
         coordenadas = [
-           int(round(float(pose.position.x * 1000))),
-           int(round(float(pose.position.y * 1000))),
-           int(round(float(pose.position.z * 1000))),
-           ] + [int(round(a)) for a in self.rad_grados([roll, pitch, yaw])
+           int(float(pose.position.x * 1000)),
+           int(float(pose.position.y * 1000)),
+           int(float(pose.position.z * 1000)),
+           ] + [int(a) for a in self.rad_grados([roll, pitch, yaw])
         ]
         return coordenadas
         

@@ -68,7 +68,7 @@ export function cargarRutinaRA(nombreRutina:string) {
       orden: ['cargarRRA', nombreRutina],
       coordenadas: []
     };
-    console.log(" Enviando a /orden_web: ELIMIAR", msg);
+    console.log(" Enviando a /orden_web:", msg);
 
     // Publica en ROS
     pubTopic('orden_web', msg);
@@ -87,7 +87,7 @@ export function nombreRutinaDB(callback: (msg: any) => void) {
 
 }
 
-// Elimina Punto seleccionado
+
 export function elimiarRutinaDB(nombreRutina:string) {
   console.log("a",nombreRutina,"no");
   if (nombreRutina){
@@ -105,7 +105,7 @@ export function elimiarRutinaDB(nombreRutina:string) {
   }  
 }
 
-// Elimina Punto seleccionado
+
 export function agregarRutinaTabla(nombreRutina:string) { //agregar posicion despues
   console.log("a",nombreRutina,"no");
   if (nombreRutina){

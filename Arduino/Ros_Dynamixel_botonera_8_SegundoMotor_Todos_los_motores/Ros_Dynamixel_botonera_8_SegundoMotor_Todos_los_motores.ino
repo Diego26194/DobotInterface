@@ -344,31 +344,39 @@ void publishPositions(void)
 
 void publishPosdy(void)
 {
-  punto.data_length = 6; // Definir la longitud del array de datos
-  int16_t puntoData[6];
-/*
-  // Llenar el array con los datos de posición
-  puntoData[0] = a;
-  puntoData[1] = a;
-  puntoData[2] = a;
-  puntoData[3] = a;
-  puntoData[4] = a;
-  puntoData[5] = a;
-  */
-  puntoData[0]=int(dxl.getPresentPosition(DXL_ID1, UNIT_RAW));
+  poscion.data_length = 6; // Definir la longitud del array de datos
+  int16_t poscionData[6];
 
-    puntoData[1]= int(dxl.getPresentPosition(DXL_ID2, UNIT_RAW))+1023;
-    puntoData[2]= int(dxl.getPresentPosition(DXL_ID3, UNIT_RAW));
+  
+  poscionData[0] = dxl.getPresentPosition(DXL_ID1, UNIT_RAW);
+  if (poscionData[0] == -1) {
+    // Error: motor no respondió
+  }
+  poscionData[1] = dxl.getPresentPosition(DXL_ID2, UNIT_RAW);
+  if (poscionData[1] == -1) {
+    // Error: motor no respondió
+  }
+  poscionData[2] = dxl.getPresentPosition(DXL_ID3, UNIT_RAW);
+  if (poscionData[2] == -1) {
+    // Error: motor no respondió
+  }
+  poscionData[3] = dxl.getPresentPosition(DXL_ID4, UNIT_RAW)*4;
+  if (poscionData[3] == -1) {
+    // Error: motor no respondió
+  }
+  poscionData[4] = dxl.getPresentPosition(DXL_ID5, UNIT_RAW)*4;
+  if (poscionData[4] == -1) {
+    // Error: motor no respondió
+  }
+  poscionData[5] = dxl.getPresentPosition(DXL_ID6, UNIT_RAW)*4;
+  if (poscionData[5] == -1) {
+    // Error: motor no respondió
+  }
+  
+   
+  poscion.data = poscionData;
 
-    puntoData[3]= int(dxl.getPresentPosition(DXL_ID4, UNIT_RAW)/4);
-
-    puntoData[4]= int(dxl.getPresentPosition(DXL_ID5, UNIT_RAW)/4);
-
-    puntoData[5]= int(dxl.getPresentPosition(DXL_ID6, UNIT_RAW)/4);  
-
-  punto.data = puntoData; // Asignar memoria para el array de datos
-
-  p_dy.publish(&punto); // Publicar el mensaje
+  p_dy.publish(&poscion); // Publicar el mensaje
 }
   
 void setup()

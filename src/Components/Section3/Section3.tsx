@@ -36,7 +36,7 @@ import InputPositive from "../Elements/Inputs/InputPoisitive";
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 import Section4 from "../Section1/Section4";
-import { ejecutarRutina, refrescarRutina } from "../../Services/Funciones";
+import { ejecutarRutina, refrescarRutina, agregarRutina } from "../../Services/Funciones";
 
 
 interface Section3Props {
@@ -48,12 +48,14 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
   const [wait, setWait] = useState(0);
   const tableRef = useRef<RutineTableRef>(null);
   const [showLibrarie, setShowLibrarie] = useState(false);
+  const [nombreRutina, setNombreRutina] = useState("");
   
 
   const [flagAddPoint, setFlagAddPoint] = useState(false);
 
   const handleAddRutineClick = () => {
-    setFlagAddRutine(true);
+    //setFlagAddRutine(true);
+    agregarRutina(nombreRutina)
   };
 
   const handleDeleteRutineClick = () => {
@@ -130,6 +132,10 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
               <CompactsInputs 
                 label="Nombre de Rutina" 
+                
+                fullWidth size="small"
+                value={nombreRutina}
+                onChange={(e) => setNombreRutina(e.target.value)}
                 sx={{width: '40%',
                   height: '100%',
                   padding: '4px 0px',   
