@@ -369,41 +369,41 @@ class ControladorRobot:
 
         rospy.loginfo(f"Puntos expandidos: {len(puntos)}")
         
-        rospy.loginfo(puntos)
+        goal = self.crear_goal(puntos)        
         
-        goal = self.crear_goal(puntos)
-        
-        
-        self.trayectoria_pub.publish(Int16(-4)) 
+        rospy.loginfo("Comiendo de planificaciond de rutina: enviando -2 a planificación y mandando goal completo")
+        self.trayectoria_pub.publish(Int16(-1)) 
         if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
             rospy.logerr("El servidor de secuencia no está disponible.")
             self.ejecutando_rutina = False
             return
-        self.sequence_action_client.cancel_all_goals()
         
         
+        self.sequence_action_client.cancel_all_goals()              
         self.sequence_action_client.send_goal(goal)
         self.sequence_action_client.wait_for_result()
         
-        #if not self.esperar_confirmacion(0, timeout=30.0):
-        #    rospy.logerr("Error ,rutina no ejecutable. Abortando.")
-        #    self.ejecutando_rutina = False
-        #    return                  
+        if not self.esperar_confirmacion(0, timeout=30.0):
+            rospy.logerr("Error ,rutina no ejecutable. Abortando.")
+            self.ejecutando_rutina = False
+            return          
+        else:
+            rospy.logerr("rutina ejecutable")           
         
         # Verificar si hay algún wait != 0
         tiene_wait = any(int(p.get('wait', 0)) != 0 for p in puntos)
 
         if not tiene_wait:
             # --- CASO 1: rutina completa sin waits ---
-            rospy.loginfo("Rutina sin waits: enviando -1 a planificación y mandando goal completo")
-            self.trayectoria_pub.publish(Int16(-1))
+            rospy.loginfo("Rutina sin waits: enviando -2 a planificación y mandando goal completo")
+            self.trayectoria_pub.publish(Int16(-2))
 
             
 
         else:
             # --- CASO 2: rutina segmentada por waits ---
-            rospy.loginfo("Rutina con waits: enviando -2 a planificación y esperando confirmación")
-            self.trayectoria_pub.publish(Int16(-2))
+            rospy.loginfo("Rutina con waits: enviando -3 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-3))
 
             if not self.esperar_confirmacion(1, timeout=30.0):
                 rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
@@ -463,11 +463,11 @@ class ControladorRobot:
 
             # fin de rutina
             rospy.loginfo("Rutina completa: notificando fin con -3")
-            self.trayectoria_pub.publish(Int16(-3))
+            self.trayectoria_pub.publish(Int16(-4))
 
-            # esperar confirmacion 3
-            if not self.esperar_confirmacion(3, timeout=30.0):
-                rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
+        # esperar confirmacion 3
+        if not self.esperar_confirmacion(3, timeout=30.0):
+            rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
         self.ejecutando_rutina = False
         rospy.loginfo("ejecutar_rutina: finalizada.")

@@ -14,7 +14,7 @@ import numpy as np
 import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
-from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult, punto_correr
+from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult, punto_correr, waits
 
 
 # Bounding volume
@@ -50,6 +50,7 @@ class ControladorRobot:
 
         # NUEVOS TOPICOS PARA COMUNICACION CON PLANNER
         self.trayectoria_pub = rospy.Publisher('trayectoria_A_planificacion', Int16, queue_size=10)
+        self.rutine_waits = rospy.Publisher('rutine_waits', waits, queue_size=10)
         self.plan_sub = rospy.Subscriber('planificacion_A_trayectoria', Int16, self._planificacion_callback)
 
         # Estado actual del robot
@@ -94,7 +95,7 @@ class ControladorRobot:
         rad = [g * np.pi / 180 for g in grad]
         return rad
     
-    def dict_to_pose(sel,pose_dict):
+    def dict_to_pose(self,pose_dict):
         
         pose = Pose()
         pose.position = Point(
@@ -116,7 +117,7 @@ class ControladorRobot:
                 if self.sequence_action_client.wait_for_server(timeout=rospy.Duration(1.0)):
                     rospy.sleep(0.1)
                     rospy.loginfo("Cancelando ejecución")
-                    self.sequence_action_client.cancel_all_goals()
+                    #self.sequence_action_client.cancel_all_goals()
                     self.esta_planificando = False
                 else:
                     rospy.logwarn("Action server no está disponible para cancelar metas.")
@@ -127,6 +128,7 @@ class ControladorRobot:
 
     def ejecutar_trayectoria_position(self, joint_angles,velocidad):
         try:
+            self.trayectoria_pub.publish(Int16(-5)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -142,7 +144,9 @@ class ControladorRobot:
             success, traj, planning_time, error_code = self.move_group.plan()
             
             
-            
+            # esperar confirmacion 3
+            if not self.esperar_confirmacion(3, timeout=30.0):
+                rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
             self.rutina_corriendo = False
             
@@ -158,6 +162,7 @@ class ControladorRobot:
         
     def ejecutar_trayectoria_pose(self, pose,velocidad,plan):
         try:
+            self.trayectoria_pub.publish(Int16(-5)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -168,6 +173,10 @@ class ControladorRobot:
             self.move_group.set_pose_target(pose,self.move_group.get_end_effector_link())
 
             success, traj, planning_time, error_code = self.move_group.plan()
+            
+            # esperar confirmacion 3
+            if not self.esperar_confirmacion(3, timeout=30.0):
+                rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
             self.rutina_corriendo = False
 
@@ -228,20 +237,19 @@ class ControladorRobot:
         # Posición: bounding volume como una pequeña esfera (usamos SolidPrimitive de tipo SPHERE)
         pos = PositionConstraint()
         pos.header = pose_stamped.header
-        pos.link_name = "ee_link" if hasattr(self.move_group, 'get_end_effector_link') and self.move_group.get_end_effector_link() else "tool0"
+        pos.link_name = self.move_group.get_end_effector_link()
 
         # Crear una esfera con radio = ratio
         sphere = SolidPrimitive()
         sphere.type = SolidPrimitive.SPHERE
-        sphere.dimensions = [float(ratio if ratio > 0 else 0.001)]
+        sphere.dimensions = [float(ratio if ratio > 0 else 0.002)]
 
         bv = BoundingVolume()
         bv.primitives.append(sphere)
         # Centramos el bounding volume en la posición deseada
-        p = Point()
-        p.x = pose_stamped.pose.position.x
-        p.y = pose_stamped.pose.position.y
-        p.z = pose_stamped.pose.position.z
+        p = Pose()
+        p.position = pose_stamped.pose.position
+        p.orientation.w = 1.0 
         bv.primitive_poses.append(p)
 
         pos.constraint_region = bv
@@ -317,17 +325,9 @@ class ControladorRobot:
         for p in puntos:
             pose = PoseStamped()
             pose.header.frame_id = "base_link"
+                        
             coords = self.dict_to_pose( p.get('coordenadasCQuaterniones') )
-            if not coords or len(coords) < 7:
-                rospy.logwarn(f"Punto con coordenadas inválidas: {p}")
-                continue
-            pose.pose.position.x = float(coords[0])
-            pose.pose.position.y = float(coords[1])
-            pose.pose.position.z = float(coords[2])
-            pose.pose.orientation.x = float(coords[3])
-            pose.pose.orientation.y = float(coords[4])
-            pose.pose.orientation.z = float(coords[5])
-            pose.pose.orientation.w = float(coords[6])
+            pose.pose = coords
 
             item = MotionSequenceItem()
             item.req.group_name = "cobot_arm"
@@ -378,38 +378,51 @@ class ControladorRobot:
 
         rospy.loginfo(f"Puntos expandidos: {len(puntos)}")
         
-        goal = self.crear_goal(puntos)
+        goal = self.crear_goal(puntos)        
+        
+        rospy.loginfo("Comiendo de planificaciond de rutina: enviando -2 a planificación y mandando goal completo")
         self.trayectoria_pub.publish(Int16(-1)) 
         if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
             rospy.logerr("El servidor de secuencia no está disponible.")
             self.ejecutando_rutina = False
-            return 
+            return
         
         
-        self.sequence_action_client.cancel_all_goals()
+        self.sequence_action_client.cancel_all_goals()              
         self.sequence_action_client.send_goal(goal)
         self.sequence_action_client.wait_for_result()
         
         if not self.esperar_confirmacion(0, timeout=30.0):
             rospy.logerr("Error ,rutina no ejecutable. Abortando.")
             self.ejecutando_rutina = False
-            return           
+            return          
         else:
-            rospy.logerr("rutina ejecutable")       
+            rospy.logerr("rutina ejecutable")           
         
-        # Verificar si hay algún wait != 0
-        tiene_wait = any(int(p.get('wait', 0)) != 0 for p in puntos)
+        # Buscar todos los waits y sus índices (ajustados por +1)
+        indices_wait = []
+        valores_wait = []
+
+        for i, p in enumerate(puntos):
+            wait_val = int(p.get('wait', 0))
+            if wait_val != 0:
+                indices_wait.append(i + 1)  # +1 porque crear_goal agrega un punto inicial
+                valores_wait.append(wait_val)
+
+        tiene_wait = len(indices_wait) > 0
+        
+        #comienzo con las ejecuciones
 
         if not tiene_wait:
             # --- CASO 1: rutina completa sin waits ---
-            rospy.loginfo("Rutina sin waits: enviando -1 a planificación y mandando goal completo")
+            rospy.loginfo("Rutina sin waits: enviando -2 a planificación y mandando goal completo")
             self.trayectoria_pub.publish(Int16(-2))
 
             
 
         else:
             # --- CASO 2: rutina segmentada por waits ---
-            rospy.loginfo("Rutina con waits: enviando -2 a planificación y esperando confirmación")
+            rospy.loginfo("Rutina con waits: enviando -3 a planificación y esperando confirmación")
             self.trayectoria_pub.publish(Int16(-3))
 
             if not self.esperar_confirmacion(1, timeout=30.0):
@@ -417,62 +430,17 @@ class ControladorRobot:
                 self.ejecutando_rutina = False
                 return
 
-            bloque = []
-            for p in puntos:
-                bloque.append(p)
-                if int(p.get('wait', 0)) != 0:
-                    rospy.loginfo("Creando goal para bloque hasta wait")
-                    goal = self.crear_goal(bloque)
+            msg_waits = waits()
+            msg_waits.indice = indices_wait
+            msg_waits.waits = valores_wait
 
-                    if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
-                        rospy.logerr("El servidor de secuencia no está disponible.")
-                        self.ejecutando_rutina = False
-                        return
+            self.rutine_waits.publish(msg_waits)
+            rospy.loginfo(f"📤 Publicado waits: {list(zip(indices_wait, valores_wait))}")
 
-                    self.sequence_action_client.cancel_all_goals()
-                    self.sequence_action_client.send_goal(goal)
-                    self.sequence_action_client.wait_for_result()
+        # esperar confirmacion 3
+        if not self.esperar_confirmacion(3, timeout=30.0):
+            rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
-                    # enviar wait al otro nodo (decisegundos)
-                    wait_val = int(p.get('wait', 0))
-                    rospy.loginfo(f"Enviando wait {wait_val} a planificación")
-                    self.trayectoria_pub.publish(Int16(wait_val))
-
-                    # esperar confirmacion 2
-                    if not self.esperar_confirmacion(2, timeout=30.0):
-                        rospy.logerr("No se recibió confirmación de guardado (2). Abortando.")
-                        self.ejecutando_rutina = False
-                        return
-
-                    bloque = []  # resetear bloque
-                    
-                #por si quedan puntos despues del ultimo wait
-                if bloque:
-                    rospy.loginfo("Creando goal para bloque hasta wait")
-                    goal = self.crear_goal(bloque)
-
-                    if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
-                        rospy.logerr("El servidor de secuencia no está disponible.")
-                        self.ejecutando_rutina = False
-                        return
-
-                    self.sequence_action_client.cancel_all_goals()
-                    self.sequence_action_client.send_goal(goal)
-                    self.sequence_action_client.wait_for_result()
-                    
-                    # esperar confirmacion 2
-                    if not self.esperar_confirmacion(2, timeout=30.0):
-                        rospy.logerr("No se recibió confirmación de guardado (2). Abortando.")
-                        self.ejecutando_rutina = False
-                        return
-
-                    bloque = []  # resetear bloque
-
-            # fin de rutina
-            rospy.loginfo("Rutina completa: notificando fin con -3")
-            self.trayectoria_pub.publish(Int16(-4))
-
-        
         self.ejecutando_rutina = False
         rospy.loginfo("ejecutar_rutina: finalizada.")
 

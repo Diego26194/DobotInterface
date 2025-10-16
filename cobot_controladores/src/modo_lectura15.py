@@ -139,7 +139,6 @@ class ModoLectura:
         # Si los ángulos están fuera de los límites, cortar el proceso
         if coorCartesianas_quat is None:
             msg = "Ángulos fuera de los límites de trabajo"
-            rospy.logwarn(msg)
             self.informe_web.publish(msg)
             return
 
@@ -185,9 +184,7 @@ class ModoLectura:
     def refrescarRutinaActual(self): # (self, rutina: list)
         
         rutina=leer_rutina_sin_quaterniones()
-        
-        rospy.logwarn(rutina)
-        
+                
         mensaje_puntoR = punto_web()
         mensaje_puntoR.orden = ['vaciarTabla']
         self.puntos_rutina.publish(mensaje_puntoR)
@@ -198,9 +195,7 @@ class ModoLectura:
                 continue
 
             if punto.get("rutina") is False:
-                
-                rospy.logwarn(punto)
-                
+                                
                 # Punto normal
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
@@ -210,16 +205,7 @@ class ModoLectura:
                     int(punto['wait']),
                     int(punto['pos']),
                 ]
-                
-                rospy.logwarn(mensaje_puntoR.coordenadas)
-                rospy.logwarn('hasta aca todo bien')
-                rospy.logwarn('hasta aca todo bien')
-                rospy.logwarn('hasta aca todo bien')
-                
-                rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
-                for i, c in enumerate(mensaje_puntoR.coordenadas):
-                    rospy.logwarn("%d: %s (%s)", i, c, type(c))
-                
+                                
                 self.puntos_rutina.publish(mensaje_puntoR)
 
             elif punto.get("rutina") is True:
@@ -370,11 +356,6 @@ class ModoLectura:
                     int(punto['wait']),
                     int(punto['pos']),
                 ]
-                rospy.logwarn(mensaje_puntoR.orden)
-                rospy.logwarn(mensaje_puntoR.coordenadas)
-                rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
-                for i, c in enumerate(mensaje_puntoR.coordenadas):
-                    rospy.logwarn("%d: %s (%s)", i, c, type(c))
                 self.puntos_rutina.publish(mensaje_puntoR)
 
                 mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
@@ -414,13 +395,7 @@ class ModoLectura:
                         int(point['ratio']),
                         int(point['wait']),
                         int(point['pos']),
-                    ]
-                    
-                    
-                    rospy.logwarn("DEBUG coordenadas -> %s", mensaje_puntoR.coordenadas)
-                    for i, c in enumerate(mensaje_puntoR.coordenadas):
-                        rospy.logwarn("%d: %s (%s)", i, c, type(c))
-                        
+                    ]                        
                         
                     self.puntos_rutina.publish(mensaje_puntoR)
 

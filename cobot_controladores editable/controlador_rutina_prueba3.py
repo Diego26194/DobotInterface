@@ -29,7 +29,7 @@ class ControladorCobot:
 
         # === Parámetros ===
         self.PAUSA_ENTRE_TRAYECTORIAS = 0.1  # segundos
-        self.TIMEOUT_PLANIFICACION = 25.0    # segundos máximos de espera
+        self.TIMEOUT_PLANIFICACION = 10.0    # segundos máximos de espera
 
         rospy.loginfo("✅ Esperando señal (-4) para iniciar planificación...")
 
@@ -59,7 +59,10 @@ class ControladorCobot:
         if self.feedback_state == "MONITOR":
             self.planificacion_valida = True
         elif self.feedback_state == "IDLE":
-            self.planificacion_valida = False
+        # Solo marcar como fallo si el texto menciona error
+            if "error" in self.feedback_text.lower() or "failed" in self.feedback_text.lower():
+                rospy.logerr("❌ Estado IDLE con error detectado.")
+                self.planificacion_valida = False
 
     def _callback_planificacion(self, msg):
         """Lógica principal de control."""
