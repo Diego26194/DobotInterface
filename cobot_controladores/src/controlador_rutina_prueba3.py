@@ -53,13 +53,13 @@ class ControladorCobot:
     # ----------------------------------------------------
     def _callback_waits(self, msg):
         """Guarda los waits y sus idices."""      
-        self.indices=msg.indices
-        self.wait=msg.waits
+        self.indices=msg.indice
+        self.wait=msg.wait
         self.recibido_waits =True
             
     def _callback_display_trajectory(self, msg):
         """Guarda los fragmentos de trayectorias planificadas."""
-        if self.orden==-1 or self.orden==-3 or self.orden==-4:
+        if self.orden==-1 or self.orden==-3 or self.orden==-5:
             self.plan_fragmentos.append(msg)
             rospy.loginfo(f"📦 Fragmento de plan recibido ({len(self.plan_fragmentos)})")
 
@@ -82,8 +82,6 @@ class ControladorCobot:
     def _callback_planificacion(self, msg):
         if msg.data<0:
             self.orden=msg.data
-        else:
-            self.wait=msg.data
         if self.orden==-1:
             rospy.loginfo("🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...")
 
@@ -126,6 +124,24 @@ class ControladorCobot:
                 return
             
             self._ejecutar_plan_completo()
+            self._limpiar_variables()   
+        if self.orden==-5:
+            rospy.loginfo("🔄 Señal -5 recibida. Esperando planificación (feedback + plan)...")
+
+            # Esperar feedback y trayectorias planificadas
+            inicio = time.time()
+            while (not self.plan_fragmentos) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                rospy.sleep(0.1)
+
+            if not self.plan_fragmentos:
+                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                self._limpiar_variables()
+                self.pub_planificacion_trayectoria.publish(-2)
+                return
+
+            rospy.loginfo("✅ Planificación válida (estado MONITOR)")
+                
+            self._ejecutar_plan_completo()
             self._limpiar_variables()      
 
         
@@ -143,9 +159,9 @@ class ControladorCobot:
                 for trajectory in frag.trajectory:
                     self._ejecutar_trayectoria_individual(trajectory.joint_trajectory)                    
                 
-                    if (i + 1) in self.indices:  # +1 porque los índices son 1-based
+                    if (i+1 ) in self.indices:  # +1 porque los índices son 1-based
                         # Obtener el tiempo de espera correspondiente
-                        idx = self.indices.index(i + 1)
+                        idx = self.indices.index(i+1)
                         tiempo_wait = self.wait[idx]
                         rospy.loginfo(f"⏸ Esperando {tiempo_wait}s después del punto {i+1}")
                         time.sleep(tiempo_wait)
@@ -184,8 +200,8 @@ class ControladorCobot:
     def _limpiar_variables(self):
         """Reinicia variables internas para evitar datos residuales."""
         self.orden=None
-        self.indices.clear()
-        self.wait.clear()
+        self.indices=[]
+        self.wait=[]
         self.plan_fragmentos.clear()
         self.feedback_state = None
         self.recibido_feedback = False
