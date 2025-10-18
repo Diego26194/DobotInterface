@@ -185,21 +185,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           break;
           
         case 'addRT':
-          setRows((prev) => {
-            const newRow: RowType = {
-              id: Date.now(),      
-              posicion: msg.coordenadas[1], //prev.length + 1,         
-              nombre: msg.orden[1],
-              plan: '',
-              coordenadas: [],
-              escV: 0, 
-              ratio: 0, 
-              editable: false,
-              wait: msg.coordenadas[0],
-              rutine: true,                   
-            };
-            return [...prev, newRow];
-          });
+          addRowPunto(['',msg.orden[1],''], [...Array(8).fill(null),msg.coordenadas[8],msg.coordenadas[9] ]);
+          
           break;
 
         case 'errorPunRut':
@@ -220,9 +207,6 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           break;
           
         case 'addP':
-           console.log('aun estoy parece');
-           console.log(msg.orden);
-           console.log(msg.coordenadas);
           addRowPunto(msg.orden, msg.coordenadas);
           break;
 

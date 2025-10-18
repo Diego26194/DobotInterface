@@ -68,7 +68,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
         <ButtonEdit onClick={() => cargarRutinaRA(nombre)}/>
         <ButtonDelete onClick={() => elimiarRutinaDB(nombre)}/>
         <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={handleAddClick}/>
-        <ButtonReflesh onClick={() =>agregarRutina(nombre)}/>
+        <ButtonReflesh onClick={() => cargarRutinasDB()}/>
       </Stack>
       <Paper sx={{
             width: '100%', 

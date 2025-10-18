@@ -84,13 +84,14 @@ def eliminar_todos_datos():
 ############# Rutina actual #############
 
 # Función para escribir punto en "rutina_actual"
-def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None):
+def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None, wait=None):
     # Convertir array de Float32 a un diccionario con claves 'x', 'y', 'z', 'a', 'b', 'c'
     coorCartesianas_quat=pose_to_dict(pose)
     coordenadas_dict = {
         'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
-        'vel_esc': vel_esc, 'ratio': ratio,'wait': 0,'plan': plan , 'rutina': False}
-    
+        'vel_esc': vel_esc, 'ratio': ratio,'plan': plan , 'rutina': False,
+        'wait': wait if wait is not None else 0}
+        
     # --- Manejo del campo "pos" ---
     if pos is None:
         # Si no se pasa posición, insertar al final
@@ -122,7 +123,7 @@ def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , ide
     return pos
 
 # Función para agregar una rutina como instruccion en la rutina actual
-def agregar_rutina_rutina(identificador, pos=None):
+def agregar_rutina_rutina(identificador, pos=None, wait=None):
         
     # --- Manejo del campo "pos" ---
     if pos is None:
@@ -134,26 +135,16 @@ def agregar_rutina_rutina(identificador, pos=None):
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    posicion = {'pos': pos, 'rutina': True, 'wait': 0}
+    rutina = {'nombre': identificador,'pos': pos, 'rutina': True, 
+        'wait': wait if wait is not None else 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
-    doc_id = rutina_actual.insert(posicion)
-    # Verificar si se recibió un identificador
-    if identificador is None:
-        # Si no se proporcionó un identificador, asignar 'p{doc_id}'
-        nombre = f"Rutina{doc_id}"
-    else:
-        # Si se proporcionó, usar ese identificador
-        nombre = identificador
-
-    # Actualizar el registro con el nombre asignado
-    rutina_actual.update({'nombre': nombre}, doc_ids=[doc_id])
-    
+    doc_id = rutina_actual.insert(rutina)
+   
     # Agregar el doc_id y nombre al diccionario original para referencia
-    posicion["id"] = doc_id
-    posicion["nombre"] = nombre
-    agregar_rutina_control(nombre)
-    return doc_id
+    rutina["id"] = doc_id
+    agregar_rutina_control(identificador)
+    return pos
 
 def editar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
     Punto = Query()

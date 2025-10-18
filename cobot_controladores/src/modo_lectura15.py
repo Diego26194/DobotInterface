@@ -35,6 +35,8 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
 
+import re
+
 class ModoLectura:
     def bit_grados(self, bit):
         grad = [(b * 360 / 4095 - 180) for b in bit]
@@ -509,17 +511,11 @@ class ModoLectura:
         
         elif accion == 'cargarRRA':
             if nombre:
-                rutina=obtener_rutina(nombre)
-                faltantes = verificar_rutinas_control()
+                rutina=obtener_rutina(nombre)                
                 
-                if rutina:
-                    if faltantes:  
-                        # Al menos una rutina declarada en control no existe en DB
-                        mensaje_informe = f"⚠️ Rutinas faltantes: {', '.join(faltantes)}"
-                        mensaje_errorDelR = punto_web()
-                        mensaje_errorDelR.orden = ['errorRR'] #['errorRR', *faltantes]  #cambiar por esto al agregar el cambio de color en la tabla
-                        self.puntos_rutina.publish(mensaje_errorDelR)  
-                        self.informe_web.publish(mensaje_informe)                       
+                if rutina:     
+                    eliminar_todos_datos_rutina()  
+                                                       
                     for doc in rutina:
                         if doc.get("id") == "control":
                             actualizar_control(
@@ -535,6 +531,7 @@ class ModoLectura:
                             plan = doc.get("plan", "")
                             identificador = doc.get("nombre")
                             pos = doc.get("pos")
+                            wait = doc.get("wait", 0)
 
                             agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler,
                                                 vel_esc, ratio, plan,
@@ -544,6 +541,16 @@ class ModoLectura:
                             identificador = doc.get("nombre")
                             pos = doc.get("pos")
                             agregar_rutina_rutina(identificador, pos)
+                    
+                    
+                    faltantes = verificar_rutinas_control()
+                    if faltantes:  
+                        # Al menos una rutina declarada en control no existe en DB
+                        mensaje_informe = f"⚠️ Rutinas faltantes: {', '.join(faltantes)}"
+                        mensaje_errorDelR = punto_web()
+                        mensaje_errorDelR.orden = ['errorRR'] #['errorRR', *faltantes]  #cambiar por esto al agregar el cambio de color en la tabla
+                        self.puntos_rutina.publish(mensaje_errorDelR)  
+                        self.informe_web.publish(mensaje_informe) 
                             
                     self.refrescarRutinaActual()                            
                             
@@ -623,9 +630,8 @@ class ModoLectura:
             # Publicar en el tópico 'informe_web'
                 self.informe_web.publish(mensajes_informe['subirR_db'])
             else:                
-                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")
-            
-            
+                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")           
+                        
             
     ###### ConversorCoordenadas ######## 
     
