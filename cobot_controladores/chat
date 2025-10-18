@@ -1,75 +1,55 @@
-rostopic pub -1 /cord_ros std_msgs/Float64MultiArray "data: [130, 0.0, 0.0, 0.0, 0.0, -90]"
 
-ls -l /dev | grep ACM
+tengo esto que es la funcion que corre cuando resibe msg de confirmacion del topico que usa el controlador
 
-sudo chmod 666 /dev/ttyACM0
+# callback del topico planificacion_A_trayectoria
+    def _planificacion_callback(self, msg):
+        try:
+            rospy.loginfo(msg)
+            self._last_plan_msg = int(msg.data)
+            self._plan_event = True
+        except Exception:
+            pass
 
-rosrun rosserial_python serial_node.py /dev/ttyACM0 _baud:=115200
+y esta es la funcion que uso para que este nodo espere la confirmacion
 
-ls -l /dev | grep ACM
+def esperar_confirmacion(self, expected, timeout=30.0):
+        """Espera a que planificacion_A_trayectoria publique un valor.
+        - expected: valor entero esperado. Si es None, se acepta cualquier valor distinto de None.
+        - timeout: segundos a esperar antes de fallar.
+        Devuelve True si recibió el esperado, False en caso contrario.
+        """
+        start = rospy.Time.now()
+        rate = rospy.Rate(10)
+        self._plan_event = False
+        self._last_plan_msg = None
 
+        while (rospy.Time.now() - start).to_sec() < timeout:
+            if self._plan_event:
+                val = self._last_plan_msg
+                # si expected es None, aceptamos cualquier valor
+                if expected is None:
+                    return True
+                if val == expected:
+                    return True
+                # en caso de error (0) devolvemos False si esperamos otro valor
+                if val == 0:
+                    return False
+                # si llega otro valor lo ignoramos y seguimos esperando
+                self._plan_event = False
+            try:
+                rate.sleep()
+            except rospy.ROSInterruptException:
+                break
+        rospy.logwarn(f"esperar_confirmacion: timeout esperando {expected}")
+        return False
 
+al usarlo aca de esta forma
 
-rostopic echo puntos_dy
-rostopic echo joint_states
-rostopic echo cord_dy
-rostopic echo pos_dy
+if not self.esperar_confirmacion(0, timeout=30.0):
+            rospy.logerr("Error ,rutina no ejecutable. Abortando.")
+            self.ejecutando_rutina = False
+            return          
+        else:
+            rospy.logerr("rutina ejecutable")
 
-python3 trayectoria35.py
-python3 modo_lectura15.py
-python3 publicacion_posicion_real3.py
-python3 controlador_rutina_prueba3.py
-
-roslaunch cobot_controladores preubaInicio9.launch
-
-
-roslaunch rosbridge_server rosbridge_websocket.launch _port:=9091
-
-Para correr la pagina
-	npm run dev 				//local
-	npm run dev -- --host			//Servidor
-	
-para darle permiso a todas las carpetas
-
-	find . -type f -name "*.py" -exec chmod +x {} \;
-	
-Subir a git
-
-	git add .
-	git commit -m ""
-	git push origin main
-	
-	
-bajar cambios de github:
-forzar (por si he hecho cambios locales y no me interesa perderlo forzando el repositorio bajado)
-
-# asegurate de estar en la rama correcta, por ej. main
-	git fetch origin				//descarga la última información del remoto.
-	git reset --hard origin/main			//descarta cualquier cambio local y deja tu copia idéntica al remoto
-	
-bajar normal:
-	git pull
-	
-	
-	
-roscd pilz_industrial_motion_planner
-
-
-sudo apt update
-sudo apt install ros-noetic-pilz-industrial-motion
-
-rostopic pub -1 /rutina std_msgs/Bool "data: true"
-
-
-move_group/display_planned_path
-
-
-
-[ERROR] [1760460027.520426]: bad callback: <function callback_sequence_result at 0x7fea94efe3a0>
-Traceback (most recent call last):
-  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
-    cb(msg)
-  File "controlador_rutina_prueba_rutina.py", line 41, in callback_sequence_result
-    sequence = msg.result.response.planned_trajectory_sequence
-AttributeError: 'MotionSequenceResponse' object has no attribute 'planned_trajectory_sequence'
-
+no esta funcionando, se termina el tiempo y hace que mi proceso termine, ya confirme que el topico esta resibiendo el msg correcto y que "planificacion_callback" si resibe y guarda el dato bien, porque puede ser el error?al mandar un 0?

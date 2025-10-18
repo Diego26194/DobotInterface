@@ -158,7 +158,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
 
   useEffect(() => {
     resibirMsgRutina((msg) => {
-      console.log('sigue todo bien');
+      
       switch (msg.orden[0]) {
         case 'editPR':
           setRows((prev) =>
@@ -185,7 +185,9 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           break;
           
         case 'addRT':
-          addRowPunto(['',msg.orden[1],''], [...Array(8).fill(null),msg.coordenadas[8],msg.coordenadas[9] ]);
+          console.log('rutina agregada');
+          console.log(msg);
+          addRowRutina(msg.orden, msg.coordenadas);
           
           break;
 
@@ -277,6 +279,24 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       return [...prev, newRow];
     });
   };  
+  
+  const addRowRutina = (orden: string[], coordenadas: number[]) => { //orden [id,noombre,plan] coordenadas[a1,a2,a3,a4,a5,a6,vel, ratio]
+    setRows((prev) => {
+      const newRow: RowType = {
+        id: Date.now() + Math.floor(Math.random() * 1000), //Date.now(),      
+        posicion: coordenadas[1], //prev.length + 1,         
+        nombre: orden[1],
+        plan:  '',
+        coordenadas: [],
+        escV: 0, 
+        ratio: 0, 
+        editable: false,
+        wait: coordenadas[0],
+        rutine:true,                   
+      };
+      return [...prev, newRow];
+    });
+  }; 
    
   const eliminarInstruccionRutina = (posiciones: number[]) => {
     setRows((prevRows) => {
