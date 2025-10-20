@@ -23,6 +23,7 @@ from db_puntos3 import (
     editar_punto_rutina,
     verificar_rutinas_control,
     actualizar_control,
+    eliminar_rutina_control,
     leer_rutina_sin_quaterniones,
 )
 from cobot_controladores.msg import punto_web, nombresPuntos, punto_real
@@ -436,6 +437,9 @@ class ModoLectura:
               for item in data.coordenadas:
                 punto = leer_punto_rutina(item)
                 eliminar_punto_rutina(item)
+                if punto['rutina']:
+                    eliminar_rutina_control(punto['nombre'])
+                    verificar_rutinas_control()
                 mensaje_informe = mensajes_informe['eliminarPunRut'].format(punto['nombre'], item)
               mensaje_puntoR.coordenadas=data.coordenadas
               self.informe_web.publish(mensaje_informe)
@@ -501,6 +505,13 @@ class ModoLectura:
                 resultado=eliminar_rutina(nombre)
                 if resultado:
                     mensaje_informe = mensajes_informe['eliminarRutina'].format(nombre)
+                    
+                    ###### Refrescar tabla de rutinas ########
+                
+                    # Publicar los nombres de los puntos en el tópico 'puntodb'
+                    mensaje_puntodb = nombresPuntos()
+                    mensaje_puntodb.nombres = obtener_todas_rutinas()
+                    self.nombres_rutinas_tabla.publish(mensaje_puntodb)
                 else:
                     mensaje_informe = mensajes_informe['ErrorR'].format(nombre)
                     mensaje_errorDelR = punto_web()

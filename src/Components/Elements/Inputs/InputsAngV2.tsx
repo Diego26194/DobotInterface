@@ -17,6 +17,8 @@ type InputsAngV2Props = {
 
 const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = false }, ref) => {
   const [values, setValues] = useState<number[]>(Array(6).fill(0));
+  const angMing=[-175,-115,-160,-175,-175,-175]
+  const angMax=[175,115,160,175,175,175]
 
 
 
@@ -53,8 +55,8 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
             <CoordInputV2
               key={i}
               label={`ang ${i + 1}`}
-              valMin={0}
-              valMax={180}
+              valMin={angMing[i]}
+              valMax={angMax[i]}
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}
@@ -70,8 +72,8 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
             <CoordInputV2
               key={i}
               label={`ang ${i + 1}`}
-              valMin={0}
-              valMax={180}
+              valMin={angMing[i]}
+              valMax={angMax[i]}
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}

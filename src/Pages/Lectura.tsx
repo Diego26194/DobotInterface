@@ -24,7 +24,7 @@ import Section3 from "../Components/Section3/Section3";
 
 import ToolBar from "../Components/Elements/ToolBar";
 import InputAng from "../Components/Elements/Inputs/InputCord";
-import { useState,useEffect } from "react";
+import { useState,useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import {initRos} from "../Services/RosService2";
 import {msgInforme} from "../Services/Funciones";
@@ -35,6 +35,8 @@ const Lectura = () => {
   const [showSection1, setShowSection1] = useState(true);
   const [showLibrariePuntos, setShowLibrariePuntos] = useState(false);
   const [showLibrarieRutina, setShowLibrarieRutinas] = useState(false);
+
+  const boxRef = useRef<HTMLDivElement>(null);
 
   const [mensajes, setMensajes] = useState<string[]>([]);
 {/* 
@@ -50,6 +52,15 @@ const Lectura = () => {
     setShowLibrarie(0)
   };
 */}
+
+//scroll valla siempre al final al llegar un msg
+useEffect(() => {
+    if (boxRef.current) {
+      // Mueve el scroll al fondo
+      boxRef.current.scrollTop = boxRef.current.scrollHeight;
+    }
+  }, [mensajes]);
+
 
 useEffect(() => {
   // inicializa ROS solo una vez cuando el componente se monta
@@ -199,6 +210,7 @@ useEffect(() => {
         </Grid>
       </Grid>
       <Box
+        ref={boxRef}
         sx={{
           width: "100%",
           height: "10%",
@@ -211,7 +223,9 @@ useEffect(() => {
         }}
       >
         {mensajes.map((m, idx) => (
-          <Typography key={idx} variant="body2">
+          <Typography key={idx} variant="body2"
+            sx={{ color: "#222", fontSize: "0.70rem" }} // color + tamaño de letra
+            >
             - {m}
           </Typography>
         ))}

@@ -48,8 +48,8 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
             <CoordInputV2
                 key={idx}
                 label={`cord ${e}`}        // "cord x", "cord y", etc.
-                valMin={0}
-                valMax={180}
+                valMin={-1000}
+                valMax={1000}
                 value={values[idx]}        // usamos el índice para acceder al valor
                 onChange={handleChange(idx)}
                 disabled={disabled}
@@ -65,8 +65,8 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
             <CoordInputV2
               key={idx+3}
               label={e}
-              valMin={0}
-              valMax={180}
+              valMin={-1000}
+              valMax={1000}
               value={values[idx+3]}
               onChange={handleChange(idx+3)}
               disabled={disabled}
