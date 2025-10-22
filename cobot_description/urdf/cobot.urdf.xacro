@@ -188,7 +188,7 @@
 	<joint name="joint_3" type="revolute">
         <parent link="arm_link" />
         <child link="elbow_link" />
-        <origin xyz="-0.00035 0.00735 0.22543" rpy="0 0 0" />
+        <origin xyz="-0.00005 0.00735 0.17466" rpy="0 0 0" />
 		<limit effort="1" velocity="1.0" lower="${limit_low_elbow_rotation}" upper="${limit_up_elbow_rotation}" />
 		<axis xyz="0 -1 0" />	
 	</joint>
@@ -196,7 +196,7 @@
 	<joint name="joint_4" type="revolute">
         <parent link="elbow_link" />
         <child link="forearm_link" />
-        <origin xyz="0.00010 -0.01300 0.22127" rpy="0 0 0" />
+        <origin xyz="-0.00050 -0.01300 0.17050" rpy="0 0 0" />
 		<limit effort="1" velocity="1.0" lower="${limit_low_forearm_rotation}" upper="${limit_up_forearm_rotation}" />
 		<axis xyz="0 1 0" />
 	</joint>
