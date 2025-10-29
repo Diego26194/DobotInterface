@@ -222,6 +222,19 @@ export function refrescarRutina() {
   pubTopic('orden_web', msg);
 }
 
+//Corer Trayectoria guardada
+export function runTrayectoria() {
+  const msg = {
+    orden: ['runTrayectoria'],
+    coordenadas:[]
+  };  
+
+  console.log("runTrayectoria", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
 export function editarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {
   const msg = {
     orden: ['editPR', nombrePunto,plan],

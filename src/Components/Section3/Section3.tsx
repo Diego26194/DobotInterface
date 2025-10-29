@@ -36,7 +36,7 @@ import InputPositive from "../Elements/Inputs/InputPoisitive";
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 import Section4 from "../Section1/Section4";
-import { ejecutarRutina, refrescarRutina, agregarRutina } from "../../Services/Funciones";
+import { ejecutarRutina, refrescarRutina, agregarRutina, runTrayectoria } from "../../Services/Funciones";
 
 
 interface Section3Props {
@@ -175,6 +175,10 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
               
               <ButtonReflesh description={'Refrescar tabla de rutina'}onClick={refrescarRutina }/> 
+
+              <Button1 sx={{width: '20%'}} variant="outlined" onClick={runTrayectoria}>
+                Run
+              </Button1>
 
               
             </Stack>
