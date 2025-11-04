@@ -57,17 +57,13 @@ class CinematicMode:
     def __init__(self):
         rospy.init_node('cinematic_mode')
         
-        # Subscribirse al tópico pos_dy
-        rospy.Subscriber('p_dy', Int16MultiArray, self.callback)
-        
+                
         # Definir el nombre del nuevo tópico
         self.puntos_dy_pub = rospy.Publisher('puntos_dy', Float32MultiArray, queue_size=10)
 
         #   ////////  PAGINA WEB    ////////
 
         
-        # Subscribirse al tópico pos_dy
-        rospy.Subscriber('orden_web', punto_web, self.acciones_web)
         
         # Definir el nombre del nuevo tópico
         self.puntos_web = rospy.Publisher('puntodb', punto_web, queue_size=10)
@@ -84,7 +80,6 @@ class CinematicMode:
         
         self.pub_pos_real = rospy.Publisher('pos_real', punto_real, queue_size=10)
         
-        rospy.Subscriber('pos_dy', Int16MultiArray, self.pasar_punto_real)
         
         self.velocidad=50
         self.ratio=0
@@ -104,16 +99,8 @@ class CinematicMode:
         self.base_frame = self.move_group.get_planning_frame()
         self.move_group.set_planner_id("PTP")
         
-        ##################### Modo Trayectoria ###################
-        rospy.Subscriber('/tipo_modo_lectura', Bool, self.modoT)
-        self.modoTrayectoria=True
-        self.rutina=[]
-        self.rutinaPunto=[2047,2047,2047,2047,2047,2047]
         
-        self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
-
-        self.modoTrayectoria=data.data
-        self.rutina.clear()
+        
         
         
         
@@ -148,24 +135,27 @@ class CinematicMode:
         cartesianas=cart.data
         
         pose = self.cartesianasEuler_a_pose(cartesianas)
-        pose_list=[ pose.position.x*1000,
-                    pose.position.y*1000,
-                    pose.position.z*1000,
-                    pose.orientation.x,
-                    pose.orientation.y,
-                    pose.orientation.z,
-                    pose.orientation.w,
-                    ]
-        msgPose = Float32MultiArray()
-        msgPose .data = pose_list
-        self.punto_pose.publish(msgPose)
+        
         
         if pose:
-            ang= self.pose_a_AngulosArticulares(pose)
         
-            msgAng = Float32MultiArray()
-            msgAng.data = ang
-            self.punto_ang.publish(msgAng)
+            pose_list=[ pose.position.x*1000,
+                        pose.position.y*1000,
+                        pose.position.z*1000,
+                        pose.orientation.x,
+                        pose.orientation.y,
+                        pose.orientation.z,
+                        pose.orientation.w,
+                        ]
+            msgPose = Float32MultiArray()
+            msgPose .data = pose_list
+            self.punto_pose.publish(msgPose)
+            ang= self.pose_a_AngulosArticulares(pose)
+            if ang is not None:
+        
+                msgAng = Float32MultiArray()
+                msgAng.data = [float(a) for a in ang]
+                self.punto_ang.publish(msgAng)
         else: 
             None
         
@@ -237,7 +227,7 @@ class CinematicMode:
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
             #return self.rad_grados(cord_ang_rad)
-            return [self.rad_grados(cord_ang_rad)]
+            return self.rad_grados(cord_ang_rad)
         else:
             rospy.logerr(f"IK falló con código: {resp.error_code.val}")
             return None

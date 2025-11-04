@@ -1,7 +1,7 @@
 import Escritura from "./Pages/Escritura";
 import Lectura from "./Pages/Lectura";
 import Arduino from "./Pages/arduino";
-import Cinematica from "./Pages/Cinematic";
+import Cinematica from "./Pages/cinematic";
 import ToolBar from "./Components/Elements/ToolBar";
 
 import RutineTable from "./Pages/RutineTable";

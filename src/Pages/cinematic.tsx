@@ -78,12 +78,6 @@ useEffect(() => {
     }, []);
     
     
-  useEffect(() => {
-    if (cart.length > 0) {
-      enviarCart();
-    }
-  }, [ang]);
-
   // Handler genérico para inputs
   const handleInputChange = (
     index: number,
@@ -118,16 +112,16 @@ useEffect(() => {
       <Stack direction="row" spacing={8}>
           {/* Sección 1 */}
         <div>
-          <h2>psoe</h2>
+          <h2>pose</h2>
           {pose.map((val, i) => (
             <div key={i} style={{ margin: "5px" }}>
               <input
                 type="number"
                 value={val}
-                min={-1}
+                min={-4095}
                 max={4095}
                 onChange={(e) =>
-                  handleInputChange(i, e.target.value, setAng, pose)
+                  handleInputChange(i, e.target.value, setPose, pose)
                 }
                 style={{ width: "80px", marginRight: "10px" }}
               />
@@ -144,7 +138,7 @@ useEffect(() => {
               <input
                 type="number"
                 value={val}
-                min={-1}
+                min={-4095}
                 max={4095}
                 onChange={(e) =>
                   handleInputChange(i, e.target.value, setCart, cart)
@@ -166,9 +160,9 @@ useEffect(() => {
               <input
                 type="number"
                 value={val}
-                min={-1}
+                min={-4095}
                 max={4095}
-                onChange={(e) => handleInputChange(i, e.target.value, setPose, ang)}
+                onChange={(e) => handleInputChange(i, e.target.value, setAng, ang)}
                 style={{ width: "80px", marginRight: "10px" }}
               />
               <span>{bitsToDegrees(val).toFixed(2)}°</span>
