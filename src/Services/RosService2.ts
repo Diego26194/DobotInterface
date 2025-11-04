@@ -102,6 +102,38 @@ export function initRos() {
     name: '/cord_dy',
     messageType: 'std_msgs/Int16MultiArray',
   });
+
+
+  ////////////// Eliminar-Prueba de pasaje de Cinematica///////
+  topics['ang'] = new ROSLIB.Topic({
+    ros,
+    name: '/ang',
+    messageType: 'std_msgs/Float32MultiArray',
+  });
+
+  topics['cart'] = new ROSLIB.Topic({
+    ros,
+    name: '/cart',
+    messageType: 'std_msgs/Float32MultiArray',
+  });
+
+  topics['pose'] = new ROSLIB.Topic({
+    ros,
+    name: '/pose',
+    messageType: 'std_msgs/Float32MultiArray',
+  });
+
+  topics['ang_cart'] = new ROSLIB.Topic({
+    ros,
+    name: '/ang_cart',
+    messageType: 'std_msgs/Float32MultiArray',
+  });
+
+  topics['cart_ang'] = new ROSLIB.Topic({
+    ros,
+    name: '/cart_ang',
+    messageType: 'std_msgs/Float32MultiArray',
+  });
   
   /*
 // Si se desconecta, reintenta
