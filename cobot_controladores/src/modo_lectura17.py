@@ -161,21 +161,12 @@ class ModoLectura:
                 if valor != -1:        
                     self.angulos[i] = self.bit_grados([valor])[0]
 
-            # Intentar convertir ángulos a pose
-            coorCartesianas_quat = self.AngulosArticulares_a_pose(self.angulos)
-
-            # Si los ángulos están fuera de los límites, cortar el proceso
-            if coorCartesianas_quat is None:
-                msg = "Ángulos fuera de los límites de trabajo"
-                self.informe_web.publish(msg)
-                return
-
             # Si pasó el chequeo, calculamos coordenadas en Euler
             coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler(self.angulos)
 
             # Guardar el punto en la rutina
             pos = agregar_punto_rutina(
-                coorCartesianas_quat,
+                self.angulos,
                 coorCartesianas_euler,
                 self.velocidad,
                 self.ratio,
@@ -365,14 +356,13 @@ class ModoLectura:
             self.informe_web.publish(mensajes_informe['subir_db'])
             
         elif accion == 'addPT':
-            coorCartesianas_quat=self.AngulosArticulares_a_pose(data.coordenadas[:6])
             coorCartesianas_euler=self.AngulosArticulares_a_cartesianasEuler(data.coordenadas[:6])
             vel_esc=data.coordenadas[6]
             ratio=data.coordenadas[7]
             if nombre:
-                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
+                posicion=agregar_punto_rutina(data.coordenadas[:6], coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
             else:
-                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
+                posicion=agregar_punto_rutina(data.coordenadas[:6], coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
                 mensaje_informe = "Punto agregado correctamente con nombre automático"
                 self.informe_web.publish(mensaje_informe)
                 
@@ -400,19 +390,19 @@ class ModoLectura:
 
         elif accion == 'editPR':            
             coorCartesianas_euler=data.coordenadas[:6]
-            coorCartesianas_quat=self.cartesianasEuler_a_pose(coorCartesianas_euler)
+            ang=self.cartesianaEuler_a_AngulosArticulares(coorCartesianas_euler)
             vel_esc=data.coordenadas[6]
             ratio=data.coordenadas[7]
             wait=data.coordenadas[8]
             posicion=data.coordenadas[9]
             mensaje_puntoR = punto_web() 
-            if self.pose_a_AngulosArticulares(coorCartesianas_quat):
+            if ang:
                 
                 if nombre:
-                    point=editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, nombre)  
+                    point=editar_punto_rutina(ang, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, nombre)  
                     # mensaje_informe = mensajes_informe['editPR'].format(nombre, data.coordenadas)
                 else:
-                    point=editar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, None)  # Si no se especifica nombre, pasa None
+                    point=editar_punto_rutina(ang, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, None)  # Si no se especifica nombre, pasa None
                     # mensaje_informe = "Punto agregado correctamente con nombre automático"
                    
                 if point:    
@@ -562,8 +552,8 @@ class ModoLectura:
                             )
 
                         elif doc.get("rutina") == False:
-                            coorCartesianas_quat = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
-                            coorCartesianas_euler = self.pose_a_cartesianasEuler(coorCartesianas_quat)
+                            ang= doc.get("cordAng", [])
+                            coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler( ang )
                             vel_esc = doc.get("vel_esc", 0)
                             ratio = doc.get("ratio", 0)
                             plan = doc.get("plan", "")
@@ -571,7 +561,7 @@ class ModoLectura:
                             pos = doc.get("pos")
                             wait = doc.get("wait", 0)
 
-                            agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler,
+                            agregar_punto_rutina(ang, coorCartesianas_euler,
                                                 vel_esc, ratio, plan,
                                                 identificador, pos)
 
@@ -847,7 +837,11 @@ class ModoLectura:
         pose = self.cartesianasEuler_a_pose(coord_grados)
         
         if pose:
-            return self.pose_a_AngulosArticulares(pose)
+            ang=self.pose_a_AngulosArticulares(pose)
+            if ang:              
+                return ang
+            else:
+                None
         else: 
             None
                         
