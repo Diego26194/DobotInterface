@@ -31,8 +31,13 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
     });
   };
 
-  const handleBlurGlobal = () => {
-    refreshCordAng(values);  // siempre tiene los 6 valores actualizados
+  const handleBlurGlobal = (newVal: number, idx: number) => {
+    setValues(prev => {
+      const newVals = [...prev];
+      newVals[idx] = newVal;
+      refreshCordAng(newVals);
+      return newVals;
+    });
   };
 
   useImperativeHandle(ref, () => ({
@@ -60,7 +65,7 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}
-              onBlurCustom={handleBlurGlobal}
+              onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, i)}
             />
           ))}
         </Stack>
@@ -77,7 +82,7 @@ const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = f
               value={values[i]}
               onChange={handleChange(i)}
               disabled={disabled}
-              onBlurCustom={handleBlurGlobal}
+              onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, i)}
             />
           ))}
         </Stack>

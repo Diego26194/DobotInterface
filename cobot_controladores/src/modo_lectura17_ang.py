@@ -3,7 +3,7 @@
 
 import rospy
 from std_msgs.msg import Float32MultiArray, Int16MultiArray, String, Bool
-from db_puntos3 import (
+from cobot_controladores.src.db_puntos4_ang import (
     escribir_datos,
     leer_datos,
     eliminar_todos_datos,

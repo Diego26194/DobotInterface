@@ -9,7 +9,7 @@ from moveit_msgs.msg import PositionConstraint, OrientationConstraint
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from db_puntos4 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
+from db_puntos3 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
 import numpy as np
 import sys
 from actionlib import SimpleActionClient 
@@ -470,36 +470,74 @@ class ControladorRobot:
                     
                 velocidad=data.descriocion[2]/100
                 pose = None
-                if data.descriocion[0] == 1:                 
+                if data.descriocion[0] == 1:
+                    # Obtener los datos de cord_ros (pose en este caso)
+                    joint_angles = self.grados_rad(list(data.coordenadas))
                     
                     if data.descriocion[1] == 1:  
-                        joint_angles = self.grados_rad(list(data.coordenadas))
-                        
                         self.ejecutar_trayectoria_position(joint_angles,velocidad)
                     else:
                         
-                        pose=self.AngulosArticulares_a_pose(data.coordenadas)                        
-                        if pose:
-                            if data.descriocion[1]==3:
-                                radio=data.descriocion[3]/1000
-                                self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
+                        #transformar coordenadas angulares a pose                        
+                        try:                     
+            
+                            cord_ang_rad = self.grados_rad(joint_angles)
+                            
+                            rospy.wait_for_service('/compute_fk')
+                            fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)
+
+                            req = GetPositionFKRequest()
+                            req.header.frame_id = self.move_group.get_planning_frame()
+                            #req.header.frame_id = "world" 
+                            req.fk_link_names = [self.move_group.get_end_effector_link()]
+
+                            # Estado articular
+                            robot_state = RobotState()
+                            js = JointState()
+                            js.name = self.move_group.get_active_joints()
+                            js.position = cord_ang_rad
+                            
+                            print("Joints activos:", self.move_group.get_active_joints())
+                            
+                            robot_state.joint_state = js
+                            req.robot_state = robot_state
+
+                            resp = fk(req)
+                            
+                            if resp.error_code.val == 1:  # SUCCESS
+                                pose=resp.pose_stamped[0].pose
                             else:
-                                self.ejecutar_trayectoria_pose(pose,velocidad,plan)
+                                rospy.logerr(f"FK falló con código {resp.error_code.val}")
+                        except Exception as e:
+                            rospy.logerr(f"Error en FK: {e}")
+                        
+                        
+                        if data.descriocion[1]==3:
+                            radio=data.descriocion[3]/1000
+                            self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
+                        else:
+                            self.ejecutar_trayectoria_pose(pose,velocidad,plan)
                             
                 elif data.descriocion[0] == 2 or data.descriocion[0] == 3:
                     instruccion=leer_punto_rutina(data.coordenadas[0])
-                    ang=list(instruccion.get("cordAng", {}))
-                    joint_angles = self.grados_rad(ang)
-                    if data.descriocion[1]==1:
-                        self.ejecutar_trayectoria_position(joint_angles,velocidad)
+                    punto = instruccion.get("coordenadasCQuaterniones", {})
+                    position = punto.get("position", {})
+                    orientation = punto.get("orientation", {})
+
+                    pose = Pose()
+                    pose.position.x = position.get("x", 0.0)
+                    pose.position.y = position.get("y", 0.0)
+                    pose.position.z = position.get("z", 0.0)
+                    pose.orientation.x = orientation.get("x", 0.0)
+                    pose.orientation.y = orientation.get("y", 0.0)
+                    pose.orientation.z = orientation.get("z", 0.0)
+                    pose.orientation.w = orientation.get("w", 1.0)
+                    
+                    if data.descriocion[1]==3:
+                        radio=data.descriocion[3]/1000
+                        self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
                     else:
-                        pose=self.AngulosArticulares_a_pose(ang)
-                        if pose:
-                            if data.descriocion[1]==3:
-                                radio=data.descriocion[3]/1000
-                                self.ejecutar_trayectoria_pose(pose,velocidad,plan,radio)
-                            else:
-                                self.ejecutar_trayectoria_pose(pose,velocidad,plan) 
+                        self.ejecutar_trayectoria_pose(pose,velocidad,plan) 
                 else:                    
                     rospy.logerr("Eror,en el origen de la instruccion: {}".format(data.descriocion[0]))                       
                     
@@ -509,41 +547,7 @@ class ControladorRobot:
                 rospy.logerr("Error al ejecutar trayectoria desde cord_ros: {}".format(e))
                 self.ejecutando_rutina = False
 
-    def AngulosArticulares_a_pose(self, cord_ang_grados):   
-        	
-        try:                     
-            
-            cord_ang_rad = self.grados_rad(cord_ang_grados)
-            
-            rospy.wait_for_service('/compute_fk')
-            fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)
 
-            req = GetPositionFKRequest()
-            req.header.frame_id = self.base_frame
-            #req.header.frame_id = "world" 
-            req.fk_link_names = [self.move_group.get_end_effector_link()]
-
-            # Estado articular
-            robot_state = RobotState()
-            js = JointState()
-            js.name = self.move_group.get_active_joints()
-            js.position = cord_ang_rad
-            
-            #print("Joints activos:", self.move_group.get_active_joints())
-            
-            robot_state.joint_state = js
-            req.robot_state = robot_state
-
-            resp = fk(req)
-            
-            if resp.error_code.val == 1:  # SUCCESS
-                return resp.pose_stamped[0].pose
-            else:
-                rospy.logerr(f"FK falló con código {resp.error_code.val}")
-                return None
-        except Exception as e:
-            rospy.logerr(f"Error en FK: {e}")
-            return None
 if __name__ == '__main__':
     try:
         roscpp_initialize(sys.argv)

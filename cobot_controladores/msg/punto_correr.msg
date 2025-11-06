@@ -1,2 +1,2 @@
 int16[]  descriocion
-int16[]  coordenadas
+float32[]  coordenadas

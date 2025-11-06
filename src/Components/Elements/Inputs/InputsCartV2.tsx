@@ -24,9 +24,14 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
     });
   };
   
-  const handleBlurGlobal = () => {
-    refreshCordCart(values);
-  };
+const handleBlurGlobal = (newVal: number, idx: number) => {
+  setValues(prev => {
+    const newVals = [...prev];
+    newVals[idx] = newVal;
+    refreshCordCart(newVals);
+    return newVals;
+  });
+};
 
   useImperativeHandle(ref, () => ({
     getValues: () => values,
@@ -53,7 +58,7 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
                 value={values[idx]}        // usamos el índice para acceder al valor
                 onChange={handleChange(idx)}
                 disabled={disabled}
-                onBlurCustom={handleBlurGlobal}
+                onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, idx)}
             />
           ))}
         </Stack>
@@ -70,7 +75,7 @@ const InputsCartV = forwardRef<InputsCartVRef, InputsCartVProps>(({ disabled = f
               value={values[idx+3]}
               onChange={handleChange(idx+3)}
               disabled={disabled}
-              onBlurCustom={handleBlurGlobal}
+              onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, idx)}
             />
           ))}
         </Stack>
