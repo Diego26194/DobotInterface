@@ -9,7 +9,7 @@ from moveit_msgs.msg import PositionConstraint, OrientationConstraint
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from db_puntos3 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
+from db_puntos5 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
 import numpy as np
 import sys
 from actionlib import SimpleActionClient 
@@ -94,6 +94,10 @@ class ControladorRobot:
     def grados_rad(self, grad):
         rad = [g * np.pi / 180 for g in grad]
         return rad
+    
+    def bit_rad(self, bit):
+        grad = [(b * 2 * np.pi / 4095 - np.pi) for b in bit]
+        return grad
     
     def dict_to_pose(self,pose_dict):
         
@@ -226,46 +230,73 @@ class ControladorRobot:
         return False
 
     def pose_to_constraint(self, pose_stamped, ratio):
-        """Crea un objeto moveit Constraints a partir de un PoseStamped.
-        Usamos PositionConstraint y OrientationConstraint con tolerancias basadas en 'ratio'.
-        Se asume que 'ratio' está en metros para posición y en radianes para orientación (si es pequeño).
         """
+        Crea un objeto moveit_msgs/Constraints a partir de un PoseStamped.
+        
+        Esta función define DOS aspectos:
+        1. La posición y orientación objetivo (a dónde debe ir el robot).
+        2. Las tolerancias espaciales y angulares (qué tan exacto debe ser).
+        
+        El parámetro 'ratio' se usa actualmente para ambas tolerancias.
+        Si en el futuro solo se desea indicar la posición objetivo sin tolerancia,
+        se puede comentar la parte que asigna el tamaño de la esfera y los límites angulares.
+        """
+
         constr = Constraints()
 
-        # Posición: bounding volume como una pequeña esfera (usamos SolidPrimitive de tipo SPHERE)
+        # ======================================================
+        #  POSICIÓN OBJETIVO (define el punto a alcanzar)
+        # ======================================================
         pos = PositionConstraint()
         pos.header = pose_stamped.header
         pos.link_name = self.move_group.get_end_effector_link()
 
-        # Crear una esfera con radio = ratio
+        # --- Volumen de restricción centrado en la posición del objetivo ---
+        bv = BoundingVolume()
         sphere = SolidPrimitive()
         sphere.type = SolidPrimitive.SPHERE
-        sphere.dimensions = [float(ratio if ratio > 0 else 0.002)]
-
-        bv = BoundingVolume()
+        
+        # ======================================================
+        #  TOLERANCIA ESPACIAL (puede comentarse si no se quiere usar)
+        # ======================================================
+        sphere.dimensions = [float(ratio if ratio > 0 else 0.002)]  # <-- tolerancia en metros
+        # Si querés eliminar tolerancia, usar simplemente:
+        # sphere.dimensions = [0.001]  # o un valor muy pequeño
+        
         bv.primitives.append(sphere)
-        # Centramos el bounding volume en la posición deseada
+        
+        # --- Pose del centro del volumen (posición objetivo) ---
         p = Pose()
         p.position = pose_stamped.pose.position
-        p.orientation.w = 1.0 
+        p.orientation.w = 1.0  # sin rotación adicional
         bv.primitive_poses.append(p)
-
+        
         pos.constraint_region = bv
         pos.weight = 1.0
 
-        # Orientación
+        # ======================================================
+        #  ORIENTACIÓN OBJETIVO
+        # ======================================================
         ori = OrientationConstraint()
         ori.header = pose_stamped.header
         ori.link_name = pos.link_name
         ori.orientation = pose_stamped.pose.orientation
-        # tolerancias en radianes (usar ratio como aproximación)
-        tol = float(ratio if ratio > 0 else 0.05)
+
+        # ======================================================
+        #  TOLERANCIA ANGULAR (puede comentarse si no se quiere usar)
+        # ======================================================
+        tol = float(ratio if ratio > 0 else 0.05)  # en radianes
         ori.absolute_x_axis_tolerance = tol
         ori.absolute_y_axis_tolerance = tol
         ori.absolute_z_axis_tolerance = tol
+        # Si querés una orientación fija, podrías definir tolerancias muy bajas:
+        # ori.absolute_x_axis_tolerance = ori.absolute_y_axis_tolerance = ori.absolute_z_axis_tolerance = 1e-3
+        
         ori.weight = 1.0
 
-        # Añadir a Constraints
+        # ======================================================
+        # 5️⃣ COMPILAR CONSTRAINT
+        # ======================================================
         constr.position_constraints = [pos]
         constr.orientation_constraints = [ori]
         return constr
@@ -278,7 +309,7 @@ class ControladorRobot:
         for elem in lista:
             if elem.get('id') == 'control':
                 continue
-            if elem.get('rutina', False):
+            if elem.get('plan')== "Rutina":
                 nombre = elem.get('nombre')
                 if not nombre:
                     rospy.logwarn("Elemento rutina sin nombre, se omite.")
@@ -296,52 +327,82 @@ class ControladorRobot:
                 sub = [r for r in sub if r.get('id') != 'control']
                 # Recursivamente expandir
                 puntos.extend(self.expandir_rutina(sub))
-            else:
+            else:                
                 puntos.append(elem)
         return puntos
 
-    def crear_goal(self, puntos):
-        """Crea un MoveGroupSequenceGoal para Pilz usando puntos en formato pose.
-        Se añade primero un item con la pose actual del robot para asegurar que la secuencia parte desde la pose actual.
+    def crear_goal(self, puntos, Pinicial):
+        """
+        Crea un MoveGroupSequenceGoal para Pilz usando puntos en formato pose.
+        Usa el estado inicial (Pinicial) como start_state en lugar de la pose actual del robot.
+        
+        Parámetros:
+        - puntos: lista de diccionarios con la información de cada punto (pose, plan, vel_esc, ratio, etc.)
+        - Pinicial: lista [q1, q2, q3, q4, q5, q6] indicando el estado inicial del robot (en radianes)
         """
         sequence_request = MotionSequenceRequest()
+        PosTrayectoria=False
+        
 
-        # Obtener pose actual
-        current_pose_stamped = PoseStamped()
-        current_pose_stamped.header.frame_id = "base_link"
-        current_pose_stamped.pose = self.move_group.get_current_pose().pose
+        # ======================================================
+        #  Crear RobotState inicial desde Pinicial
+        # ======================================================
+        start_state = RobotState()
+        joint_state = JointState()
+        joint_state.name = self.move_group.get_active_joints()  # toma los nombres del grupo
+        joint_state.position = Pinicial
+        start_state.joint_state = joint_state
 
-        # Item inicial con pose actual (para asegurar inicio desde la pose real)
-        init_item = MotionSequenceItem()
-        init_item.req.group_name = "cobot_arm"
-        init_item.req.planner_id = "PTP"
-        init_item.req.max_velocity_scaling_factor = 0.1
-        init_item.req.max_acceleration_scaling_factor = 0.1
-        init_item.req.goal_constraints.append(self.pose_to_constraint(current_pose_stamped, 0.01))
-        sequence_request.items.append(init_item)
-
-        for p in puntos:
+        # ======================================================
+        #  Crear los items de la secuencia
+        # ======================================================
+        for idx, p in enumerate(puntos):             
             pose = PoseStamped()
             pose.header.frame_id = "base_link"
-                        
-            coords = self.dict_to_pose( p.get('coordenadasCQuaterniones') )
-            pose.pose = coords
+            pose.pose = self.dict_to_pose(p.get('coordenadasCQuaterniones'))
 
             item = MotionSequenceItem()
-            item.req.group_name = "cobot_arm"
-            item.req.planner_id = p.get('plan', 'PTP')  # PTP, LIN, CIRC
-            item.req.max_velocity_scaling_factor = float(p.get('vel_esc', 100)) / 100.0
+            # Usar Pinicial como start_state en el primer movimiento
+            if idx == 0 or PosTrayectoria:
+                item.req.start_state = start_state
+                PosTrayectoria=False      
+                PTrayectoriaFinal=[]  
+            
+            #El proximo punto despues de una trayectoria empezara donde esta termino
+            if p.get('plan')== "Trayectoria":
+                PTrayectoriaFinal=self.bit_rad(p.get('punto')[-1]) 
+                joint_state.position = PTrayectoriaFinal
+                PosTrayectoria=True 
+                #si es trayectoria debo ir al punto iniciar,por eso cambio a PTP
+                item.req.planner_id = 'PTP'
+            else: 
+                #indico el plan comun cuando no es trayectoria
+                item.req.planner_id = p.get('plan', 'PTP')  # PTP, LIN o CIRC
+            
+            item.req.group_name = "cobot_arm"            
+            item.req.max_velocity_scaling_factor = float(p.get('vel_esc', 50)) / 100.0
             item.req.max_acceleration_scaling_factor = 1.0
 
-            ratio = float(p.get('ratio', 0.01))
+                 
+            
+            
+
+            # Crear constraint hacia el punto objetivo
+            ratio = float(p.get('ratio', 0))
             item.req.goal_constraints.append(self.pose_to_constraint(pose, ratio))
+
+            # Radio de blending (si se desea suavizar transiciones)
             item.blend_radius = 0.0
 
             sequence_request.items.append(item)
 
+        # ======================================================
+        #  Construir el Goal final para enviar al ActionServer
+        # ======================================================
         goal = MoveGroupSequenceGoal()
         goal.request = sequence_request
         return goal
+
 
     def ejecutar_rutina(self, data):
         F = Bool(False)
@@ -376,7 +437,9 @@ class ControladorRobot:
 
         rospy.loginfo(f"Puntos expandidos: {len(puntos)}")
         
-        goal = self.crear_goal(puntos)        
+        
+        posicion_actual = self.move_group.get_current_joint_values()
+        goal = self.crear_goal(puntos,posicion_actual )        
         
         rospy.loginfo("Comiendo de planificaciond de rutina: enviando -2 a planificación y mandando goal completo")
         self.trayectoria_pub.publish(Int16(-1)) 
@@ -399,17 +462,25 @@ class ControladorRobot:
         #self.sequence_action_client.wait_for_result()
         
         
-        # Buscar todos los waits y sus índices (ajustados por +1)
+        # Buscar todos los waits y trayectorias con sus índices 
         indices_wait = []
         valores_wait = []
+        
+        
+        indices_Trayectorias = []
+        puntos_Trayectorias = []
         
         rospy.loginfo(puntos)
 
         for i, p in enumerate(puntos):
             wait_val = int(p.get('wait', 0))
             if wait_val != 0:
-                indices_wait.append(i + 2)  # +1 porque crear_goal agrega un punto inicial
+                indices_wait.append(i + 1)  # +1 porque crear_goal agrega un punto inicial
                 valores_wait.append(wait_val)
+            if p.get('plan')== "Trayectoria":
+                indices_Trayectorias.append(i + 1)
+                #puntos_convertidos = [[int(v) for v in sublista] for sublista in p.get('puntos')]
+                puntos_Trayectorias.append(p.get('puntos'))
 
         tiene_wait = len(indices_wait) > 0
         

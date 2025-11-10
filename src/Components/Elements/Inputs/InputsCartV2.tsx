@@ -75,7 +75,7 @@ const handleBlurGlobal = (newVal: number, idx: number) => {
               value={values[idx+3]}
               onChange={handleChange(idx+3)}
               disabled={disabled}
-              onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, idx)}
+              onBlurCustom={(newVal: number) => handleBlurGlobal(newVal, idx+3)}
             />
           ))}
         </Stack>

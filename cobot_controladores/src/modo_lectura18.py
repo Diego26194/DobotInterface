@@ -3,7 +3,7 @@
 
 import rospy
 from std_msgs.msg import Float32MultiArray, Int16MultiArray, String, Bool
-from db_puntos3 import (
+from db_puntos5 import (
     escribir_datos,
     leer_datos,
     eliminar_todos_datos,
@@ -25,6 +25,7 @@ from db_puntos3 import (
     actualizar_control,
     eliminar_rutina_control,
     leer_rutina_sin_quaterniones,
+    agregar_trayectoria_rutina,
 )
 from cobot_controladores.msg import punto_web, nombresPuntos, punto_real
 import numpy as np
@@ -95,7 +96,7 @@ class ModoLectura:
         eliminar_todos_datos_rutina()
         #################### Aquí termina la sección de eliminación de la base de datos ####################
         
-        self.angulos = [0] * 6
+        self.angulosBit = [2047,2047,2047,2047,2047,2047]
         
         
         #################### Inicializa el conversor de coordenadas para un robot definido en MoveIt. ####################
@@ -105,33 +106,61 @@ class ModoLectura:
         self.move_group.set_planner_id("PTP")
         
         ##################### Modo Trayectoria ###################
-        rospy.Subscriber('/tipo_modo_lectura', Bool, self.modoT)
+        rospy.Subscriber('/tipo_modo_lectura', Bool, self.modoT)        
+        rospy.Subscriber('/guardar_trayectoria', Bool, self.guardarT)
+        self.GuardarT=False
         self.modoTrayectoria=True
         self.rutina=[]
-        self.rutinaPunto=[2047,2047,2047,2047,2047,2047]
         
         self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
 
     def modoT(self,data):
         self.modoTrayectoria=data.data
         self.rutina.clear()
+    
+    def guardarT(self,data):
+        self.GuardarT=data.data
+        if self.rutina:
+            angInit=self.bit_grados(self.rutina[0])
+            poseInit=self.AngulosArticulares_a_pose(angInit)
+            pos=agregar_trayectoria_rutina(self.rutina,poseInit)           
+                
+            punto = leer_punto_rutina(pos)  
+            if punto:
+                mensaje_puntoR = punto_web()
+                mensaje_puntoR.orden = ['addR', punto['nombre'], punto['plan']]
+                mensaje_puntoR.coordenadas = [(punto['wait']), (punto['pos'])]
+                self.puntos_rutina.publish(mensaje_puntoR)
+
+                mensaje_informe = (
+                    f"Trayectoria {punto['nombre']} agregado correctamente "
+                )
+                self.informe_web.publish(mensaje_informe)
+                self.rutina.clear()
+            else:
+                self.informe_web.publish(f"Trayectoria no guardada")
+        else: 
+            self.informe_web.publish(f"No hay trayectoria para guardar")
+        self.GuardarT=False
+
         
     def pasar_punto_real(self, data):        
         entrada = data.data
         
         errores = []
         for i, valor in enumerate(entrada):
-            if valor == -1:
+            if valor != -1 or valor != 0:
                 errores.append(False)
             else:       
                 errores.append(True)        
-                self.angulos[i] = self.bit_grados([valor])[0]  
+                self.angulosBit[i] = valor
         
-        coordenadas_rad = self.grados_rad(self.angulos)
-        coordenadas_cart = self.AngulosArticulares_a_cartesianasEuler(coordenadas_rad)
+        angulos=self.bit_grados(self.angulosBit)        
+        #coordenadas_rad = self.grados_rad(angulos)
+        coordenadas_cart = self.AngulosArticulares_a_cartesianasEuler(angulos)
         
         msg = punto_real()
-        msg.ang = [int(a) for a in self.angulos]          
+        msg.ang = [int(a) for a in angulos]          
         msg.cart = [int(c) for c in coordenadas_cart]    
         msg.error = errores                              
         
@@ -143,11 +172,11 @@ class ModoLectura:
         
         if self.modoTrayectoria:
             for i, valor in enumerate(coordenadas):
-                if valor != -1:
-                    self.rutinaPunto[i] = valor
+                if valor != -1 or valor != 0:
+                    self.angulosBit[i] = valor
 
             # Guarda una copia del vector actual
-            self.rutina.append(list(self.rutinaPunto))
+            self.rutina.append(list(self.angulosBit))
         
         else:
 
@@ -158,11 +187,12 @@ class ModoLectura:
             
             # Filtrar valores -1 (motores desconectados)
             for i, valor in enumerate(coordenadas):
-                if valor != -1:        
-                    self.angulos[i] = self.bit_grados([valor])[0]
+                if valor != -1 or valor != 0:        
+                    self.angulosBit[i] = valor
 
+            angulos=self.bit_grados(self.angulosBit)
             # Intentar convertir ángulos a pose
-            coorCartesianas_quat = self.AngulosArticulares_a_pose(self.angulos)
+            coorCartesianas_quat = self.AngulosArticulares_a_pose(angulos)
 
             # Si los ángulos están fuera de los límites, cortar el proceso
             if coorCartesianas_quat is None:
@@ -171,7 +201,7 @@ class ModoLectura:
                 return
 
             # Si pasó el chequeo, calculamos coordenadas en Euler
-            coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler(self.angulos)
+            coorCartesianas_euler = self.AngulosArticulares_a_cartesianasEuler(angulos)
 
             # Guardar el punto en la rutina
             pos = agregar_punto_rutina(
@@ -239,7 +269,7 @@ class ModoLectura:
             elif punto.get("rutina") is True:
                 # Sub-rutina
                 mensaje_rutinaR = punto_web()
-                mensaje_rutinaR.orden = ['addRT', punto['nombre']]
+                mensaje_rutinaR.orden = ['addRT', punto['nombre'], punto['plan']]
                 mensaje_rutinaR.coordenadas = [
                     punto['wait'],
                     punto['pos'],
@@ -464,7 +494,7 @@ class ModoLectura:
               for item in data.coordenadas:
                 punto = leer_punto_rutina(item)
                 eliminar_punto_rutina(item)
-                if punto['rutina']:
+                if punto['plan']=="Rutina":
                     eliminar_rutina_control(punto['nombre'])
                     verificar_rutinas_control()
                 mensaje_informe = mensajes_informe['eliminarPunRut'].format(punto['nombre'], item)
@@ -613,7 +643,7 @@ class ModoLectura:
                 punto = leer_punto_rutina(resultado)  
             if punto:
                 mensaje_rutinaR = punto_web()
-                mensaje_rutinaR.orden = ['addRT', punto['nombre']]
+                mensaje_rutinaR.orden = ['addRT', punto['nombre'], punto['plan']]
                 mensaje_rutinaR.coordenadas = [
                     punto['wait'],
                     punto['pos'],
@@ -668,15 +698,9 @@ class ModoLectura:
             # Publicar en el tópico 'informe_web'
                 self.informe_web.publish(mensajes_informe['subirR_db'])
             else:                
-                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")           
-                        
-        elif accion == 'runTrayectoria':
-            rate = rospy.Rate(20)  
-            for punto in self.rutina:
-                msg = Int16MultiArray()
-                msg.data = punto
-                self.pub_cord_dy.publish(msg)
-                rate.sleep()
+                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")       
+                     
+        
     
     def dict_to_pose(self, pose_dict):
         

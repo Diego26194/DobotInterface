@@ -13,6 +13,8 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { resibirMsgRutina ,elimiarPuntoRutina, correrTAngular, msgEmergente, editarPuntoRutina } from "../Services/Funciones";
 import InputPoisitive from "../Components/Elements/Inputs/InputPoisitive";
 
+import InputGridCords from '../Components/Elements/Inputs/InputGridCords';
+
 
 //COLUMNA Select
 
@@ -106,7 +108,6 @@ type RowType = {
   plan: string ;
   editable: boolean;
   wait: number; 
-  rutine: boolean;
 };
 
 
@@ -126,10 +127,11 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     React.useState<GridRowSelectionModel>({ type: 'include', ids: new Set() });
   //const [rows, setRows] = useState<RowType[]>([]);
   
-  const [rows, setRows] = useState([ { id: 1, posicion: 1 , nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0, rutine: false },
-     { id: 2, posicion: 2 , nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false },
-     { id: 3, posicion: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'CIRC' , editable: false, wait: 0 , rutine: true}, 
-     { id: 4, posicion: 4 , nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3, rutine: false }, 
+  const [rows, setRows] = useState([ { id: 1, posicion: 1 , nombre: 'Inicio', coordenadas: [0, 0, 0, 0, 0, 0], escV: 10, ratio:0, plan: 'PTP' , editable: false, wait: 0},
+     { id: 2, posicion: 2 , nombre: 'Punto A', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3},
+     { id: 3, posicion: 3, nombre: 'Ir a Torno', coordenadas: [15, 25, 35, 0, 10, 0], escV: 100, ratio:0, plan: 'Rutina' , editable: false, wait: 0 }, 
+     { id: 4, posicion: 4 , nombre: 'Punto B', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'LIN' , editable: false, wait: 3}, 
+     { id: 5, posicion: 5 , nombre: 'T2', coordenadas: [10, 20, 30, 0, 0, 0], escV: 50, ratio:50, plan: 'Trayectoria' , editable: false, wait: 3}, 
     ]);
     
     //const [wite, setShoWite] = useState(0);
@@ -173,7 +175,6 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
                     ratio: msg.coordenadas[7],
                     wait: msg.coordenadas[8] ?? row.wait, // por si lo mandás
                     editable: false,
-                    rutine: false,
                   }
                 : row
             )
@@ -184,12 +185,20 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           setRows([]);
           break;
           
+        case 'addT':
+          console.log('Trayectoria agregada');
+          console.log(msg);
+          addRowRutina(msg.orden, msg.coordenadas);
+          
+          break;
+          
         case 'addRT':
           console.log('rutina agregada');
           console.log(msg);
           addRowRutina(msg.orden, msg.coordenadas);
           
           break;
+
 
         case 'errorPunRut':
           //msgEmergente('ErrordelPR');
@@ -273,8 +282,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
         escV: coordenadas[6], 
         ratio: coordenadas[7], 
         editable: false,
-        wait: coordenadas[8],
-        rutine: false,                   
+        wait: coordenadas[8],          
       };
       return [...prev, newRow];
     });
@@ -286,13 +294,12 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
         id: Date.now() + Math.floor(Math.random() * 1000), //Date.now(),      
         posicion: coordenadas[1], //prev.length + 1,         
         nombre: orden[1],
-        plan:  '',
+        plan:  orden[2],
         coordenadas: [],
         escV: 0, 
         ratio: 0, 
         editable: false,
-        wait: coordenadas[0],
-        rutine:true,                   
+        wait: coordenadas[0],         
       };
       return [...prev, newRow];
     });
@@ -415,7 +422,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     // Buscamos la fila correspondiente en el estado `rows`
     const row = rows.find(r => r.id === rowId);
     if (row) {
-      if (row.rutine){
+      if (row.plan="Rutina"){
         console.log("No es un punto,por el momento no se puede correr la rutina: ", row.nombre);
       }
       else{
@@ -454,7 +461,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
   {
       field: 'coordenadas',
       headerName: 'Coordenadas',
-      width: 330,
+      width: 360,
       editable: true,  
       renderEditCell: ({ id, field, value, api }) => {
         const handleChange = (index: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -464,49 +471,19 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
         };
 
         return (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.7 }}>
             {value.map((coord: number, i: number) => (
-              <TextField
+              <InputGridCords
                 key={i}
-                type="number"
                 value={coord}
                 onChange={handleChange(i)}
-                size="small"
-                InputProps={{
-                  inputProps: {
-                    step: '1',
-                    inputMode: 'numeric',
-                  },
-                }}
-                sx={{
-                  width: 50,
-                  height: '100%',
-                  /*
-                  '& input::-webkit-outer-spin-button': {
-                    display: 'none',
-                  },
-                  '& input::-webkit-inner-spin-button': {
-                    display: 'none',
-                  },*/
-                  '& .MuiInputBase-root': {
-                    fontSize: '0.75rem',
-                    padding: '0px 4px',
-                    minHeight: '2px',
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '0.70rem',
-                  },
-                  '& input': {
-                    padding: 0,
-                  },
-                }}
               />
             ))}
           </Box>
         );
       },
-      renderCell: (params) => params.row.rutine === false ? 
-        (<span>{params.value?.join(', ')}</span>
+      renderCell: (params) => (params.row.plan !== "Rutina" && params.row.plan !== "Trayectoria") ? 
+        (<span>{params.value?.join(' , ')}</span>
       ) : null
     },
     {
@@ -516,7 +493,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       width: 50,
       editable: true,
       renderEditCell: (params) => <NumericEditCell {...params} />,
-      renderCell: (params) =>params.row.rutine === false ? params.row.escV : null
+      renderCell: (params) =>(params.row.plan !== "Rutina" && params.row.plan !== "Trayectoria" ) ? 
+      params.row.escV : null
     },
   /*  {
       field: 'escA',
@@ -540,7 +518,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       width: 50,
       editable: true,
       renderEditCell: (params) => <NumericEditCell {...params} />,
-      renderCell: (params) =>params.row.rutine === false ? params.row.ratio : null
+      renderCell: (params) =>(params.row.plan !== "Rutina" && params.row.plan !== "Trayectoria" ) ? 
+      params.row.ratio : null
     },
     {
       field: 'plan',
@@ -548,7 +527,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       width: 80,
       editable: true,
       renderEditCell: (params) => <SelectTrayectoriaCell {...params} />,
-      renderCell: (params) =>params.row.rutine === false ? params.row.plan : null
+      
     },
     {
       field: "actions",
@@ -556,7 +535,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       width: 40,
       renderCell: (params) => {
 
-        if (params.row.rutine) return null;
+        if ((params.row.plan == "Rutina" || params.row.plan == "Trayectoria" )) return null;
 
         const rowEditable = params.row.editable;
 

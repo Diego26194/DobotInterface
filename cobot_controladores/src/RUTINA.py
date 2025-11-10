@@ -51,7 +51,7 @@ class RUN:
         
         if self.modoTrayectoria:
             for i, valor in enumerate(coordenadas):
-                if valor != -1:
+                if valor != -1 or valor != 0:
                     self.rutinaPunto[i] = valor
 
             # Guarda una copia del vector actual

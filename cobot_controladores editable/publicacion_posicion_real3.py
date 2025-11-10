@@ -36,7 +36,7 @@ class PublicacionPosicionReal:
 
         with self.lock:
             for i in range(6):
-                if msg.data[i] != -1:
+                if msg.data[i] != -1 or msg.data[i] != 0:
                     self.positionPos_dy[i] = msg.data[i]
 
     def timer_callback(self, event):
