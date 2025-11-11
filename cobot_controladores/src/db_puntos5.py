@@ -148,15 +148,7 @@ def agregar_rutina_rutina(identificador, pos=None, wait=None):
 
 # Función para agregar una rutina como instruccion en la rutina actual
 def agregar_trayectoria_rutina(trayectoria,poseInit,identificador=None, pos=None, wait=None):
-    
-    # Verificar si se recibió un identificador
-    if identificador is None:
-        # Si no se proporcionó un identificador, asignar 'p{doc_id}'
-        nombre = f"rut{doc_id}"
-    else:
-        # Si se proporcionó, usar ese identificador
-        nombre = identificador
-        
+               
     # --- Manejo del campo "pos" ---
     if pos is None:
         # Si no se pasa posición, insertar al final
@@ -167,15 +159,27 @@ def agregar_trayectoria_rutina(trayectoria,poseInit,identificador=None, pos=None
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    rutina = {'puntos':trayectoria, 'coordenadasCQuaterniones': poseInit,'nombre': identificador,
+    rutina = {'puntos':trayectoria, 'coordenadasCQuaterniones': poseInit,
               'pos': pos, 'plan':"Trayectoria",'wait': wait if wait is not None else 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
     doc_id = rutina_actual.insert(rutina)
-   
+    
+    # Verificar si se recibió un identificador
+    if identificador is None:
+        # Si no se proporcionó un identificador, asignar 'p{doc_id}'
+        nombre = f"rut{doc_id}"
+    else:
+        # Si se proporcionó, usar ese identificador
+        nombre = identificador
+        
+    # Actualizar el registro con el nombre asignado
+    rutina_actual.update({'nombre': nombre}, doc_ids=[doc_id])
+    
     # Agregar el doc_id y nombre al diccionario original para referencia
     rutina["id"] = doc_id
-    agregar_rutina_control(identificador)
+    rutina["nombre"] = nombre
+    #agregar_rutina_control(identificador)
     return pos
 
 def editar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):

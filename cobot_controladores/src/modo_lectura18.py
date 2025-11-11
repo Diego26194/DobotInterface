@@ -252,8 +252,27 @@ class ModoLectura:
             if punto.get("id") == "control":
                 continue
 
-            if punto.get("rutina") is False:
-                                
+            if punto.get("plan") == "Rutina" :
+                # Sub-rutina
+                mensaje_rutinaR = punto_web()
+                mensaje_rutinaR.orden = ['addRT', punto['nombre'], punto['plan']]
+                mensaje_rutinaR.coordenadas = [
+                    punto['wait'],
+                    punto['pos'],
+                ]
+                self.puntos_rutina.publish(mensaje_rutinaR)
+
+            elif punto.get("plan") == "Trayectoria":
+                # Sub-rutina
+                mensaje_rutinaR = punto_web()
+                mensaje_rutinaR.orden = ['addR', punto['nombre'], punto['plan']]
+                mensaje_rutinaR.coordenadas = [
+                    punto['wait'],
+                    punto['pos'],
+                ]
+                self.puntos_rutina.publish(mensaje_rutinaR)
+                
+            else:                                
                 # Punto normal
                 mensaje_puntoR = punto_web()
                 mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
@@ -265,16 +284,6 @@ class ModoLectura:
                 ]
                                 
                 self.puntos_rutina.publish(mensaje_puntoR)
-
-            elif punto.get("rutina") is True:
-                # Sub-rutina
-                mensaje_rutinaR = punto_web()
-                mensaje_rutinaR.orden = ['addRT', punto['nombre'], punto['plan']]
-                mensaje_rutinaR.coordenadas = [
-                    punto['wait'],
-                    punto['pos'],
-                ]
-                self.puntos_rutina.publish(mensaje_rutinaR)
 
     def acciones_web(self, data):
     # Extraer la acción y el nombre (si existe) desde el mensaje recibido

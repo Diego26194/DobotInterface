@@ -14,7 +14,7 @@ import numpy as np
 import sys
 from actionlib import SimpleActionClient 
 from moveit_msgs.srv import GetMotionPlan
-from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult, punto_correr, waits
+from cobot_controladores.msg import actionSAction, actionSGoal, actionSResult, punto_correr, waits, trayectorias
 
 
 # Bounding volume
@@ -52,6 +52,7 @@ class ControladorRobot:
         self.trayectoria_pub = rospy.Publisher('trayectoria_A_planificacion', Int16, queue_size=10)
         self.rutine_waits = rospy.Publisher('rutine_waits', waits, queue_size=10)
         self.plan_sub = rospy.Subscriber('planificacion_A_trayectoria', Int16, self._planificacion_callback)
+        self.rutine_trayectorias = rospy.Publisher('rutine_trayectorias', trayectorias, queue_size=10)
 
         # Estado actual del robot
         self.estado_actual = None
@@ -85,6 +86,11 @@ class ControladorRobot:
 
         rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, self.anular_ejecucion)
         self.planear_Rutina = False
+        
+        ## Trayectoria        
+        
+        self.posicion_Trayectorias=[]
+        self.rutina_Trayectorias=[]
 
 
     def rad_bit(self, rad):
@@ -132,7 +138,7 @@ class ControladorRobot:
 
     def ejecutar_trayectoria_position(self, joint_angles,velocidad):
         try:
-            self.trayectoria_pub.publish(Int16(-5)) 
+            self.trayectoria_pub.publish(Int16(0)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -166,7 +172,7 @@ class ControladorRobot:
         
     def ejecutar_trayectoria_pose(self, pose,velocidad,plan):
         try:
-            self.trayectoria_pub.publish(Int16(-5)) 
+            self.trayectoria_pub.publish(Int16(0)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -305,29 +311,35 @@ class ControladorRobot:
         """Expande recursivamente las rutinas anidadas en una lista plana de puntos (elem donde elem['rutina'] == False).
         Ignora elementos con id == 'control'.
         """
+        nombre_rut='rutina_actual'
+        
         puntos = []
         for elem in lista:
             if elem.get('id') == 'control':
                 continue
             if elem.get('plan')== "Rutina":
-                nombre = elem.get('nombre')
-                if not nombre:
+                nombre_rut = elem.get('nombre')
+                if not nombre_rut:
                     rospy.logwarn("Elemento rutina sin nombre, se omite.")
                     continue
                 try:
-                    sub = obtener_rutina(nombre)
+                    sub = obtener_rutina(nombre_rut)
                 except Exception as e:
-                    rospy.logerr(f"Error al obtener rutina {nombre}: {e}")
+                    rospy.logerr(f"Error al obtener rutina {nombre_rut}: {e}")
                     continue
                 # comprobar control en la rutina anidada
                 control = next((r for r in sub if r.get('id') == 'control'), None)
                 if control and control.get('error', False):
-                    rospy.logwarn(f"Rutina anidada {nombre} inválida, se omite.")
+                    rospy.logwarn(f"Rutina anidada {nombre_rut} inválida, se omite.")
                     continue
                 sub = [r for r in sub if r.get('id') != 'control']
                 # Recursivamente expandir
                 puntos.extend(self.expandir_rutina(sub))
             else:                
+                if elem.get('plan')== "Trayectoria":                    
+                    self.posicion_Trayectorias.append(elem.get('pos'))
+                    self.rutina_Trayectorias.append(nombre_rut)
+                    
                 puntos.append(elem)
         return puntos
 
@@ -468,25 +480,23 @@ class ControladorRobot:
         
         
         indices_Trayectorias = []
-        puntos_Trayectorias = []
         
         rospy.loginfo(puntos)
 
         for i, p in enumerate(puntos):
             wait_val = int(p.get('wait', 0))
             if wait_val != 0:
-                indices_wait.append(i + 1)  # +1 porque crear_goal agrega un punto inicial
+                indices_wait.append(i) 
                 valores_wait.append(wait_val)
             if p.get('plan')== "Trayectoria":
-                indices_Trayectorias.append(i + 1)
-                #puntos_convertidos = [[int(v) for v in sublista] for sublista in p.get('puntos')]
-                puntos_Trayectorias.append(p.get('puntos'))
+                indices_Trayectorias.append(i)
 
         tiene_wait = len(indices_wait) > 0
+        tiene_trayectoria = len(indices_Trayectorias) > 0
         
         #comienzo con las ejecuciones
 
-        if not tiene_wait:
+        if not tiene_wait and not tiene_trayectoria:
             # --- CASO 1: rutina completa sin waits ---
             rospy.loginfo("Rutina sin waits: enviando -2 a planificación y mandando goal completo")
             self.trayectoria_pub.publish(Int16(-2))
