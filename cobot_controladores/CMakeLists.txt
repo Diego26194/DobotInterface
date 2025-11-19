@@ -23,7 +23,10 @@ add_message_files(
   msg_web.msg
   punto_web.msg
   nombresPuntos.msg
+  punto_correr.msg
   punto_real.msg
+  trayectorias.msg
+  waits.msg
 )
 
 generate_messages(
