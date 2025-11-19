@@ -148,6 +148,8 @@ def agregar_rutina_rutina(identificador, pos=None, wait=None):
 
 # Función para agregar una rutina como instruccion en la rutina actual
 def agregar_trayectoria_rutina(trayectoria,poseInit,identificador=None, pos=None, wait=None):
+
+    cordInit=pose_to_dict(poseInit)
                
     # --- Manejo del campo "pos" ---
     if pos is None:
@@ -159,7 +161,7 @@ def agregar_trayectoria_rutina(trayectoria,poseInit,identificador=None, pos=None
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    rutina = {'puntos':trayectoria, 'coordenadasCQuaterniones': poseInit,
+    rutina = {'puntos':trayectoria, 'coordenadasCQuaterniones': cordInit,
               'pos': pos, 'plan':"Trayectoria",'wait': wait if wait is not None else 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado

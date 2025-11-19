@@ -36,24 +36,15 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
 
+from Normalizacion_Robot import NormalizacionRobot
+
 import re
 
 
 import time
 
+norm = NormalizacionRobot()
 class CinematicMode:
-    def bit_grados(self, bit):
-        grad = [(b * 360 / 4095 - 180) for b in bit]
-        return grad
-    
-    def grados_rad(self, grad):
-        rad = [g * np.pi / 180 for g in grad]
-        return rad
-    
-    def rad_grados(self, rad):
-        grad=[r * 180 / np.pi for r in rad]
-        return grad
-
     def __init__(self):
         rospy.init_node('cinematic_mode')
         
@@ -97,12 +88,7 @@ class CinematicMode:
         self.move_group = MoveGroupCommander("cobot_arm")
         self.group_name = "cobot_arm"
         self.base_frame = self.move_group.get_planning_frame()
-        self.move_group.set_planner_id("PTP")
-        
-        
-        
-        
-        
+        self.move_group.set_planner_id("PTP")     
         
         self.punto_ang = rospy.Publisher('ang', Float32MultiArray, queue_size=10)
         self.punto_cart = rospy.Publisher('cart', Float32MultiArray, queue_size=10)
@@ -134,8 +120,7 @@ class CinematicMode:
     def cart_ang(self, cart):
         cartesianas=cart.data
         
-        pose = self.cartesianasEuler_a_pose(cartesianas)
-        
+        pose = self.cartesianasEuler_a_pose(cartesianas)        
         
         if pose:
         
@@ -157,8 +142,7 @@ class CinematicMode:
                 msgAng.data = [float(a) for a in ang]
                 self.punto_ang.publish(msgAng)
         else: 
-            None
-        
+            None        
    
     # ===============================
     # 1. Ángulos articulares -> Pose
@@ -167,7 +151,7 @@ class CinematicMode:
         	
         try:                     
             
-            cord_ang_rad = self.grados_rad(cord_ang_grados)
+            cord_ang_rad = norm.grados_rad(cord_ang_grados)
             
             rospy.wait_for_service('/compute_fk')
             fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)
@@ -199,7 +183,6 @@ class CinematicMode:
             rospy.logerr(f"Error en FK: {e}")
             return None
 
-
     # ===============================
     # 2. Pose -> Ángulos articulares
     # ===============================
@@ -226,12 +209,11 @@ class CinematicMode:
         
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
-            #return self.rad_grados(cord_ang_rad)
-            return self.rad_grados(cord_ang_rad)
+            #return norm.rad_grados(cord_ang_rad)
+            return norm.rad_grados(cord_ang_rad)
         else:
             rospy.logerr(f"IK falló con código: {resp.error_code.val}")
             return None
-
 
     # ===============================
     # 3. Cartesianas + Euler -> Pose
@@ -239,7 +221,7 @@ class CinematicMode:
     def cartesianasEuler_a_pose(self, coord):
         # 1. Separar parte cartesiana y angular
         coord_cart = [c / 1000.0 for c in coord[:3]]   # mm → m
-        coord_ang  = self.grados_rad(coord[3:])        # grados → radianes
+        coord_ang  = norm.grados_rad(coord[3:])        # grados → radianes
 
         # 2. Calcular cuaternión a partir de las coordenadas angulares
         quat = tf.transformations.quaternion_from_euler(
@@ -257,7 +239,7 @@ class CinematicMode:
         pose.orientation.w = quat[3]
        
         return pose
-
+    
     # ===============================
     # 4. Pose -> Cartesianas + Euler
     # ===============================
@@ -274,10 +256,9 @@ class CinematicMode:
            float(pose.position.x * 1000),
            float(pose.position.y * 1000),
            float(pose.position.z * 1000),
-           ] + [float(a) for a in self.rad_grados([roll, pitch, yaw])
+           ] + [float(a) for a in norm.rad_grados([roll, pitch, yaw])
         ]
-        return coordenadas
-        
+        return coordenadas        
        
     # ===============================
     # 5. Ángulos articulares -> Cartesianas + Euler
@@ -289,7 +270,6 @@ class CinematicMode:
         """
         pose = self.AngulosArticulares_a_pose(cord_ang_grados)
         return self.pose_a_cartesianasEuler(pose)
-
 
     # ===============================
     # 6. Cartesianas + Euler -> Ángulos articulares
@@ -306,9 +286,6 @@ class CinematicMode:
         else: 
             None
                         
-
-
-
 if __name__ == '__main__':
     try:
         cinematic_mode =CinematicMode()

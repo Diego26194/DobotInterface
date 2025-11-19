@@ -25,6 +25,9 @@ from moveit_msgs.msg import BoundingVolume
 
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionFK, GetPositionFKRequest
 
+from Normalizacion_Robot import NormalizacionRobot
+
+norm = NormalizacionRobot()
 
 class ControladorRobot:
     def __init__(self):
@@ -90,20 +93,7 @@ class ControladorRobot:
         ## Trayectoria        
         
         self.posicion_Trayectorias=[]
-        self.rutina_Trayectorias=[]
-
-
-    def rad_bit(self, rad):
-        bit = [(int((r + np.pi) * 4095 / (2 * np.pi))) for r in rad]
-        return np.int16(bit)
-
-    def grados_rad(self, grad):
-        rad = [g * np.pi / 180 for g in grad]
-        return rad
-    
-    def bit_rad(self, bit):
-        grad = [(b * 2 * np.pi / 4095 - np.pi) for b in bit]
-        return grad
+        self.rutina_Trayectorias=[] 
     
     def dict_to_pose(self,pose_dict):
         
@@ -137,13 +127,14 @@ class ControladorRobot:
                 rospy.logerr(f"Error inesperado al cancelar metas: {e}")
 
     def ejecutar_trayectoria_position(self, joint_angles,velocidad):
+    
         try:
             self.trayectoria_pub.publish(Int16(0)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
             
-            rospy.logwarn(velocidad)
+            rospy.logwarn(1)
             self.move_group.set_max_velocity_scaling_factor(velocidad)
 
             self.move_group.set_planner_id("PTP")
@@ -152,7 +143,6 @@ class ControladorRobot:
             
 
             success, traj, planning_time, error_code = self.move_group.plan()
-            
             
             # esperar confirmacion 3
             if not self.esperar_confirmacion(3, timeout=30.0):
@@ -382,8 +372,18 @@ class ControladorRobot:
             
             #El proximo punto despues de una trayectoria empezara donde esta termino
             if p.get('plan')== "Trayectoria":
-                PTrayectoriaFinal=self.bit_rad(p.get('punto')[-1]) 
+                PTrayectoriaFinal=norm.bit_rad(p.get('puntos')[-1]) 
+                
+                # ======================================================
+                #  Crear RobotState inicial desde Pinicial
+                
+                start_state = RobotState()
+                joint_state = JointState()
+                joint_state.name = self.move_group.get_active_joints()
                 joint_state.position = PTrayectoriaFinal
+                start_state.joint_state = joint_state
+                # ======================================================
+                                
                 PosTrayectoria=True 
                 #si es trayectoria debo ir al punto iniciar,por eso cambio a PTP
                 item.req.planner_id = 'PTP'
@@ -503,7 +503,7 @@ class ControladorRobot:
 
             
 
-        else:
+        elif tiene_wait and not tiene_trayectoria:
             # --- CASO 2: rutina segmentada por waits ---
             rospy.loginfo("Rutina con waits: enviando -3 a planificación y esperando confirmación")
             self.trayectoria_pub.publish(Int16(-3))
@@ -512,6 +512,55 @@ class ControladorRobot:
                 rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
                 self.ejecutando_rutina = False
                 return
+
+            msg_waits = waits()
+            msg_waits.indice = indices_wait
+            msg_waits.wait = valores_wait
+
+            self.rutine_waits.publish(msg_waits)
+            rospy.loginfo(f"📤 Publicado waits: {list(zip(indices_wait, valores_wait))}")
+
+        elif not tiene_wait and tiene_trayectoria:
+            # --- CASO 2: rutina segmentada por waits ---
+            rospy.loginfo("Rutina con waits: enviando -4 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-4))
+
+            if not self.esperar_confirmacion(1, timeout=30.0):
+                rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
+                self.ejecutando_rutina = False
+                return
+
+            msg_trayectorias = trayectorias()
+            msg_trayectorias.indice = indices_Trayectorias
+            msg_trayectorias.posicion = self.posicion_Trayectorias
+            msg_trayectorias.Rutina = self.rutina_Trayectorias
+
+            self.rutine_trayectorias.publish(msg_trayectorias)
+            rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
+            
+            self.posicion_Trayectorias.clear()
+            self.rutina_Trayectorias.clear()
+
+        elif tiene_wait and tiene_trayectoria:
+            # --- CASO 2: rutina segmentada por waits ---
+            rospy.loginfo("Rutina con waits: enviando -5 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-5))
+
+            if not self.esperar_confirmacion(1, timeout=30.0):
+                rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
+                self.ejecutando_rutina = False
+                return
+                            
+            msg_trayectorias = trayectorias()
+            msg_trayectorias.indice = indices_Trayectorias
+            msg_trayectorias.posicion = self.posicion_Trayectorias
+            msg_trayectorias.Rutina = self.rutina_Trayectorias
+
+            self.rutine_trayectorias.publish(msg_trayectorias)
+            rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
+            
+            self.posicion_Trayectorias.clear()
+            self.rutina_Trayectorias.clear()
 
             msg_waits = waits()
             msg_waits.indice = indices_wait
@@ -553,7 +602,7 @@ class ControladorRobot:
                 pose = None
                 if data.descriocion[0] == 1:
                     # Obtener los datos de cord_ros (pose en este caso)
-                    joint_angles = self.grados_rad(list(data.coordenadas))
+                    joint_angles = norm.grados_rad(list(data.coordenadas))
                     
                     if data.descriocion[1] == 1:  
                         self.ejecutar_trayectoria_position(joint_angles,velocidad)
@@ -562,7 +611,7 @@ class ControladorRobot:
                         #transformar coordenadas angulares a pose                        
                         try:                     
             
-                            cord_ang_rad = self.grados_rad(joint_angles)
+                            cord_ang_rad = norm.grados_rad(joint_angles)
                             
                             rospy.wait_for_service('/compute_fk')
                             fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)

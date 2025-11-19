@@ -8,6 +8,10 @@ import time
 from cobot_controladores.msg import waits, trayectorias
 from db_puntos5 import (obtener_rutina)
 
+from Normalizacion_Robot import NormalizacionRobot
+
+norm = NormalizacionRobot()
+
 class ControladorCobot:
     def __init__(self):
         rospy.init_node('controlador_cobot', anonymous=False)
@@ -34,7 +38,7 @@ class ControladorCobot:
         rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, self.callback_display_trajectory)
         rospy.Subscriber('/sequence_move_group/feedback', MoveGroupSequenceActionFeedback, self.callback_feedback)
         rospy.Subscriber('trayectoria_A_planificacion', Int16, self.callback_planificacion)  
-        self.rutine_waits = rospy.Subscriber('rutine_waits', waits, self._callback_waits)
+        self.rutine_waits = rospy.Subscriber('rutine_waits', waits, self.callback_waits)
         self.rutine_trayectorias = rospy.Subscriber('rutine_trayectorias', trayectorias, self.callback_trayectorias)
 
         # === Parámetros ===
@@ -46,38 +50,31 @@ class ControladorCobot:
         self._limpiar_variables()
 
     # ----------------------------------------------------
-    # Conversión
-    # ----------------------------------------------------
-    def radianes_a_bits(self, rad):
-        """Convierte una lista de radianes a valores 0–4095."""
-        return [int((r + np.pi) * 4095 / (2 * np.pi)) for r in rad]
-
-    # ----------------------------------------------------
     # Callbacks
     # ----------------------------------------------------
     def callback_waits(self, msg):
         """Guarda los waits y sus idices."""      
-        self.indicesWait=msg.indice
-        self.wait=msg.wait
+        self.indicesWait=list(msg.indice)
+        self.wait=list(msg.wait)
         self.recibido_waits =True
         
     def callback_trayectorias(self, msg):
         """Guarda las trayectorias y sus idices."""      
-        self.indicesT=msg.indice
-        posicionT=msg.posicion
-        rutinasT=msg.Rutina
+        self.indicesT=list(msg.indice)
+        posicionT=list(msg.posicion)
+        rutinasT=list(msg.Rutina)
         self.recibido_trayectorias =True
         
         for i, nomRut in enumerate(rutinasT):
             rut=obtener_rutina(nomRut)
             tray=next((r for r in rut if r.get('pos') == posicionT[i]))
-            self.trayectoras.append(tray.get('puntos'))
-            
+            self.trayectoras.append(tray.get('puntos'))            
             
     def callback_display_trajectory(self, msg):
         """Guarda los fragmentos de trayectorias planificadas."""
-        if self.orden==-1 or self.orden==-3 or self.orden==-5:
+        if not (self.orden==-2) :
             self.plan_fragmentos.append(msg)
+            
             rospy.loginfo(f"📦 Fragmento de plan recibido ({len(self.plan_fragmentos)})")
 
     def callback_feedback(self, msg):
@@ -97,8 +94,8 @@ class ControladorCobot:
                 self.planificacion_valida = False
 
     def callback_planificacion(self, msg):
-        if msg.data==0:
-            
+        self.orden=msg.data
+        if self.orden==0:
             rospy.loginfo("🔄 Señal 0 recibida. Esperando planificación (feedback + plan)...")
 
             # Esperar feedback y trayectorias planificadas
@@ -117,7 +114,7 @@ class ControladorCobot:
             self.ejecutar_plan_completo()
             self._limpiar_variables()      
             
-        if self.orden==-1:
+        elif self.orden==-1:
             rospy.loginfo("🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...")
 
             # Esperar feedback y trayectorias planificadas
@@ -139,7 +136,7 @@ class ControladorCobot:
                 rospy.logerr("❌ Planificación fallida (estado IDLE o sin trayectoria). No se ejecutará.")
                 self.pub_planificacion_trayectoria.publish(-1)                
                 self._limpiar_variables()
-        elif self.orden==-2 or self.orden==-4:
+        elif self.orden==-2:
             self.ejecutar_plan_completo()
             self._limpiar_variables()      
         elif self.orden==-3:
@@ -209,9 +206,7 @@ class ControladorCobot:
                 return
             
             self.ejecutar_plan_completo()
-            self._limpiar_variables()      
-
-        
+            self._limpiar_variables()              
 
     # ----------------------------------------------------
     # Ejecución
@@ -240,7 +235,7 @@ class ControladorCobot:
     
     def ejecutar_trayectoria_bruta(self, puntos):
         rate = rospy.Rate(20)  
-        for punto in self.puntos:
+        for punto in puntos:
             msg = Int16MultiArray()
             msg.data = punto
             self.pub_cord_dy.publish(msg)
@@ -252,7 +247,7 @@ class ControladorCobot:
         t0 = time.time()
 
         for punto in puntos:
-            posiciones_bits = self.radianes_a_bits(punto.positions)
+            posiciones_bits = norm.rad_bit(punto.positions)
             msg = Int16MultiArray(data=posiciones_bits)
             self.pub_cord_dy.publish(msg)
 
@@ -278,7 +273,6 @@ class ControladorCobot:
         self.planificacion_valida = False
         self.recibido_waits = False
         rospy.loginfo("🧹 Variables internas limpiadas y nodo listo para próxima planificación.")
-
 
 if __name__ == '__main__':
     try:

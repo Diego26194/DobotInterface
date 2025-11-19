@@ -37,24 +37,13 @@ from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from moveit_msgs.msg import RobotState
 from sensor_msgs.msg import JointState
 
+from Normalizacion_Robot import NormalizacionRobot
+
 import re
-
-
 import time
 
+norm = NormalizacionRobot()
 class ModoLectura:
-    def bit_grados(self, bit):
-        grad = [(b * 360 / 4095 - 180) for b in bit]
-        return grad
-    
-    def grados_rad(self, grad):
-        rad = [g * np.pi / 180 for g in grad]
-        return rad
-    
-    def rad_grados(self, rad):
-        grad=[r * 180 / np.pi for r in rad]
-        return grad
-
     def __init__(self):
         rospy.init_node('modo_lectura')
         
@@ -121,14 +110,14 @@ class ModoLectura:
     def guardarT(self,data):
         self.GuardarT=data.data
         if self.rutina:
-            angInit=self.bit_grados(self.rutina[0])
+            angInit=norm.bit_grados(self.rutina[0])
             poseInit=self.AngulosArticulares_a_pose(angInit)
             pos=agregar_trayectoria_rutina(self.rutina,poseInit)           
                 
             punto = leer_punto_rutina(pos)  
             if punto:
                 mensaje_puntoR = punto_web()
-                mensaje_puntoR.orden = ['addR', punto['nombre'], punto['plan']]
+                mensaje_puntoR.orden = ['addT', punto['nombre'], punto['plan']]
                 mensaje_puntoR.coordenadas = [(punto['wait']), (punto['pos'])]
                 self.puntos_rutina.publish(mensaje_puntoR)
 
@@ -149,14 +138,14 @@ class ModoLectura:
         
         errores = []
         for i, valor in enumerate(entrada):
-            if valor != -1 or valor != 0:
+            if valor == -1 or valor == 0:
                 errores.append(False)
             else:       
                 errores.append(True)        
                 self.angulosBit[i] = valor
         
-        angulos=self.bit_grados(self.angulosBit)        
-        #coordenadas_rad = self.grados_rad(angulos)
+        angulos=norm.bit_grados(self.angulosBit)        
+        #coordenadas_rad = norm.grados_rad(angulos)
         coordenadas_cart = self.AngulosArticulares_a_cartesianasEuler(angulos)
         
         msg = punto_real()
@@ -190,7 +179,7 @@ class ModoLectura:
                 if valor != -1 or valor != 0:        
                     self.angulosBit[i] = valor
 
-            angulos=self.bit_grados(self.angulosBit)
+            angulos=norm.bit_grados(self.angulosBit)
             # Intentar convertir ángulos a pose
             coorCartesianas_quat = self.AngulosArticulares_a_pose(angulos)
 
@@ -252,7 +241,7 @@ class ModoLectura:
             if punto.get("id") == "control":
                 continue
 
-            if punto.get("plan") == "Rutina" :
+            if punto.get("plan") == "Rutina":
                 # Sub-rutina
                 mensaje_rutinaR = punto_web()
                 mensaje_rutinaR.orden = ['addRT', punto['nombre'], punto['plan']]
@@ -734,7 +723,7 @@ class ModoLectura:
         	
         try:                     
             
-            cord_ang_rad = self.grados_rad(cord_ang_grados)
+            cord_ang_rad = norm.grados_rad(cord_ang_grados)
             
             rospy.wait_for_service('/compute_fk')
             fk = rospy.ServiceProxy('/compute_fk', GetPositionFK)
@@ -797,8 +786,8 @@ class ModoLectura:
         
         if resp.error_code.val == 1:  # SUCCESS
             cord_ang_rad = list(resp.solution.joint_state.position)
-            #return self.rad_grados(cord_ang_rad)
-            return [float(ang) for ang in self.rad_grados(cord_ang_rad)]
+            #return norm.rad_grados(cord_ang_rad)
+            return [float(ang) for ang in norm.rad_grados(cord_ang_rad)]
         else:
             rospy.logerr(f"IK falló con código: {resp.error_code.val}")
             return None
@@ -814,7 +803,7 @@ class ModoLectura:
         """
         # 1. Separar parte cartesiana y angular
         coord_cart = [c / 1000.0 for c in coord[:3]]   # mm → m
-        coord_ang  = self.grados_rad(coord[3:])        # grados → radianes
+        coord_ang  = norm.grados_rad(coord[3:])        # grados → radianes
 
         # 2. Calcular cuaternión a partir de las coordenadas angulares
         quat = tf.transformations.quaternion_from_euler(
@@ -852,7 +841,7 @@ class ModoLectura:
            float(pose.position.x * 1000),
            float(pose.position.y * 1000),
            float(pose.position.z * 1000),
-           ] + [float(a) for a in self.rad_grados([roll, pitch, yaw])
+           ] + [float(a) for a in norm.rad_grados([roll, pitch, yaw])
         ]
         return coordenadas
         

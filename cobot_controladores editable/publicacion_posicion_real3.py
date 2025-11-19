@@ -8,6 +8,9 @@ from moveit_commander import RobotCommander, MoveGroupCommander
 import numpy as np
 import threading
 
+from Normalizacion_Robot import NormalizacionRobot
+
+norm = NormalizacionRobot()
 class PublicacionPosicionReal:
     def __init__(self):
         rospy.init_node('publicacion_posicion_real', anonymous=True)
@@ -24,11 +27,7 @@ class PublicacionPosicionReal:
 
         rospy.loginfo("Nodo 'publicacion_posicion_real' iniciado.")
         rospy.spin()
-
-    def bit_rad(self, bit):
-        rad = [((b * (2 * np.pi) / 4095) - np.pi) for b in bit]
-        return np.array(rad, dtype=np.float64)
-
+    
     def callback_pos_dy(self, msg):
         if not msg.data or len(msg.data) != 6:
             rospy.logwarn("Mensaje vacío recibido en pos_dy.")
@@ -44,7 +43,7 @@ class PublicacionPosicionReal:
             self.publicar_joint_states(self.positionPos_dy)
 
     def publicar_joint_states(self, positionPos_dy):
-        posiciones_rad = self.bit_rad(positionPos_dy)
+        posiciones_rad = norm.bit_rad(positionPos_dy)
         joint_msg = JointState()
         joint_msg.header.stamp = rospy.Time.now()
         joint_msg.name = self.joint_names

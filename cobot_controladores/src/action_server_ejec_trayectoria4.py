@@ -26,10 +26,6 @@ class EjecucionTrayectoriaServer:
         self.cord_dy_pub2 = rospy.Publisher('ErroresRos', Int16MultiArray, queue_size=10)
         
         self.server.start()
-        
-    def rad_bit(self, rad):
-        bit = [(int((r + np.pi) * 4095 / (2 * np.pi))) for r in rad]
-        return np.int16(bit)
 
     def execute_callback(self, goal):
         try:
