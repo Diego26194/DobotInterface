@@ -204,7 +204,7 @@
 	<joint name="joint_5" type="revolute">
         <parent link="forearm_link" />
         <child link="wrist_link" />
-		<origin xyz=" -0.00083 0.05875 0.01530 " rpy="0 0 0" />
+		<origin xyz=" 0.00083 -0.05875 0.01530 " rpy="0 0 0" />
 		<limit effort="1" velocity="1.0" lower="${limit_low_wrist_rotation}" upper="${limit_up_wrist_rotation}" />
 		<axis xyz="0 0 1" />
 	</joint>
@@ -212,7 +212,7 @@
 	<joint name="joint_6" type="revolute">
         <parent link="wrist_link" />
         <child link="hand_link" />
-        <origin xyz=" 0.00053 -0.01470 0.05875 " rpy="0 0 0" />
+        <origin xyz=" 0.00053 -0.01470 0.05875 " rpy="0 0 135" />
 		<limit effort="1" velocity="1.0" lower="${limit_low_hand_rotation}" upper="${limit_up_hand_rotation}" />
 		<axis xyz="0 1 0" />
 	</joint>

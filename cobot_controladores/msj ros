@@ -15,10 +15,10 @@ rostopic echo joint_states
 rostopic echo cord_dy
 rostopic echo pos_dy
 
-python3 trayectoria35.py
-python3 modo_lectura15.py
+python3 trayectoria37.py
+python3 modo_lectura18.py
 python3 publicacion_posicion_real3.py
-python3 controlador_rutina_prueba3.py
+python3 controlador_rutina_prueba4.py
 
 roslaunch cobot_controladores preubaInicio9.launch
 
