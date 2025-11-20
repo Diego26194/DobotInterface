@@ -17,8 +17,8 @@ type InputsAngV2Props = {
 
 const InputsAngV2 = forwardRef<InputsAngV2Ref, InputsAngV2Props>(({ disabled = false }, ref) => {
   const [values, setValues] = useState<number[]>(Array(6).fill(0));
-  const angMing=[-175,-115,-160,-175,-175,-175]
-  const angMax=[175,115,160,175,175,175]
+  const angMing=[-175,-115,-160,-145,-145,-145]
+  const angMax=[175,115,160,145,145,145]
 
 
 

@@ -29,15 +29,19 @@ function ResibirCord(callback: (msg: any) => void) {
   
 }
 
-function bitsToDegrees(bits: number): number {
+function bitsToDegreesXL430(bits: number): number {
   return (bits / 4095) * 360 - 180;
+}
+
+function bitsToDegreesXL320(bits: number): number {
+  return (bits / 1023) * 300 - 150;
 }
 
 const Arduino = () => {
   // Estados para cada grupo de inputs (arrays de enteros)
-  const [cordDy, setCordDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
-  const [posDy, setPosDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
-  const [pDy, setPDy] = useState([2090, 2090, 2090, 2090, 2090, 2090]);
+  const [cordDy, setCordDy] = useState([2090, 2090, 2090, 512, 512, 512]);
+  const [posDy, setPosDy] = useState([2090, 2090, 2090, 512, 512, 512]);
+  const [pDy, setPDy] = useState([2090, 2090, 2090, 512, 512, 512]);
   
   
 useEffect(() => {
@@ -109,7 +113,11 @@ useEffect(() => {
                 }
                 style={{ width: "80px", marginRight: "10px" }}
               />
-              <span>{bitsToDegrees(val).toFixed(2)}°</span>
+              {i < 3 ? (
+                <span>{bitsToDegreesXL430(val).toFixed(2)}°</span>
+              ) : (
+                <span>{bitsToDegreesXL320(val).toFixed(2)}°</span>
+              )}
             </div>
           ))}
         </div>
@@ -129,7 +137,11 @@ useEffect(() => {
                 }
                 style={{ width: "80px", marginRight: "10px" }}
               />
-              <span>{bitsToDegrees(val).toFixed(2)}°</span>
+              {i < 3 ? (
+                <span>{bitsToDegreesXL430(val).toFixed(2)}°</span>
+              ) : (
+                <span>{bitsToDegreesXL320(val).toFixed(2)}°</span>
+              )}
             </div>
           ))}
           <br />
@@ -149,7 +161,11 @@ useEffect(() => {
                 onChange={(e) => handleInputChange(i, e.target.value, setPDy, pDy)}
                 style={{ width: "80px", marginRight: "10px" }}
               />
-              <span>{bitsToDegrees(val).toFixed(2)}°</span>
+              {i < 3 ? (
+                <span>{bitsToDegreesXL430(val).toFixed(2)}°</span>
+              ) : (
+                <span>{bitsToDegreesXL320(val).toFixed(2)}°</span>
+              )}
             </div>
           ))}
           <br />
