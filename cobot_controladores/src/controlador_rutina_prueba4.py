@@ -6,7 +6,7 @@ from moveit_msgs.msg import DisplayTrajectory, MoveGroupSequenceActionFeedback
 import numpy as np
 import time
 from cobot_controladores.msg import waits, trayectorias
-from db_puntos5 import (obtener_rutina)
+from db_puntos6 import (obtener_rutina)
 
 from Normalizacion_Robot import NormalizacionRobot
 

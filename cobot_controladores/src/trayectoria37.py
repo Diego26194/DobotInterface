@@ -9,7 +9,7 @@ from moveit_msgs.msg import PositionConstraint, OrientationConstraint
 from shape_msgs.msg import SolidPrimitive
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from db_puntos5 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
+from db_puntos6 import  leer_rutina_sin_euler, obtener_rutina, leer_punto_rutina
 import numpy as np
 import sys
 from actionlib import SimpleActionClient 

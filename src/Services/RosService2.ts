@@ -59,31 +59,18 @@ export function initRos() {
     name: '/informe_web',
     messageType: 'std_msgs/String',
   });
-
-  topics['pos_dy'] = new ROSLIB.Topic({
-    ros,
-    name: '/pos_dy',
-    messageType: 'std_msgs/Int16MultiArray',
-  });
-
   topics['pos_real'] = new ROSLIB.Topic({
     ros,
     name: '/pos_real',
     messageType: 'cobot_controladores/punto_real',
   });
-
-  topics['p_dy'] = new ROSLIB.Topic({
-    ros,
-    name: '/p_dy',
-    messageType: 'std_msgs/Int16MultiArray',
-  });
-
+  //topico no usado que hay que agregar
   topics['modo_actuar'] = new ROSLIB.Topic({
     ros,
     name: '/modo_actuar',
     messageType: 'std_msgs/Bool',
   });
-
+  //topico no usado que hay que agregar
   topics['tipo_modo_lectura'] = new ROSLIB.Topic({
     ros,
     name: '/tipo_modo_lectura',
@@ -102,6 +89,21 @@ export function initRos() {
     name: '/cord_dy',
     messageType: 'std_msgs/Int16MultiArray',
   });
+  
+  //no va
+  topics['p_dy'] = new ROSLIB.Topic({
+    ros,
+    name: '/p_dy',
+    messageType: 'std_msgs/Int16MultiArray',
+  });
+  
+  //no va
+  topics['pos_dy'] = new ROSLIB.Topic({
+    ros,
+    name: '/pos_dy',
+    messageType: 'std_msgs/Int16MultiArray',
+  });
+
 
 
   ////////////// Eliminar-Prueba de pasaje de Cinematica///////

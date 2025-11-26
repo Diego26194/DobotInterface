@@ -13,13 +13,13 @@ from Normalizacion_Robot import NormalizacionRobot
 norm = NormalizacionRobot()
 class PublicacionPosicionReal:
     def __init__(self):
-        rospy.init_node('publicacion_posicion_real', anonymous=True)
+        rospy.init_node('publicador_posicion_real', anonymous=True)
 
         self.joint_names = ["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
         self.joint_pub = rospy.Publisher('joint_states', JointState, queue_size=10)
         rospy.Subscriber('pos_dy', Int16MultiArray, self.callback_pos_dy)
 
-        self.positionPos_dy = [2090, 2090, 2090, 2090, 2090, 2090]
+        self.positionPos_dy = [2090, 2090, 2090, 512, 512, 512]
         self.lock = threading.Lock()  # para acceso seguro desde ambos hilos
 
         # Hilo de publicación constante (10 Hz)
@@ -35,7 +35,7 @@ class PublicacionPosicionReal:
 
         with self.lock:
             for i in range(6):
-                if msg.data[i] != -1 or msg.data[i] != 0:
+                if msg.data[i] != -1 and msg.data[i] != 0:
                     self.positionPos_dy[i] = msg.data[i]
 
     def timer_callback(self, event):

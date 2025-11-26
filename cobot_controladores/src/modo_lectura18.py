@@ -3,7 +3,7 @@
 
 import rospy
 from std_msgs.msg import Float32MultiArray, Int16MultiArray, String, Bool
-from db_puntos5 import (
+from db_puntos6 import (
     escribir_datos,
     leer_datos,
     eliminar_todos_datos,
@@ -254,7 +254,7 @@ class ModoLectura:
             elif punto.get("plan") == "Trayectoria":
                 # Sub-rutina
                 mensaje_rutinaR = punto_web()
-                mensaje_rutinaR.orden = ['addR', punto['nombre'], punto['plan']]
+                mensaje_rutinaR.orden = ['addT', punto['nombre'], punto['plan']]
                 mensaje_rutinaR.coordenadas = [
                     punto['wait'],
                     punto['pos'],
@@ -589,7 +589,21 @@ class ModoLectura:
                                 doc.get("fechas", [])
                             )
 
-                        elif doc.get("rutina") == False:
+                        elif doc.get("plan") == "Trayectoria":
+                            identificador = doc.get("nombre")
+                            pos = doc.get("pos")
+                            poseInit = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
+                            trayectoria=doc.get("puntos")
+                            wait=doc.get("wait")
+                            agregar_trayectoria_rutina(trayectoria,poseInit, identificador,pos,wait)
+
+                        elif doc.get("rutina") == True:
+                            identificador = doc.get("nombre")
+                            pos = doc.get("pos")
+                            wait=doc.get("wait")
+                            agregar_rutina_rutina(identificador, pos,wait)
+                            
+                        else:
                             coorCartesianas_quat = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
                             coorCartesianas_euler = self.pose_a_cartesianasEuler(coorCartesianas_quat)
                             vel_esc = doc.get("vel_esc", 0)
@@ -602,11 +616,6 @@ class ModoLectura:
                             agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler,
                                                 vel_esc, ratio, plan,
                                                 identificador, pos)
-
-                        elif doc.get("rutina") == True:
-                            identificador = doc.get("nombre")
-                            pos = doc.get("pos")
-                            agregar_rutina_rutina(identificador, pos)
                     
                     
                     faltantes = verificar_rutinas_control()
@@ -645,7 +654,7 @@ class ModoLectura:
                 mensaje_rutinaR.coordenadas = [
                     punto['wait'],
                     punto['pos'],
-                ],
+                ]
                 self.puntos_rutina.publish(mensaje_rutinaR)
 
                 mensaje_informe = mensajes_informe['addRT'].format(nombre)

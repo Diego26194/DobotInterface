@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import rospy
-from std_msgs.msg import String
 from tinydb import TinyDB, Query, where
 
 # Inicializar la base de datos
@@ -84,12 +82,12 @@ def eliminar_todos_datos():
 ############# Rutina actual #############
 
 # Función para escribir punto en "rutina_actual"
-def agregar_punto_rutina(ang, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None, wait=None):
+def agregar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio, plan , identificador=None, pos=None, wait=None):
     # Convertir array de Float32 a un diccionario con claves 'x', 'y', 'z', 'a', 'b', 'c'
-    
+    coorCartesianas_quat=pose_to_dict(pose)
     coordenadas_dict = {
-        'coordenadasCEuler': coorCartesianas_euler, 'cordAng': ang, 
-        'vel_esc': vel_esc, 'ratio': ratio,'plan': plan , 'rutina': False,
+        'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
+        'vel_esc': vel_esc, 'ratio': ratio,'plan': plan,
         'wait': wait if wait is not None else 0}
         
     # --- Manejo del campo "pos" ---
@@ -135,7 +133,7 @@ def agregar_rutina_rutina(identificador, pos=None, wait=None):
         for punto in rutina_actual.search(where("pos") >= pos):
             rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
 
-    rutina = {'nombre': identificador,'pos': pos, 'rutina': True, 
+    rutina = {'nombre': identificador,'pos': pos, 'plan':"Rutina", 
         'wait': wait if wait is not None else 0}
     
     # Insertar coordenadas en la base de datos y obtener el doc_id asignado
@@ -146,9 +144,48 @@ def agregar_rutina_rutina(identificador, pos=None, wait=None):
     agregar_rutina_control(identificador)
     return pos
 
-def editar_punto_rutina(ang, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
+# Función para agregar una rutina como instruccion en la rutina actual
+def agregar_trayectoria_rutina(trayectoria,poseInit,identificador=None, pos=None, wait=None):
+
+    cordInit=pose_to_dict(poseInit)
+               
+    # --- Manejo del campo "pos" ---
+    if pos is None:
+        # Si no se pasa posición, insertar al final
+        max_pos = max([p.get("pos", 0) for p in rutina_actual.all()] or [0])
+        pos = max_pos + 1
+    else:
+        # Si se pasa posición, hay que desplazar los que están desde pos en adelante
+        for punto in rutina_actual.search(where("pos") >= pos):
+            rutina_actual.update({"pos": punto["pos"] + 1}, doc_ids=[punto.doc_id])
+
+    rutina = {'puntos':trayectoria, 'coordenadasCQuaterniones': cordInit,
+              'pos': pos, 'plan':"Trayectoria",'wait': wait if wait is not None else 0}
+    
+    # Insertar coordenadas en la base de datos y obtener el doc_id asignado
+    doc_id = rutina_actual.insert(rutina)
+    
+    # Verificar si se recibió un identificador
+    if identificador is None:
+        # Si no se proporcionó un identificador, asignar 'p{doc_id}'
+        nombre = f"rut{doc_id}"
+    else:
+        # Si se proporcionó, usar ese identificador
+        nombre = identificador
+        
+    # Actualizar el registro con el nombre asignado
+    rutina_actual.update({'nombre': nombre}, doc_ids=[doc_id])
+    
+    # Agregar el doc_id y nombre al diccionario original para referencia
+    rutina["id"] = doc_id
+    rutina["nombre"] = nombre
+    #agregar_rutina_control(identificador)
+    return pos
+
+def editar_punto_rutina(pose, coorCartesianas_euler, vel_esc, ratio,wait, posicion, plan, identificador=None):
     Punto = Query()
     pos=posicion
+    coorCartesianas_quat=pose_to_dict(pose)
     # Buscar el punto por pos
     punto = rutina_actual.get(Punto.pos == pos)
     if not punto or (identificador is not None and punto.get('nombre') != identificador):
@@ -156,7 +193,7 @@ def editar_punto_rutina(ang, coorCartesianas_euler, vel_esc, ratio,wait, posicio
     
     # Crear diccionario con los nuevos valores
     nuevas_coordenadas_dict = {
-        'coordenadasCEuler': coorCartesianas_euler, 'cordAng': ang, 
+        'coordenadasCEuler': coorCartesianas_euler, 'coordenadasCQuaterniones': coorCartesianas_quat, 
         'vel_esc': vel_esc, 'ratio': ratio,'wait': wait,'plan': plan
     }
     
@@ -231,13 +268,13 @@ def leer_rutina_sin_euler():
 
 
 def leer_rutina_sin_quaterniones():
-    """Devuelve la rutina completa pero excluyendo 'cordAng' """
+    """Devuelve la rutina completa pero excluyendo 'coordenadasCQuaterniones' """
     docs = rutina_actual.all()
     resultado = []
 
     for doc in docs:
         doc_copy = dict(doc)
-        doc_copy.pop('cordAng', None)  # elimina si existe
+        doc_copy.pop('coordenadasCQuaterniones', None)  # elimina si existe
         resultado.append(doc_copy)
 
     resultado.sort(key=lambda d: (0 if d.get("id") == "control" else 1, d.get("pos", float('inf'))))
@@ -375,29 +412,3 @@ def pose_to_dict(pose):
         }
     }
 
-    
-
-def main():
-    rospy.init_node('coordenadas_node')
-
-    """
-    # Ejemplo de publicación de datos
-    coordenadas = {"x": 10, "y": 20, "z": 30, "a": 40, "b": 50, "c": 60}
-    escribir_datos(coordenadas)
-
-    # Ejemplo de lectura de datos
-    punto_leido = leer_punto(1)
-    print("Datos del punto 1:")
-    print(punto_leido)
-
-    # Ejemplo de cambio de datos
-    nuevas_coordenadas = {"x": 20, "y": 30, "z": 40, "a": 50, "b": 60, "c": 70}
-    cambiar_punto(1, nuevas_coordenadas)
-
-    # Ejemplo de eliminación de datos
-    eliminar_punto(1)
-
-    """
-
-if __name__ == '__main__':
-    main()
