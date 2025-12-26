@@ -23,7 +23,20 @@ export function agregarPuntoDB(nombrePunto:string, coord:number[]) {
     coordenadas: coord
   };
 
-  console.log(" Enviando a /orden_web: agregando punto", msg);
+  console.log(" Enviando a /orden_web: guardando punto", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
+
+//Agrega Punto a Libreria de Puntos (Puesto ahora en Section2)
+export function agregarPuntoRealDB(nombrePunto:string) {
+  const msg = {
+    orden: ['agregarPReal', nombrePunto],
+    coordenadas: []
+  };
+
+  console.log(" Enviando a /orden_web: guardando punto real", msg);
 
   // Publica en ROS
   pubTopic('orden_web', msg);
@@ -176,6 +189,7 @@ export function escucharCordReal(callback: (msg: any) => void) {
 
 //////////////////////////    FIN Section2     /////////////////////////
 
+//Agrega a la "rutina actual" el punto ingresado en la pagina web
 export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[]) {
   const msg = {
     orden: ['addPT', nombrePunto,plan],
@@ -188,6 +202,18 @@ export function agregarPuntoRutina(nombrePunto:string,plan:string, coord:number[
   pubTopic('orden_web', msg);
 }
 
+//Agrega a la "rutina actual" el punto Real del robot 
+export function agregarPuntoRealRutina(nombrePunto:string,plan:string, VelRatio:number[]) {
+  const msg = {
+    orden: ['addPPRealRA', nombrePunto,plan],
+    coordenadas: VelRatio
+  };
+
+  console.log(" Enviando a /orden_web: agregando punto real rutina", msg);
+
+  // Publica en ROS
+  pubTopic('orden_web', msg);
+}
 //////////////////////////    Section3     ////////////////////////////
 
 

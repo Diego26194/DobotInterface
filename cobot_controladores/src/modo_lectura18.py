@@ -294,6 +294,7 @@ class ModoLectura:
             'ver': "Punto {} con los datos {}",
             'ang-cart':"",
             'cart-ang':"",
+            'agregarPReal':"Punto {} con los datos {} agregado correctamente",
             #Tabla Rutina actual
             'eliminarPunRut': "Punto {} de posicion {} eliminado correctamente",
             'errorPunRut': " ERROR en Punto {} de posicion {} ",
@@ -301,6 +302,7 @@ class ModoLectura:
             'addRT':"Rutina {} agregada correctamente a la tabla",
             'editPR': "Punto {} con los datos {} modificado correctamente",
             'refresRut':' Rutina actual refrescada ',
+            'addPPRealRA': "Punto {} con los datos {},{},{} agregado correctamente",
                         
             'correr_rutina': "Punto de rutina agregado correctamente",
             'fin_rutina': "Rutina completada exitosamente",
@@ -352,6 +354,48 @@ class ModoLectura:
 
         # Publicar en el tópico 'informe_web'
             self.informe_web.publish(mensaje_informe)
+            
+            
+        elif accion == 'agregarPReal':
+            if nombre:                
+                angulos=norm.bit_grados(self.angulosBit)
+                if not leer_punto(nombre):                    
+                    escribir_datos(angulos, nombre)  # Llamar a la función escribir_datos
+                    mensaje_informe = mensajes_informe['agregarPReal'].format(nombre, angulos)
+                    
+                    #### Refresco la lista de puntos ####
+                    puntos = leer_datos()  # Esto retorna db.all()
+                    nombres = [punto['nombre'] for punto in puntos]  # Extraer todos los nombres
+                
+                # Publicar los nombres de los puntos en el tópico 'puntodb'
+                    mensaje_puntodb = nombresPuntos()
+                    mensaje_puntodb.nombres = nombres
+                    self.nombres_puntos_tabla.publish(mensaje_puntodb)
+                
+                # Publicar en el tópico 'informe_web'
+                    self.informe_web.publish(mensajes_informe['subir_db'])
+                else:
+                    mensaje_informe = mensajes_informe['Erroragregar'].format(nombre)                    
+            else:
+                escribir_datos(angulos, None)  # Si no se especifica nombre, pasa None
+                mensaje_informe = "Punto agregado correctamente con nombre automático"
+                
+                 #### Refresco la lista de puntos ####
+                puntos = leer_datos()  # Esto retorna db.all()
+                nombres = [punto['nombre'] for punto in puntos]  # Extraer todos los nombres
+            
+            # Publicar los nombres de los puntos en el tópico 'puntodb'
+                mensaje_puntodb = nombresPuntos()
+                mensaje_puntodb.nombres = nombres
+                self.nombres_puntos_tabla.publish(mensaje_puntodb)
+            
+            # Publicar en el tópico 'informe_web'
+                self.informe_web.publish(mensajes_informe['subir_db'])
+
+        # Publicar en el tópico 'informe_web'
+            self.informe_web.publish(mensaje_informe)
+
+        
 
         elif accion == 'eliminar':
             if nombre:
@@ -417,6 +461,37 @@ class ModoLectura:
                 self.puntos_rutina.publish(mensaje_puntoR)
 
                 mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
+                self.informe_web.publish(mensaje_informe)
+            else:
+                self.informe_web.publish(f"Punto {posicion} no agregado correctamente.")
+                
+            
+        elif accion == 'addPPRealRA':
+            angulos=norm.bit_grados(self.angulosBit) 
+            coorCartesianas_quat=self.AngulosArticulares_a_pose(angulos)
+            coorCartesianas_euler=self.AngulosArticulares_a_cartesianasEuler(angulos)
+            vel_esc=data.coordenadas[0]
+            ratio=data.coordenadas[2]
+            if nombre:
+                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
+            else:
+                posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
+                mensaje_informe = "Punto agregado correctamente con nombre automático"
+                self.informe_web.publish(mensaje_informe)
+                
+            punto = leer_punto_rutina(posicion)  
+            if punto:
+                mensaje_puntoR = punto_web()
+                mensaje_puntoR.orden = ['addP', punto['nombre'], punto['plan']]
+                mensaje_puntoR.coordenadas = list(punto['coordenadasCEuler']) + [
+                    (punto['vel_esc']),
+                    (punto['ratio']),
+                    (punto['wait']),
+                    (punto['pos']),
+                ]
+                self.puntos_rutina.publish(mensaje_puntoR)
+
+                mensaje_informe = mensajes_informe['addPPRealRA'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
                 self.informe_web.publish(mensaje_informe)
             else:
                 self.informe_web.publish(f"Punto {posicion} no agregado correctamente.")

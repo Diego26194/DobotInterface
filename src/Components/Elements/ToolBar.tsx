@@ -1,17 +1,70 @@
-import { AppBar, Toolbar, Button } from "@mui/material";
+import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
 
 interface ToolBarProps {
   LinkHome: string;
+  onTogglePuntos: () => void;
+  onToggleRutinas: () => void;
 }
 
-function ToolBar({ LinkHome }: ToolBarProps) {
+function ToolBar({
+  LinkHome,
+  onTogglePuntos,
+  onToggleRutinas,
+}: ToolBarProps) {
   return (
-    <AppBar position="fixed" sx={{ backgroundColor: "rgba(185, 194, 158, 0.7)", width: "100%", height: "4%" }}>
-      <Toolbar>
-          <Button sx={{ color: "black", fontSize: "10px", height: "90%" }}>
-            Inicio
-          </Button>
+    <AppBar
+      position="static"
+      sx={{
+        backgroundColor: "rgba(205, 207, 214, 0.67)",
+        height: "clamp(36px, 4vh, 56px)",
+        minHeight: "clamp(36px, 4vh, 56px)",
+        justifyContent: "center",
+      }}
+    >
+      <Toolbar
+        disableGutters
+        sx={{
+          height: "100%",
+          minHeight: "100% !important",
+          px: 2,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        <Button onClick={onTogglePuntos}  variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          B.Puntos
+        </Button>
+
+        <Button onClick={onToggleRutinas} variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          B.Rutinas
+        </Button>
+
+        <Button variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          Inicializar Programa
+        </Button>
+
+        <Button variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          Cerrar Programa
+        </Button>
+
+        <Button variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          M Escritura
+        </Button>
+
+        <Button variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+          M Lectura
+        </Button>
+        
+        <Button
+          component={Link}
+          to={LinkHome}
+          variant="contained" 
+          sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}
+        >
+          Emulador Robot
+        </Button>
       </Toolbar>
     </AppBar>
   );

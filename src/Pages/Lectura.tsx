@@ -22,7 +22,7 @@ import Section4 from "../Components/Section1/Section4";
 import Section2V2 from "../Components/Section2/Section2V2";
 import Section3 from "../Components/Section3/Section3";
 
-import ToolBar from "../Components/Elements/ToolBar";
+import ToolBar from "../Components/Elements/ToolBar2";
 import InputAng from "../Components/Elements/Inputs/InputCord";
 import { useState,useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
@@ -89,7 +89,14 @@ useEffect(() => {
         width: '100vw',  
       }}
     > 
+
+      <ToolBar 
+        LinkHome="/arduino" 
+        onTogglePuntos={() => setShowLibrariePuntos(p => !p)}
+        onToggleRutinas={() => setShowLibrarieRutinas(p => !p)}
+        />
       {/*//Barra de herramientas*/} 
+      {/*
       <Stack direction="row" spacing={5}  
         sx={{ height: '3%' , width: '100%', backgroundColor: 'rgba(194, 170, 104, 0.76)',}}
       >
@@ -138,6 +145,7 @@ useEffect(() => {
         </Button>
 
       </Stack>
+      */} 
     
       <Grid container spacing={0} sx={{ height: '86%' , width: '100%' }}>
         
@@ -195,7 +203,7 @@ useEffect(() => {
               size={{ xs: 9.7,md: 9.8}}
               sx={{ 
                 height: '100%' ,
-                //backgroundColor: '#FF745C',
+                //backgroundColor: '#81B8D1',
                 //borderBottom: '4px solid #aaa',
                 //overflow: 'auto',
                 padding:"4px",
@@ -217,8 +225,8 @@ useEffect(() => {
           display: "flex",
           flexDirection: "column",  // para que los mensajes se apilen
           overflowY: "auto",        // scroll si hay muchos
-          border: "1px solid #000",
-          backgroundColor: "#dbdbdbe5",
+          border: "1px solid #0adf1cff",
+          backgroundColor: "#030303e5",
           p: 1,
         }}
       >

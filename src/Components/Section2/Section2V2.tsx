@@ -29,7 +29,7 @@ import InputsAngV2, { InputsAngV2Ref } from "../Elements/Inputs/InputsAngV2";
 import SelectPlan from "../Elements/SelectPlan";
 import { SelectChangeEvent } from "@mui/material/Select";
 
-import { agregarPuntoDB, correrTAngular, correrTCartesiano, escucharPuntoDB, agregarPuntoRutina, publicar_informe} from "../../Services/Funciones";
+import { agregarPuntoRealDB, agregarPuntoRealRutina, agregarPuntoDB, correrTAngular, correrTCartesiano, escucharPuntoDB, agregarPuntoRutina, publicar_informe,msgEmergente} from "../../Services/Funciones";
 
 import CoordInput from "../Elements/Inputs/CoordInput";
 
@@ -77,8 +77,8 @@ const Section2V2: React.FC<Section2V2Props> =
             inputsRefAng.current?.setValues(msg.coordenadas.slice(0, 6));
             inputsRefCart.current?.setValues(msg.coordenadas.slice(-6));
             setNombrePuntoCord(msg.orden[1])
-            blockAng();
-            blockCart();
+            //blockAng();
+            //blockCart();
             break;
   
           case 'Ang':
@@ -145,6 +145,22 @@ const Section2V2: React.FC<Section2V2Props> =
         ratio
       ];
       agregarPuntoRutina(nombrePuntoCord,plan, valores)
+    }
+  };
+
+  const agregarPuActDB = () => {
+    if (inputsRefAng.current) {
+      agregarPuntoRealDB(nombrePuntoCord)
+    }
+  };
+
+  const agregarPuActRutina = () => {
+    if (inputsRefAng.current) {
+      const  valores = [
+        velocidad,
+        ratio
+      ];
+      agregarPuntoRealRutina(nombrePuntoCord,plan, valores)
     }
   };
 
@@ -248,8 +264,8 @@ const Section2V2: React.FC<Section2V2Props> =
         }}
         >
           <Typography variant="h6"sx={{fontSize: '1rem',}} >Coordenadas</Typography>
-          <ButtonSave description={'Guardar Punto en Base de Datos'} onClick={agregarPuDB}/>  
-          <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={agregarPuRutina}/> 
+          <ButtonSave description={'Guardar Punto real en Base de Datos'} onClick={agregarPuActDB}/>  
+          <ButtonRutineAdd description={'Agregar Punto real a la Rutina'} onClick={agregarPuActRutina}/> 
           
 
         
@@ -269,24 +285,20 @@ const Section2V2: React.FC<Section2V2Props> =
         }}
       >
         <CoordDisplay/>
-      </Box>  
-
-      <Grid
-        container
-        spacing={2}
-        sx={{
-          width: '100%',
-          py: 0,
-          px: 1,
-        }}
-      >
-        <Grid size={{xs: 6, md: 6}}>
-          <Button1 variant="contained" onClick={activar}>Modificar</Button1>
-        </Grid>
-        <Grid size={{xs: 6, md: 6}}>
-          <Button1 variant="contained" onClick={correr}>Ejecutar</Button1>
-        </Grid>
-      </Grid>
+      </Box>    
+          <Stack direction="row" spacing={2}
+            sx={{
+              width: '100%',
+              height: '4%',
+              py: 0,
+              px: 1,
+              
+            }}      
+            >
+            <Button1 variant="contained" onClick={correr}>Ejecutar</Button1>
+            <ButtonSave description={'Guardar Punto en Base de Datos'} onClick={agregarPuDB}/>  
+            <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={agregarPuRutina}/> 
+          </Stack>
       
       {/*Coordenadas a Cartesianas */}
       <FormControl 

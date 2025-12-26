@@ -52,7 +52,7 @@ const CoordDisplay: React.FC = () => {
         <Typography 
         sx={{
               fontSize: "0.7rem",   // más chico que body2
-              color: "#5c5b5bff",        // gris oscuro en vez de negro
+              color: "#0a0a0aff",        // gris oscuro en vez de negro
               
           }}
         >
