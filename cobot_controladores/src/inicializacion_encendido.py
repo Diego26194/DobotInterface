@@ -1,50 +1,81 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import rospy
 from std_msgs.msg import String, Bool
 import subprocess
 import signal
 import os
 
-# Variable para almacenar el proceso del launch
-launch_process = None
-launch_file = '/home/dobot_labme/catkin_ws/src/cobot_niryo/niryo_controladores/launch/ini_rob_colaborativo.launch'
 
-def control_launch_callback(msg):
-    global launch_process
+class Control_Launch:
+    def __init__(self):
+        rospy.init_node('launch_controller', anonymous=False)
 
-    if msg.data == True:
-        if launch_process is None:  # Solo iniciar si no está corriendo
-            rospy.loginfo(f"Iniciando el lanzamiento: {launch_file}")
-            # Lanza el archivo launch en una nueva terminal
-            launch_process = subprocess.Popen(
-                ['gnome-terminal', '--disable-factory', '--', 'roslaunch', 'niryo_controladores', 'ini_rob_colaborativo.launch'], 
-                preexec_fn=os.setpgrp # Crea un nuevo grupo de procesos
+        # Ruta al launch principal
+        self.launch_file = (
+            '/home/dobot/catkin_ws/src/cobot_niryo/'
+            'niryo_controladores/launch/ini_rob_colaborativo.launch'
+        )
+
+        # Proceso del launch
+        self.launch_process = None
+
+        # Publisher hacia la web
+        self.informe_pub = rospy.Publisher(
+            'informe_web',
+            String,
+            queue_size=10
+        )
+
+        # Subscriber desde la web
+        rospy.Subscriber(
+            'control_launch',
+            Bool,
+            self.control_launch_callback
+        )
+
+        rospy.loginfo("Nodo Control_Launch inicializado correctamente")
+
+    def control_launch_callback(self, msg):
+        if msg.data:
+            self.start_launch()
+        else:
+            self.stop_launch()
+
+    def start_launch(self):
+        if self.launch_process is None:
+            rospy.loginfo("Iniciando el programa principal")
+
+            self.launch_process = subprocess.Popen(
+                ['roslaunch', 'niryo_controladores', 'ini_rob_colaborativo.launch'],
+                preexec_fn=os.setpgrp
             )
-            rospy.loginfo("Launch iniciado correctamente.")
-        else:
-            rospy.loginfo("El launch ya está corriendo.")
-    
-    elif msg.data == False:
-        if launch_process is not None:  # Solo detener si está corriendo
-            rospy.loginfo("Deteniendo el proceso del launch...")
-            os.killpg(launch_process.pid, signal.SIGINT)   # Termina el grupo de procesos
-            launch_process.wait()  # Espera a que termine
-            launch_process = None
-            rospy.loginfo("Launch detenido y ventana cerrada.")
-        else:
-            rospy.loginfo("No hay un launch corriendo para detener.")
 
-def launch_controller():
-    rospy.init_node('launch_controller', anonymous=True)
-    rospy.Subscriber('control_launch', Bool, control_launch_callback)
-    
-    rospy.loginfo("Nodo de control de lanzamiento iniciado.")
-    rospy.spin()
+            self.informe_pub.publish("Programa inicializado")
+
+        else:
+            self.informe_pub.publish("Programa ya estaba en ejecución")
+
+    def stop_launch(self):
+        if self.launch_process is not None:
+            rospy.loginfo("Finalizando el programa principal")
+
+            os.killpg(self.launch_process.pid, signal.SIGINT)
+            self.launch_process.wait()
+            self.launch_process = None
+
+            self.informe_pub.publish("Programa finalizado")
+
+        else:
+            self.informe_pub.publish("Programa no estaba iniciado")
+
 
 if __name__ == '__main__':
     try:
-        launch_controller()
+        control_launch = Control_Launch()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
+
 
