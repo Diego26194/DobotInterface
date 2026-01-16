@@ -1,5 +1,6 @@
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
+import { inicializarPrograma, cerrarPrograma, modoControl, modoLectura } from "../../Services/Funciones";
 
 interface ToolBarProps {
   LinkHome: string;
@@ -33,7 +34,7 @@ function ToolBar({
           gap: 1,
         }}
       >
-        <Button onClick={onTogglePuntos}   sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button onClick={onTogglePuntos}  sx={{height: "90%", color: "#f1eaeaff" }}>
           B.Puntos
         </Button>
 
@@ -41,19 +42,19 @@ function ToolBar({
           B.Rutinas
         </Button>
 
-        <Button sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button onClick={inicializarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
           Inicializar Programa
         </Button>
 
-        <Button sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button onClick={cerrarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
           Cerrar Programa
         </Button>
 
-        <Button sx={{height: "90%", color: "#f1eaeaff" }}>
-          M Escritura
+        <Button onClick={modoControl}   sx={{height: "90%", color: "#f1eaeaff" }}>
+          M Control
         </Button>
 
-        <Button sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button onClick={modoLectura}   sx={{height: "90%", color: "#f1eaeaff" }}>
           M Lectura
         </Button>
         

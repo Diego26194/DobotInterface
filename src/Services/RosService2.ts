@@ -63,8 +63,14 @@ export function initRos() {
     ros,
     name: '/pos_real',
     messageType: 'cobot_controladores/punto_real',
+  }); 
+
+  topics['control_launch'] = new ROSLIB.Topic({
+    ros,
+    name: '/control_launch',
+    messageType: 'std_msgs/Bool',
   });
-  //topico no usado que hay que agregar
+
   topics['modo_actuar'] = new ROSLIB.Topic({
     ros,
     name: '/modo_actuar',

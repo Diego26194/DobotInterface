@@ -1,5 +1,41 @@
 import {initRos, pubTopic, subTopic, unsubTopic } from './RosService2';
 
+//////////////////////////    Barra de Herramientas     /////////////////////////
+
+export function inicializarPrograma() {
+  const msg = { data: true };
+
+  console.log("Inicializa el programa", msg);
+
+  pubTopic('control_launch', msg);
+}
+
+export function cerrarPrograma() {
+  const msg = { data: false };
+
+  console.log("Cerrar el programa", msg);
+
+  pubTopic('control_launch', msg);
+}
+
+export function modoControl() {
+  const msg = { data: true };
+
+  console.log("Poner en Modo Control", msg);
+
+  pubTopic('modo_actuar', msg);
+}
+
+export function modoLectura() {
+  const msg = { data: false };
+
+  console.log("Poner en Modo Lectura", msg);
+
+  pubTopic('modo_actuar', msg);
+}
+
+//////////////////////////    Fin Barra de Herramientas     /////////////////////////
+
 
 //////////////////////////    Section1     /////////////////////////
 
