@@ -1,13 +1,15 @@
 <launch>
     
     <!-- Lanzar preubaInicio7.launch primero -->
-    <include file="$(find niryo_controladores)/launch/preubaInicio7.launch" />
+    <include file="$(find cobot_controladores)/launch/preubaInicio9.launch" />
 
    
         
     <!-- Ejecutar los dos scripts Python -->
-    <node name="modo_lectura12" pkg="niryo_controladores" type="modo_lectura12.py" output="screen" />
-    <node name="trayectoria29" pkg="niryo_controladores" type="trayectoria29.py" output="screen" />
+    <node name="modo_lectura" pkg="cobot_controladores" type="modo_lectura18.py" output="screen" />
+    <node name="trayectoria" pkg="cobot_controladores" type="trayectoria37.py" output="screen" />
+    <node name="publicacion_posicion_real" pkg="cobot_controladores" type="publicacion_posicion_real3.py" output="screen" />
+    <node name="controlador_cobot" pkg="cobot_controladores" type="controlador_rutina_prueba4.py" output="screen" />
 
         <!-- Lanzar rosbridge_websocket.launch -->
     <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />  -->

@@ -1,7 +1,10 @@
 <launch>
       
      <!-- Ejecutar los dos scripts Python -->
-     <node name="inicializacion_encendido" pkg="niryo_controladores" type="inicializacion_encendido.py" output="screen" />
+     <node name="inicializacion_encendido" pkg="cobot_controladores" type="inicializacion_encendido.py" output="screen" />
+
+     <!-- Lanzar rosbridge_websocket.launch -->
+     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
         
 </launch>
 

@@ -45,8 +45,8 @@ class Control_Launch:
             rospy.loginfo("Iniciando el programa principal")
 
             self.launch_process = subprocess.Popen(
-                ['gnome-terminal', '--disable-factory', '--', 'roslaunch', 'cobot_controladores', 'ini_rob_colaborativo.launch'], 
-                preexec_fn=os.setpgrp # Crea un nuevo grupo de procesos
+                ['roslaunch', 'cobot_controladores', 'ini_rob_colaborativo.launch'],
+                preexec_fn=os.setpgrp
             )
 
             self.informe_pub.publish("Programa inicializado")
