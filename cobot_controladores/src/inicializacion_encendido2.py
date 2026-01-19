@@ -3,6 +3,7 @@
 
 import rospy
 from std_msgs.msg import String, Bool
+from cobot_controladores.msg import msg_web
 import subprocess
 import signal
 import os
@@ -19,11 +20,7 @@ class Control_Launch:
         self.launch_process = None
 
         # Publisher hacia la web
-        self.informe_pub = rospy.Publisher(
-            'informe_web',
-            String,
-            queue_size=10
-        )
+        self.informe_pub = rospy.Publisher('informe_web',String,queue_size=10)
 
         # Subscriber desde la web
         rospy.Subscriber(
@@ -33,6 +30,12 @@ class Control_Launch:
         )
 
         rospy.loginfo("Nodo Control_Launch inicializado correctamente")
+    
+    def publicar_informe(self, mensaje: str, tipo: int):
+        msg = msg_web()
+        msg.mensaje = mensaje
+        msg.tipo = tipo
+        self.informe_pub.publish(msg)
 
     def control_launch_callback(self, msg):
         if msg.data:
@@ -49,10 +52,10 @@ class Control_Launch:
                 preexec_fn=os.setpgrp
             )
 
-            self.informe_pub.publish("Programa inicializado")
+            publicar_informe("Programa inicializado",0)
 
         else:
-            self.informe_pub.publish("Programa ya estaba en ejecución")
+            publicar_informe("Programa ya estaba en ejecución",-1)
 
     def stop_launch(self):
         if self.launch_process is not None:
@@ -62,10 +65,10 @@ class Control_Launch:
             self.launch_process.wait()
             self.launch_process = None
 
-            self.informe_pub.publish("Programa finalizado")
+            publicar_informe("Programa finalizado",0)
 
         else:
-            self.informe_pub.publish("Programa no estaba iniciado")
+            publicar_informe("Programa no estaba iniciado",-1)
 
 
 if __name__ == '__main__':

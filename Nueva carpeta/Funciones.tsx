@@ -282,6 +282,7 @@ export function refreshCordCart(coord:number[]) {
   pubTopic('orden_web', msg);
 }
 
+
 export function publicar_informe(informe: string) {
   const msg = { data: informe };
 

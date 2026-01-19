@@ -28,6 +28,12 @@ import { useState,useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import {initRos} from "../Services/RosService2";
 import {msgInforme} from "../Services/Funciones";
+
+type MensajeInforme = {
+  texto: string;
+  nivel: number;
+};
+
 const Lectura = () => {
   const [angle, setAngle] = useState(0);
   const [flagAddPoint, setFlagAddPoint] = useState(false);
@@ -38,7 +44,7 @@ const Lectura = () => {
 
   const boxRef = useRef<HTMLDivElement>(null);
 
-  const [mensajes, setMensajes] = useState<string[]>([]);
+  const [mensajes, setMensajes] = useState<MensajeInforme[]>([]);
 {/* 
   const handleRutinas = () => {
     setShowLibrarie(2)
@@ -52,6 +58,30 @@ const Lectura = () => {
     setShowLibrarie(0)
   };
 */}
+
+const getColorByNivel = (nivel: number): string => {
+  switch (nivel) {
+    case 0:   // informativo
+      return "#f1f1eb"; // blanco suave
+    case 1:   // OK
+      return "#4caf50"; // verde
+    case -1:  // advertencia
+      return "#ffb300"; // amarillo ámbar
+    case -2:  // error
+      return "#e53935"; // rojo
+    default:
+      return "#b0bec5"; // gris por defecto
+  }
+};
+
+useEffect(() => {
+  setMensajes([
+    {
+      texto: "Prueba de inicialización",
+      nivel: -2,
+    },
+  ]);
+}, []);
 
 //scroll valla siempre al final al llegar un msg
 useEffect(() => {
@@ -69,14 +99,17 @@ useEffect(() => {
 
 useEffect(() => {
   msgInforme((msg: any) => {
-    // Si el mensaje es std_msgs/String, viene como { data: "..." }
-    if (msg && typeof msg.data === "string") {
+    if (
+      msg &&
+      typeof msg.texto === "string" &&
+      typeof msg.nivel === "number"
+    ) {
       setMensajes((prev) => {
-        const updated = [...prev, msg.data];
-        return updated.length > 50 ? updated.slice(-50) : updated; // mantiene solo últimos 50
+        const updated = [...prev, { texto: msg.texto, nivel: msg.nivel }];
+        return updated.length > 50 ? updated.slice(-50) : updated;
       });
     } else {
-      console.warn("Mensaje recibido no es string:", msg);
+      console.warn("Mensaje recibido con formato inválido:", msg);
     }
   });
 }, []);
@@ -226,15 +259,22 @@ useEffect(() => {
           flexDirection: "column",  // para que los mensajes se apilen
           overflowY: "auto",        // scroll si hay muchos
           border: "1px solid #0adf1cff",
-          backgroundColor: "#030303e5",
+          backgroundColor: "#1a1a1a",
           p: 1,
         }}
       >
         {mensajes.map((m, idx) => (
-          <Typography key={idx} variant="body2"
-            sx={{ color: "#222", fontSize: "0.70rem" }} // color + tamaño de letra
-            >
-            - {m}
+          <Typography
+            key={idx}
+            variant="body2"
+            sx={{
+              color: getColorByNivel(m.nivel),
+              fontSize: "0.75rem",
+              lineHeight: 1.4,
+              fontFamily: "monospace",
+            }}
+          >
+           - {m.texto}
           </Typography>
         ))}
       </Box>

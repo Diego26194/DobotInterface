@@ -27,7 +27,7 @@ from db_puntos6 import (
     leer_rutina_sin_quaterniones,
     agregar_trayectoria_rutina,
 )
-from cobot_controladores.msg import punto_web, nombresPuntos, punto_real
+from cobot_controladores.msg import punto_web, nombresPuntos, punto_real, msg_web
 import numpy as np
 
 import tf
@@ -64,7 +64,7 @@ class ModoLectura:
         
         self.puntos_rutina = rospy.Publisher('puntoRutina', punto_web, queue_size=10)
         
-        self.informe_web = rospy.Publisher('informe_web', String, queue_size=10)
+        self.informe_web = rospy.Publisher('informe_web', msg_web, queue_size=10)
         
         self.correr_rutina = rospy.Publisher('rutina', Bool, queue_size=10)
         
@@ -103,6 +103,12 @@ class ModoLectura:
         
         self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
 
+    def publicar_informe(self, mensaje: str, tipo: int):
+        msg = msg_web()
+        msg.mensaje = mensaje
+        msg.tipo = tipo
+        self.informe_web.publish(msg)
+    
     def modoT(self,data):
         self.modoTrayectoria=data.data
         self.rutina.clear()
@@ -120,16 +126,14 @@ class ModoLectura:
                 mensaje_puntoR.orden = ['addT', punto['nombre'], punto['plan']]
                 mensaje_puntoR.coordenadas = [(punto['wait']), (punto['pos'])]
                 self.puntos_rutina.publish(mensaje_puntoR)
-
-                mensaje_informe = (
-                    f"Trayectoria {punto['nombre']} agregado correctamente "
-                )
-                self.informe_web.publish(mensaje_informe)
+                
+                self.publicar_informe(f"Trayectoria {punto['nombre']} agregada correctamente",1)
+                
                 self.rutina.clear()
             else:
-                self.informe_web.publish(f"Trayectoria no guardada")
+                self.publicar_informe("Trayectoria no guardada",-1)
         else: 
-            self.informe_web.publish(f"No hay trayectoria para guardar")
+            self.publicar_informe("No hay trayectoria para guardar",-2)
         self.GuardarT=False
 
         
@@ -184,9 +188,8 @@ class ModoLectura:
             coorCartesianas_quat = self.AngulosArticulares_a_pose(angulos)
 
             # Si los ángulos están fuera de los límites, cortar el proceso
-            if coorCartesianas_quat is None:
-                msg = "Ángulos fuera de los límites de trabajo"
-                self.informe_web.publish(msg)
+            if coorCartesianas_quat is None:                
+                self.publicar_informe("Ángulos fuera de los límites de trabajo", -2)
                 return
 
             # Si pasó el chequeo, calculamos coordenadas en Euler
@@ -214,14 +217,14 @@ class ModoLectura:
                     (punto['pos']),
                 ]
                 self.puntos_rutina.publish(mensaje_puntoR)
-
-                mensaje_informe = (
+                
+                self.publicar_informe( 
                     f"Punto {punto['nombre']} agregado correctamente "
-                    f"con datos {mensaje_puntoR.coordenadas}, {self.velocidad}, {self.ratio}"
+                    f"con datos {mensaje_puntoR.coordenadas}, {self.velocidad}, {self.ratio}",
+                    1
                 )
-                self.informe_web.publish(mensaje_informe)
             else:
-                self.informe_web.publish(f"Punto {id} no agregado correctamente.")
+                self.publicar_informe(f"Punto {id} no agregado correctamente.", -1)
 
             
 
@@ -321,7 +324,7 @@ class ModoLectura:
             if nombre:
                 if not leer_punto(nombre):                    
                     escribir_datos(data.coordenadas, nombre)  # Llamar a la función escribir_datos
-                    mensaje_informe = mensajes_informe['agregar'].format(nombre, data.coordenadas)
+                    self.publicar_informe(mensajes_informe['agregar'].format(nombre, data.coordenadas), 1)
                     
                     #### Refresco la lista de puntos ####
                     puntos = leer_datos()  # Esto retorna db.all()
@@ -332,13 +335,13 @@ class ModoLectura:
                     mensaje_puntodb.nombres = nombres
                     self.nombres_puntos_tabla.publish(mensaje_puntodb)
                 
-                # Publicar en el tópico 'informe_web'
-                    self.informe_web.publish(mensajes_informe['subir_db'])
+                # Publicar en el tópico 'informe_web'                
+                    self.publicar_informe(mensajes_informe['subir_db'], 0)
                 else:
-                    mensaje_informe = mensajes_informe['Erroragregar'].format(nombre)                    
+                    self.publicar_informe(mensajes_informe['Erroragregar'].format(nombre),-2)
             else:
                 escribir_datos(data.coordenadas, None)  # Si no se especifica nombre, pasa None
-                mensaje_informe = "Punto agregado correctamente con nombre automático"
+                self.publicar_informe("Punto agregado correctamente con nombre automático", 1)
                 
                  #### Refresco la lista de puntos ####
                 puntos = leer_datos()  # Esto retorna db.all()
@@ -350,10 +353,7 @@ class ModoLectura:
                 self.nombres_puntos_tabla.publish(mensaje_puntodb)
             
             # Publicar en el tópico 'informe_web'
-                self.informe_web.publish(mensajes_informe['subir_db'])
-
-        # Publicar en el tópico 'informe_web'
-            self.informe_web.publish(mensaje_informe)
+                self.publicar_informe(mensajes_informe['subir_db'], 0)
             
             
         elif accion == 'agregarPReal':
@@ -361,7 +361,7 @@ class ModoLectura:
                 angulos=norm.bit_grados(self.angulosBit)
                 if not leer_punto(nombre):                    
                     escribir_datos(angulos, nombre)  # Llamar a la función escribir_datos
-                    mensaje_informe = mensajes_informe['agregarPReal'].format(nombre, angulos)
+                    self.publicar_informe(mensajes_informe['agregarPReal'].format(nombre, angulos), 1)
                     
                     #### Refresco la lista de puntos ####
                     puntos = leer_datos()  # Esto retorna db.all()
@@ -373,12 +373,12 @@ class ModoLectura:
                     self.nombres_puntos_tabla.publish(mensaje_puntodb)
                 
                 # Publicar en el tópico 'informe_web'
-                    self.informe_web.publish(mensajes_informe['subir_db'])
+                    self.publicar_informe(mensajes_informe['subir_db'], 0)
                 else:
-                    mensaje_informe = mensajes_informe['Erroragregar'].format(nombre)                    
+                    self.publicar_informe(mensajes_informe['Erroragregar'].format(nombre), -2)                
             else:
                 escribir_datos(angulos, None)  # Si no se especifica nombre, pasa None
-                mensaje_informe = "Punto agregado correctamente con nombre automático"
+                self.publicar_informe("Punto agregado correctamente con nombre automático", 1)
                 
                  #### Refresco la lista de puntos ####
                 puntos = leer_datos()  # Esto retorna db.all()
@@ -390,37 +390,31 @@ class ModoLectura:
                 self.nombres_puntos_tabla.publish(mensaje_puntodb)
             
             # Publicar en el tópico 'informe_web'
-                self.informe_web.publish(mensajes_informe['subir_db'])
-
-        # Publicar en el tópico 'informe_web'
-            self.informe_web.publish(mensaje_informe)
-
-        
+                self.publicar_informe(mensajes_informe['subir_db'], 0)
+                        
 
         elif accion == 'eliminar':
             if nombre:
                 resultado = eliminar_punto(nombre)  # Llamar a la función eliminar_punto
-                if resultado:  
-                    mensaje_informe = mensajes_informe['eliminar'].format(nombre)                    
+                if resultado:    
+                    self.publicar_informe(mensajes_informe['eliminar'].format(nombre), 1)                
                 else:
-                    mensaje_informe = mensajes_informe['errorP'].format(nombre)
+                    self.publicar_informe(mensajes_informe['errorP'].format(nombre), -2)
                     mensaje_error = punto_web()
                     mensaje_error.orden=['errorP'].format(nombre)
                     self.puntos_rutina.publish(mensaje_error)
-                self.informe_web.publish(mensaje_informe)
                 
 
         elif accion == 'modificar':
             if nombre:
                 resultado = cambiar_punto(nombre, data.coordenadas)
                 if resultado:  
-                    mensaje_informe = mensajes_informe['modificar'].format(nombre, data.coordenadas)                    
+                    self.publicar_informe(mensajes_informe['modificar'].format(nombre, data.coordenadas), 1)
                 else:
-                    mensaje_informe = mensajes_informe['errorModifica'].format(nombre, data.coordenadas)
+                    self.publicar_informe(mensajes_informe['errorModifica'].format(nombre, data.coordenadas), -2)
                     mensaje_error = punto_web()
                     mensaje_error.orden=['errorP'].format(nombre)
                     self.puntos_rutina.publish(mensaje_error)
-                self.informe_web.publish(mensaje_informe)
                     
 
         elif accion == 'subir_db':
@@ -434,7 +428,7 @@ class ModoLectura:
             self.nombres_puntos_tabla.publish(mensaje_puntodb)
         
         # Publicar en el tópico 'informe_web'
-            self.informe_web.publish(mensajes_informe['subir_db'])
+            self.publicar_informe(mensajes_informe['subir_db'], 0)
             
         elif accion == 'addPT':
             coorCartesianas_quat=self.AngulosArticulares_a_pose(data.coordenadas[:6])
@@ -445,8 +439,6 @@ class ModoLectura:
                 posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
             else:
                 posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
-                mensaje_informe = "Punto agregado correctamente con nombre automático"
-                self.informe_web.publish(mensaje_informe)
                 
             punto = leer_punto_rutina(posicion)  
             if punto:
@@ -460,10 +452,9 @@ class ModoLectura:
                 ]
                 self.puntos_rutina.publish(mensaje_puntoR)
 
-                mensaje_informe = mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
-                self.informe_web.publish(mensaje_informe)
+                self.publicar_informe(mensajes_informe['addPT'].format(nombre, coorCartesianas_euler, vel_esc, ratio), 2)
             else:
-                self.informe_web.publish(f"Punto {posicion} no agregado correctamente.")
+                self.publicar_informe(f"Punto {posicion} no agregado correctamente.", -1)
                 
             
         elif accion == 'addPPRealRA':
@@ -476,8 +467,6 @@ class ModoLectura:
                 posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, nombre)                 
             else:
                 posicion=agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler, vel_esc, ratio, plan, None)  # Si no se especifica nombre, pasa None
-                mensaje_informe = "Punto agregado correctamente con nombre automático"
-                self.informe_web.publish(mensaje_informe)
                 
             punto = leer_punto_rutina(posicion)  
             if punto:
@@ -491,10 +480,9 @@ class ModoLectura:
                 ]
                 self.puntos_rutina.publish(mensaje_puntoR)
 
-                mensaje_informe = mensajes_informe['addPPRealRA'].format(nombre, coorCartesianas_euler, vel_esc, ratio)
-                self.informe_web.publish(mensaje_informe)
+                self.publicar_informe(mensajes_informe['addPPRealRA'].format(nombre, coorCartesianas_euler, vel_esc, ratio), 1)
             else:
-                self.informe_web.publish(f"Punto {posicion} no agregado correctamente.")
+                self.publicar_informe(f"Punto {posicion} no agregado correctamente.", -1)
 
 
         # Publicar en el tópico 'informe_web'
@@ -532,23 +520,20 @@ class ModoLectura:
                         
                     self.puntos_rutina.publish(mensaje_puntoR)
 
-                    mensaje_informe = mensajes_informe['editPR'].format(point['nombre'], mensaje_puntoR.coordenadas)
-                    self.informe_web.publish(mensaje_informe)
+                    self.publicar_informe(mensajes_informe['editPR'].format(point['nombre'], mensaje_puntoR.coordenadas), 1)
                 else:
                     mensaje_puntoR.orden = ['errorPunRut']
                     self.puntos_rutina.publish(mensaje_puntoR)
-                    mensaje_informe ='Rutina NO Editada,'+ mensajes_informe['errorPunRut'].format(nombre, posicion)
-                    self.informe_web.publish(mensaje_informe)
+                    self.publicar_informe('Rutina NO Editada,'+ mensajes_informe['errorPunRut'].format(nombre, posicion), -1)
             else:
                 mensaje_puntoR.orden = ['errorPunRut2']
                 self.puntos_rutina.publish(mensaje_puntoR)
-                self.informe_web.publish(f"Error Coordenadas fuera de limites")
+                self.publicar_informe(f"Error Coordenadas fuera de limites", -2)
 
         
         elif accion == 'refresRut':          
             self.refrescarRutinaActual()
-            mensaje_informe = mensajes_informe['refresRut']
-            self.informe_web.publish(mensaje_informe)
+            self.publicar_informe(mensajes_informe['refresRut'], 0)
 
         
         elif accion == 'eliminarPunRut':          
@@ -559,8 +544,7 @@ class ModoLectura:
               punto = leer_punto_rutina(data.coordenadas[i])        
               if not punto or punto['nombre'] != data.orden[i+1]:
                 mensaje_puntoR.coordenadas.append(data.coordenadas[i])
-                mensaje_informe ='Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], item)
-                self.informe_web.publish(mensaje_informe)                
+                self.publicar_informe('Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], item), -1)               
                 errores = True
             if not errores:
               mensaje_puntoR.orden=['delPR']
@@ -570,9 +554,8 @@ class ModoLectura:
                 if punto['plan']=="Rutina":
                     eliminar_rutina_control(punto['nombre'])
                     verificar_rutinas_control()
-                mensaje_informe = mensajes_informe['eliminarPunRut'].format(punto['nombre'], item)
               mensaje_puntoR.coordenadas=data.coordenadas
-              self.informe_web.publish(mensaje_informe)
+              self.publicar_informe(mensajes_informe['eliminarPunRut'].format(punto['nombre'], item), 1)
               self.refrescarRutinaActual() #ver si dejar esto o no
              
              
@@ -588,14 +571,13 @@ class ModoLectura:
                         mensaje_puntodb.coordenadas = [*(punto['coordenadasAngulares']),*CoordenadasCartesianas]
                         self.puntos_web.publish(mensaje_puntodb)
 
-                        mensaje_informe = mensajes_informe['ver'].format(nombre, mensaje_puntodb.coordenadas)
-                        self.informe_web.publish(mensaje_informe)
+                        self.publicar_informe(mensajes_informe['ver'].format(nombre, mensaje_puntodb.coordenadas), 1)
                     else:
-                        self.informe_web.publish(f"Coordenadas no validas")
+                        self.publicar_informe(f"Coordenadas no validas", -1)
                 else:
-                    self.informe_web.publish(f"Punto {nombre} no encontrado.")
-            else:
-                self.informe_web.publish("Error: no se ha proporcionado un nombre para el punto.")             
+                    self.publicar_informe(f"Punto {nombre} no encontrado.", -1)
+            else:  
+                self.publicar_informe("Error: no se ha proporcionado un nombre para el punto.", -2)          
              
 
         elif accion == 'ang-cart':            
@@ -610,8 +592,8 @@ class ModoLectura:
                 #self.informe_web.publish(mensaje_informe)
             else:
                 mensaje_puntodb.orden = ['ECart']                        
-                self.puntos_web.publish(mensaje_puntodb)
-                self.informe_web.publish(f"Coordenadas no validas")             
+                self.puntos_web.publish(mensaje_puntodb)   
+                self.publicar_informe(f"Coordenadas no validas",-1)        
              
 
         elif accion == 'cart-ang':
@@ -627,14 +609,14 @@ class ModoLectura:
             else:
                 mensaje_puntodb.orden = ['EAng']                        
                 self.puntos_web.publish(mensaje_puntodb)
-                self.informe_web.publish(f"Coordenadas no validas")
+                self.publicar_informe(f"Coordenadas no validas",-1) 
 
 
         elif accion == 'eliminarRutina':
             if nombre:
                 resultado=eliminar_rutina(nombre)
                 if resultado:
-                    mensaje_informe = mensajes_informe['eliminarRutina'].format(nombre)
+                    self.publicar_informe(mensajes_informe['eliminarRutina'].format(nombre), 1)
                     
                     ###### Refrescar tabla de rutinas ########
                 
@@ -643,11 +625,10 @@ class ModoLectura:
                     mensaje_puntodb.nombres = obtener_todas_rutinas()
                     self.nombres_rutinas_tabla.publish(mensaje_puntodb)
                 else:
-                    mensaje_informe = mensajes_informe['ErrorR'].format(nombre)
+                    self.publicar_informe(mensajes_informe['ErrorR'].format(nombre), -2)
                     mensaje_errorDelR = punto_web()
                     mensaje_errorDelR.orden=['errorR']
                     self.puntos_rutina.publish(mensaje_errorDelR)
-                self.informe_web.publish(mensaje_informe)  
         
         
         elif accion == 'cargarRRA':
@@ -696,22 +677,20 @@ class ModoLectura:
                     faltantes = verificar_rutinas_control()
                     if faltantes:  
                         # Al menos una rutina declarada en control no existe en DB
-                        mensaje_informe = f"⚠️ Rutinas faltantes: {', '.join(faltantes)}"
+                        self.publicar_informe(f"⚠️ Rutinas faltantes: {', '.join(faltantes)}", -2)
                         mensaje_errorDelR = punto_web()
                         mensaje_errorDelR.orden = ['errorRR'] #['errorRR', *faltantes]  #cambiar por esto al agregar el cambio de color en la tabla
                         self.puntos_rutina.publish(mensaje_errorDelR)  
-                        self.informe_web.publish(mensaje_informe) 
                             
                     self.refrescarRutinaActual()                            
                             
-                    mensaje_informe = mensajes_informe['cargarRRA'].format(nombre)
+                    self.publicar_informe(mensajes_informe['cargarRRA'].format(nombre), 1)
                     
                 else:
-                    mensaje_informe = mensajes_informe['ErrorR'].format(nombre)
+                    self.publicar_informe(mensajes_informe['ErrorR'].format(nombre), -2)
                     mensaje_errorDelR = punto_web()
                     mensaje_errorDelR.orden=['errorR']
-                    self.puntos_rutina.publish(mensaje_errorDelR)
-                self.informe_web.publish(mensaje_informe)                
+                    self.puntos_rutina.publish(mensaje_errorDelR)    
                   
 
         elif accion == 'addRT':
@@ -732,10 +711,9 @@ class ModoLectura:
                 ]
                 self.puntos_rutina.publish(mensaje_rutinaR)
 
-                mensaje_informe = mensajes_informe['addRT'].format(nombre)
-                self.informe_web.publish(mensaje_informe)
+                self.publicar_informe(mensajes_informe['addRT'].format(nombre), 1)
             else:
-                self.informe_web.publish(f"Rutina {nombre} no agregado correctamente.")
+                self.publicar_informe(f"Rutina {nombre} no agregado correctamente.", -1)
                 
         elif accion == 'subirR_db':
         # Publicar los nombres de los puntos en el tópico 'puntodb'
@@ -744,7 +722,7 @@ class ModoLectura:
             self.nombres_rutinas_tabla.publish(mensaje_puntodb)
         
         # Publicar en el tópico 'informe_web'
-            self.informe_web.publish(mensajes_informe['subirR_db'])
+            self.publicar_informe(mensajes_informe['subirR_db'], 0)
         
                 
         elif accion == 'addRutina':
@@ -767,8 +745,7 @@ class ModoLectura:
                 nombre=f"rutina{nuevo_num}"
                         
             if agregar_rutina(nombre):
-                mensaje_informe = mensajes_informe['addRutina'].format(nombre)
-                self.informe_web.publish(mensaje_informe)
+                self.publicar_informe(mensajes_informe['addRutina'].format(nombre), 1)
                 
                 ###### Refrescar tabla de rutinas ########
                 
@@ -778,9 +755,9 @@ class ModoLectura:
                 self.nombres_rutinas_tabla.publish(mensaje_puntodb)
             
             # Publicar en el tópico 'informe_web'
-                self.informe_web.publish(mensajes_informe['subirR_db'])
-            else:                
-                self.informe_web.publish(f"Ya existe rutina con el nombre {nombre}")       
+                self.publicar_informe(mensajes_informe['subirR_db'], 0)
+            else:                  
+                self.publicar_informe(f"Ya existe rutina con el nombre {nombre}",-1)  
                      
         
     

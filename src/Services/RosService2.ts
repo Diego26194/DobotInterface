@@ -57,7 +57,7 @@ export function initRos() {
   topics['informe_web'] = new ROSLIB.Topic({
     ros,
     name: '/informe_web',
-    messageType: 'std_msgs/String',
+    messageType: 'cobot_controladores/msg_web',
   });
   topics['pos_real'] = new ROSLIB.Topic({
     ros,

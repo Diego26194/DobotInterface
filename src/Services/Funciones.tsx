@@ -357,6 +357,7 @@ export function refreshCordCart(coord:number[]) {
   pubTopic('orden_web', msg);
 }
 
+//Revisar si esto es util
 export function publicar_informe(informe: string) {
   const msg = { data: informe };
 
