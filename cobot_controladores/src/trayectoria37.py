@@ -683,7 +683,7 @@ if __name__ == '__main__':
         roscpp_initialize(sys.argv)
         controlador = ControladorRobot()
         # Suscribirse al tópico cord_ros
-        rospy.Subscriber('cord_ros', punto_correr, controlador.ejecutar_cord_ros)
+        rospy.Subscriber('cord_ros', punto_correr, controlador.ejecutar_cord_ros, queue_size=1)
         rospy.spin()
     except rospy.ROSInterruptException:
         rospy.loginfo("Se ha interrumpido la ejecución del nodo.")

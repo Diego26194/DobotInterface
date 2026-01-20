@@ -114,13 +114,14 @@ type RowType = {
 interface RutineTableProps {
   flagEliminarPRut: boolean;
   setFlagEliminarPRut: React.Dispatch<React.SetStateAction<boolean>>;
+  modoActuar: boolean;
 }
 
 export type RutineTableRef = {
   updateWaitForSelectedRows: (valor: number) => void;
   validarRutina: () => boolean; 
 };
-const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarPRut, setFlagEliminarPRut}, ref) => {
+const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarPRut, setFlagEliminarPRut, modoActuar}, ref) => {
 
 //const RutineTable = () => {
   const [rowSelectionModel, setRowSelectionModel] =
@@ -573,7 +574,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       headerName: "Correr",
       width: 40,
        renderCell: (params) =>
-        !params.row.editable ? (
+        (!params.row.editable && modoActuar) ? (
           <IconButton
             onClick={() => handlePlayRow(params.row.id)}
             color="primary"

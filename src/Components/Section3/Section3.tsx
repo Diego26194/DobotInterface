@@ -36,13 +36,14 @@ import InputPositive from "../Elements/Inputs/InputPoisitive";
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 
 import Section4 from "../Section1/Section4";
-import { ejecutarRutina, refrescarRutina, agregarRutina, runTrayectoria } from "../../Services/Funciones";
+import { ejecutarRutina, refrescarRutina, agregarRutina} from "../../Services/Funciones";
 
 
 interface Section3Props {
   setFlagAddRutine: React.Dispatch<React.SetStateAction<boolean>>;
+  modoActuar: boolean;
 }
-const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
+const Section3: React.FC<Section3Props> = ({ setFlagAddRutine, modoActuar }) => {
   const [open, setOpen] = useState(false);
   const [flagEliminarPRut, setFlagEliminarPRut] = useState(false);
   const [wait, setWait] = useState(0);
@@ -148,7 +149,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
 
               <ButtonSave description={'Guardar Rutina'} onClick={handleAddRutineClick}/>
           
-              <Button1 title= "Ejecutar Rutina" sx={{width: '20%'}} variant="outlined" onClick={handleEjecutarClick}>
+              <Button1 title= "Ejecutar Rutina" sx={{width: '20%'}} variant="outlined" onClick={handleEjecutarClick} disabled={!modoActuar}>
                 {<PlayArrowIcon />}Ejecutar
               </Button1>    
              {/*<ButtonAdd description={'Agregar Punto a la Rutina'} onClick={handleAddRutineClick}/> */}
@@ -172,14 +173,8 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
               <Button1 sx={{width: '20%'}} variant="outlined" onClick={handleWaitPassDatagrid}>
                 add
               </Button1>
-
               
               <ButtonReflesh description={'Refrescar tabla de rutina'}onClick={refrescarRutina }/> 
-
-              <Button1 sx={{width: '20%'}} variant="outlined" onClick={runTrayectoria}>
-                Run
-              </Button1>
-
               
             </Stack>
 
@@ -220,6 +215,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine }) => {
               flagEliminarPRut={flagEliminarPRut} 
               setFlagEliminarPRut={setFlagEliminarPRut} 
               ref={tableRef} 
+              modoActuar={modoActuar}
             />
           </Grid>
           {/* 

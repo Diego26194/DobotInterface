@@ -49,6 +49,7 @@ interface Section2V2Props {
   setFlagAddPoint: React.Dispatch<React.SetStateAction<boolean>>;
   flagAddRutine: boolean;
   setFlagAddRutine: React.Dispatch<React.SetStateAction<boolean>>;
+  modoActuar: boolean;
 }
 
 const Section2V2: React.FC<Section2V2Props> = 
@@ -56,7 +57,8 @@ const Section2V2: React.FC<Section2V2Props> =
     flagAddPoint,
     setFlagAddPoint, 
     flagAddRutine,
-    setFlagAddRutine 
+    setFlagAddRutine,
+    modoActuar 
   }) => {
 
   const inputsRefCart = useRef<InputsCartVRef>(null);
@@ -295,7 +297,7 @@ const Section2V2: React.FC<Section2V2Props> =
               
             }}      
             >
-            <Button1 variant="contained" onClick={correr}>Ejecutar</Button1>
+            <Button1 variant="contained" onClick={correr} disabled={!modoActuar}>Ejecutar</Button1>
             <ButtonSave description={'Guardar Punto en Base de Datos'} onClick={agregarPuDB}/>  
             <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={agregarPuRutina}/> 
           </Stack>

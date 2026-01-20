@@ -316,8 +316,6 @@ class ModoLectura:
             'subirR_db': "Rutinas de la base de datos cargados correctamente",            
             'cargarRRA': "Rutinas {} cargados ",        
             'addRutina': "Rutinas {} agregada correctamente ",
-            #Prueba de Rutina
-            'runTrayectoria': "corriendo trayectoria",
         }
     # Switch que maneja las diferentes acciones en base al valor de 'accion'
         if accion == 'agregar':

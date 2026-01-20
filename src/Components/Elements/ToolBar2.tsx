@@ -6,18 +6,20 @@ interface ToolBarProps {
   LinkHome: string;
   onTogglePuntos: () => void;
   onToggleRutinas: () => void;
+  modoActuar: boolean;
 }
 
 function ToolBar({
   LinkHome,
   onTogglePuntos,
   onToggleRutinas,
+  modoActuar,
 }: ToolBarProps) {
   return (
     <AppBar
       position="static"
       sx={{
-        backgroundColor: "#116e7aff",
+        backgroundColor: modoActuar? "#116e7aff":"rgb(17, 122, 78)" ,
         height: "clamp(36px, 4vh, 56px)",
         minHeight: "clamp(36px, 4vh, 56px)",
         justifyContent: "center",

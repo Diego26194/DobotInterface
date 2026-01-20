@@ -34,6 +34,9 @@ export function modoLectura() {
   pubTopic('modo_actuar', msg);
 }
 
+export function ModoActuar(callback: (msg: any) => void) {
+  subTopic("modo_actuar", callback);
+}
 //////////////////////////    Fin Barra de Herramientas     /////////////////////////
 
 

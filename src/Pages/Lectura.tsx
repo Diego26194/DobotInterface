@@ -27,7 +27,7 @@ import InputAng from "../Components/Elements/Inputs/InputCord";
 import { useState,useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import {initRos} from "../Services/RosService2";
-import {msgInforme} from "../Services/Funciones";
+import {msgInforme, ModoActuar} from "../Services/Funciones";
 
 type MensajeInforme = {
   texto: string;
@@ -45,6 +45,8 @@ const Lectura = () => {
   const boxRef = useRef<HTMLDivElement>(null);
 
   const [mensajes, setMensajes] = useState<MensajeInforme[]>([]);
+
+  const [modoActuar, setModoActuar] = useState<boolean>(true);
 {/* 
   const handleRutinas = () => {
     setShowLibrarie(2)
@@ -73,6 +75,16 @@ const getColorByNivel = (nivel: number): string => {
       return "#b0bec5"; // gris por defecto
   }
 };
+
+useEffect(() => {
+  ModoActuar((msg: any) => {
+    if (typeof msg.data === "boolean") {
+      setModoActuar(msg.data);
+    } else {
+      console.warn("modo_actuar inválido:", msg);
+    }
+  });
+}, []);
 
 useEffect(() => {
   setMensajes([
@@ -127,6 +139,7 @@ useEffect(() => {
         LinkHome="/arduino" 
         onTogglePuntos={() => setShowLibrariePuntos(p => !p)}
         onToggleRutinas={() => setShowLibrarieRutinas(p => !p)}
+        modoActuar={modoActuar}
         />
       {/*//Barra de herramientas*/} 
       {/*
@@ -229,6 +242,7 @@ useEffect(() => {
                 setFlagAddPoint={setFlagAddPoint}
                 flagAddRutine={flagAddRutine} 
                 setFlagAddRutine={setFlagAddRutine}
+                modoActuar={modoActuar}
               />
             </Grid>
 
@@ -242,7 +256,8 @@ useEffect(() => {
                 padding:"4px",
               }} 
             >
-              <Section3 setFlagAddRutine={setFlagAddRutine} />
+              <Section3 setFlagAddRutine={setFlagAddRutine} modoActuar={modoActuar}/>
+              
             </Grid>
 
           </Grid>
