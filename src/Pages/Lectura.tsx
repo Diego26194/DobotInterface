@@ -110,20 +110,24 @@ useEffect(() => {
 }, [])
 
 useEffect(() => {
-  msgInforme((msg: any) => {
+  const unsubscribe = msgInforme((msg: any) => {
     if (
       msg &&
-      typeof msg.texto === "string" &&
-      typeof msg.nivel === "number"
+      typeof msg.mensaje === "string" &&
+      typeof msg.tipo === "number"
     ) {
       setMensajes((prev) => {
-        const updated = [...prev, { texto: msg.texto, nivel: msg.nivel }];
+        const updated = [...prev, { texto: msg.mensaje, nivel: msg.tipo }];
         return updated.length > 50 ? updated.slice(-50) : updated;
       });
     } else {
       console.warn("Mensaje recibido con formato inválido:", msg);
     }
   });
+
+  return () => {
+    if (unsubscribe) unsubscribe();
+  };
 }, []);
 
   return (

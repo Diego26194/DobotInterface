@@ -1,4 +1,4 @@
-import {initRos, pubTopic, subTopic, unsubTopic } from './RosService2';
+import {initRos, pubTopic, subTopic, unsubTopic, subTopic2 } from './RosService2';
 
 //////////////////////////    Barra de Herramientas     /////////////////////////
 
@@ -372,8 +372,7 @@ export function publicar_informe(informe: string) {
 
 //Resibe mensaje de informe
 export function msgInforme(callback: (msg: any) => void) {
-  subTopic("informe_web", callback);
-  
+  return subTopic2("informe_web", callback);  
 }
 
 export function msgEmergente(tipoMsg: string) {

@@ -166,7 +166,6 @@ export function pubTopic(topicName: string, message: any) {
   topics[topicName].publish(rosMsg);
 }
 
-
 //Subscripcion Generica
 
 export function subTopic(topicName: string, callback: (msg: any) => void) {
@@ -177,6 +176,24 @@ export function subTopic(topicName: string, callback: (msg: any) => void) {
   topics[topicName].subscribe((msg: any) => {
     callback(msg);
   });
+}
+
+//Subscripcion con desubscripcion
+
+export function subTopic2(topicName: string, callback: (msg: any) => void) {
+  if (!topics[topicName]) {
+    console.error(`El tópico ${topicName} no está inicializado.`);
+    return null;
+  }
+
+  const handler = (msg: any) => {callback(msg); };
+
+  topics[topicName].subscribe(handler);
+
+  // 👇 devolver función de cleanup
+  return () => {
+    topics[topicName].unsubscribe(handler);
+  };
 }
 
 //Cancelar subscripcion

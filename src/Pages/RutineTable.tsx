@@ -444,6 +444,14 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
             correrTAngular([row.posicion],[2,3,row.escV]);
             break;
 
+          case "Rutina":
+            correrTAngular([row.posicion],[2,4]);
+            break;
+
+          case "Trayectoria":
+            correrTAngular([row.posicion],[2,5]);
+            break;
+
           default:
             console.warn("Acción no reconocida:", row.plan);
         }
