@@ -372,7 +372,10 @@ class ControladorRobot:
             
             #El proximo punto despues de una trayectoria empezara donde esta termino
             if p.get('plan')== "Trayectoria":
+                rospy.loginfo(p.get('puntos')[-1])
                 PTrayectoriaFinal=norm.bit_rad(p.get('puntos')[-1]) 
+                rospy.loginfo(PTrayectoriaFinal)
+                
                 
                 # ======================================================
                 #  Crear RobotState inicial desde Pinicial
@@ -417,17 +420,18 @@ class ControladorRobot:
     
     def Ordenar_ejec_rutina(self, data):
         F = Bool(False)
-        self.planear_Rutina = True
+        self.planear_Rutina = True    
+        self.rutina_pub.publish(F)   
+          
         if not data.data or self.ejecutando_rutina:
             return
-        self.ejecutar_rutina("rutina_actual")       
+        self.ejecutar_rutina("rutina_actual")   
 
 
     def ejecutar_rutina(self, rut):
 
         rospy.loginfo("Iniciando rutina...")
         self.ejecutando_rutina = True
-        self.rutina_pub.publish(F)
 
         # Leer rutina desde DB
         try:
@@ -438,7 +442,7 @@ class ControladorRobot:
         except Exception as e:
             rospy.logerr(f"Error leyendo rutina: {e}")
             self.ejecutando_rutina = False
-            return
+            return            
 
         # buscar registro control por id
         control = next((r for r in rutina if r.get('id') == 'control'), None)
@@ -496,6 +500,8 @@ class ControladorRobot:
                 valores_wait.append(wait_val)
             if p.get('plan')== "Trayectoria":
                 indices_Trayectorias.append(i)
+       
+        rospy.logerr(indices_Trayectorias)
 
         tiene_wait = len(indices_wait) > 0
         tiene_trayectoria = len(indices_Trayectorias) > 0
@@ -507,10 +513,86 @@ class ControladorRobot:
             rospy.loginfo("Rutina sin waits: enviando -2 a planificación y mandando goal completo")
             self.trayectoria_pub.publish(Int16(-2))
 
+            
+
+        elif tiene_wait and not tiene_trayectoria:
+            # --- CASO 2: rutina segmentada por waits ---
+            rospy.loginfo("Rutina con waits: enviando -3 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-3))
+
+            if not self.esperar_confirmacion(1, timeout=30.0):
+                rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
+                self.ejecutando_rutina = False
+                return
+
+            msg_waits = waits()
+            msg_waits.indice = indices_wait
+            msg_waits.wait = valores_wait
+
+            self.rutine_waits.publish(msg_waits)
+            rospy.loginfo(f"📤 Publicado waits: {list(zip(indices_wait, valores_wait))}")
+
+        elif not tiene_wait and tiene_trayectoria:
+            # --- CASO 2: rutina segmentada por waits ---
+            rospy.loginfo("Rutina sin waits: enviando -4 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-4))
+
+            if not self.esperar_confirmacion(1, timeout=30.0):
+                rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
+                self.ejecutando_rutina = False
+                return
+
+            msg_trayectorias = trayectorias()
+            msg_trayectorias.indice = indices_Trayectorias
+            msg_trayectorias.posicion = self.posicion_Trayectorias
+            msg_trayectorias.Rutina = self.rutina_Trayectorias
+            
+
+            self.rutine_trayectorias.publish(msg_trayectorias)
+            rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
+            
+            self.posicion_Trayectorias.clear()
+            self.rutina_Trayectorias.clear()
+
+        elif tiene_wait and tiene_trayectoria:
+            # --- CASO 2: rutina segmentada por waits ---
+            rospy.loginfo("Rutina con waits: enviando -5 a planificación y esperando confirmación")
+            self.trayectoria_pub.publish(Int16(-5))
+
+            if not self.esperar_confirmacion(1, timeout=30.0):
+                rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
+                self.ejecutando_rutina = False
+                return
+                            
+            msg_trayectorias = trayectorias()
+            msg_trayectorias.indice = indices_Trayectorias
+            msg_trayectorias.posicion = self.posicion_Trayectorias
+            msg_trayectorias.Rutina = self.rutina_Trayectorias
+
+            self.rutine_trayectorias.publish(msg_trayectorias)
+            rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
+            
+            self.posicion_Trayectorias.clear()
+            self.rutina_Trayectorias.clear()
+
+            msg_waits = waits()
+            msg_waits.indice = indices_wait
+            msg_waits.wait = valores_wait
+
+            self.rutine_waits.publish(msg_waits)
+            rospy.loginfo(f"📤 Publicado waits: {list(zip(indices_wait, valores_wait))}")
+
+        # esperar confirmacion 3
+        if not self.esperar_confirmacion(3, timeout=30.0):
+            rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
+
+        self.ejecutando_rutina = False
+        rospy.loginfo("ejecutar_rutina: finalizada.")
+
     def ejecutar_Trayectoria(self, trayectoria):
         rospy.loginfo(f"Puntos expandidos: {trayectoria}")     
                   
-        self.posicion_Trayectorias.append(0)
+        self.posicion_Trayectorias.append(trayectoria.get('pos'))
         self.rutina_Trayectorias.append("rutina_actual")   
         
         posicion_actual = self.move_group.get_current_joint_values()
@@ -536,9 +618,9 @@ class ControladorRobot:
         
         indices_Trayectorias = []
         
-        indices_Trayectorias.append(i)
+        indices_Trayectorias.append(0)
 
-        rospy.loginfo("Rutina con waits: enviando -4 a planificación y esperando confirmación")
+        rospy.loginfo("Rutina sin waits: enviando -4 a planificación y esperando confirmación")
         self.trayectoria_pub.publish(Int16(-4))
 
         if not self.esperar_confirmacion(1, timeout=30.0):
@@ -572,17 +654,20 @@ class ControladorRobot:
         F = Bool(False)
         #data.descripcion[orgien_de_orden,plan,velocidad,radio]
         rospy.loginfo(data)
-        
+        self.rutina_pub.publish(F)
         if not self.ejecutando_rutina:
             self.ejecutando_rutina = True
-            self.rutina_pub.publish(F)
+            
             try:
                 if data.descriocion[1]==1:
                     plan="PTP"
+                    velocidad=data.descriocion[2]/100
                 elif data.descriocion[1]==2:
                     plan="LIN"
+                    velocidad=data.descriocion[2]/100
                 elif data.descriocion[1]==3:
                     plan="CIRC"
+                    velocidad=data.descriocion[2]/100
                 elif data.descriocion[1]==4:
                     plan="Rutina"
                 elif data.descriocion[1]==5:
@@ -590,7 +675,6 @@ class ControladorRobot:
                 else:
                     rospy.logerr("Eror,Plan no especificado: {}".format(data.descriocion[1]))
                     
-                velocidad=data.descriocion[2]/100
                 pose = None
                 if data.descriocion[0] == 1:
                     # Obtener los datos de cord_ros (pose en este caso)

@@ -113,15 +113,9 @@ class ModoLectura:
 
         for i in range(num_puntos):
             motor1 = int(bit_inicio + i * incremento)
-
-            self.angulosBit = (
-                motor1,   # Motor 1: 0° → 90°
-                2047,     # Motor 2 fijo
-                2047,     # Motor 3 fijo
-                512,      # Motor 4 fijo
-                512,      # Motor 5 fijo
-                512       # Motor 6 fijo
-            )
+            
+            # Motor 1: 0° → 90°  
+            self.angulosBit = [motor1,2047,2047,512,512,512]
 
             self.rutina.append(list(self.angulosBit))
         

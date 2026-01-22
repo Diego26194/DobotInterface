@@ -423,38 +423,33 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
     // Buscamos la fila correspondiente en el estado `rows`
     const row = rows.find(r => r.id === rowId);
     if (row) {
-      if (row.plan="Rutina"){
-        console.log("No es un punto,por el momento no se puede correr la rutina: ", row.nombre);
-      }
-      else{
-        console.log("Coordenadas:", row.coordenadas);
-        alert(`Coordenadas: [${row.coordenadas.join(', ')}]`);
+      console.log("Coordenadas:", row.coordenadas);
+      alert(`Coordenadas: [${row.coordenadas.join(', ')}]`);
 
-        switch (row.plan) {
+      switch (row.plan) {
                 
-          case "PTP":
-            correrTAngular([row.posicion],[2,1,row.escV]);
-            break;          
+        case "PTP":
+          correrTAngular([row.posicion],[2,1,row.escV]);
+          break;          
           
-          case "LIN":
-            correrTAngular([row.posicion],[2,2,row.escV]);
-            break;
+        case "LIN":
+          correrTAngular([row.posicion],[2,2,row.escV]);
+          break;
 
-          case "CIRC":
-            correrTAngular([row.posicion],[2,3,row.escV]);
-            break;
+        case "CIRC":
+          correrTAngular([row.posicion],[2,3,row.escV]);
+          break;
 
-          case "Rutina":
-            correrTAngular([row.posicion],[2,4]);
-            break;
+        case "Rutina":
+          correrTAngular([row.posicion],[2,4]);
+          break;
 
-          case "Trayectoria":
-            correrTAngular([row.posicion],[2,5]);
-            break;
+        case "Trayectoria":
+          correrTAngular([row.posicion],[2,5]);
+          break;
 
-          default:
-            console.warn("Acción no reconocida:", row.plan);
-        }
+        default:
+          console.warn("Acción no reconocida:", row.plan);
       }
     }
   };
