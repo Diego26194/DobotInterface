@@ -430,7 +430,7 @@ const Section2V2: React.FC<Section2V2Props> =
           >
             <Grid size={{xs: 6, md: 6}}>
               <InputPositive
-                label="Velocidad"
+                label="Velocidad (%)"
                 valMin={0}
                 valMax={100}
                 value={velocidad}
@@ -439,7 +439,7 @@ const Section2V2: React.FC<Section2V2Props> =
             </Grid>
             <Grid size={{xs: 6, md: 6}}>
               <InputPositive
-                label="Ratio"
+                label="Ratio (mm)"
                 valMin={0}
                 valMax={100}
                 value={ratio}
