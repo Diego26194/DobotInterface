@@ -540,10 +540,21 @@ class ControladorRobot:
         else: #Tiene trayectoria
             
             
-            
+            self.sequence_action_client.cancel_all_goals() 
             posicion_actual = self.move_group.get_current_joint_values()
             
-            for sub_tramos in tramos:
+            for idx, sub_tramos in enumerate(tramos):
+            
+                if idx > 0:
+                    robot_state_T = RobotState()
+                    robot_state_T.joint_state = JointState()
+                    robot_state_T.joint_state.name = self.move_group.get_active_joints()
+                    robot_state_T.joint_state.position = posicion_actual
+                    
+                    self.move_group.set_start_state(robot_state_T)
+                else:
+                    # Primer tramo: estado real
+                    self.move_group.set_start_state_to_current_state()
                 
                 goal = self.crear_goal(sub_tramos["puntos"],posicion_actual )    
                 
@@ -555,8 +566,7 @@ class ControladorRobot:
                     rospy.logerr("El servidor de secuencia no está disponible.")
                     self.ejecutando_rutina = False
                     return        
-                
-                self.sequence_action_client.cancel_all_goals()              
+                                             
                 self.sequence_action_client.send_goal(goal)
                 
                 if not self.esperar_confirmacion(0, timeout=10.0):
@@ -564,7 +574,9 @@ class ControladorRobot:
                     self.ejecutando_rutina = False
                     return          
                 else:
-                    rospy.logerr("rutina ejecutable")                
+                    rospy.logerr("rutina ejecutable")         
+            
+            self.move_group.set_start_state_to_current_state()       
                 
                 
                 
