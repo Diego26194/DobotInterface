@@ -1,0 +1,16 @@
+[Unit]
+Description=Interfaz Web ROS (Node.js)
+After=network.target roscore.service
+Requires=roscore.service
+
+[Service]
+Type=simple
+User=dobot
+WorkingDirectory=/home/dobot/Diego_Carpetas_exteriores/DobotInterface
+ExecStart=/usr/bin/npm run dev -- --host
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+

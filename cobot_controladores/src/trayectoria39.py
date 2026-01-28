@@ -50,6 +50,10 @@ class ControladorRobot:
 
         # Publicar en el tópico de coordenadas Dynamixel alternativo
         self.cord_dy_pub2 = rospy.Publisher('cord_dy2', Int16MultiArray, queue_size=10)
+        
+        # Publicar en joint_states
+        self.joint_pub = rospy.Publisher('joint_states', JointState, queue_size=10) 
+        self.pos_dy_pub = rospy.Publisher('pos_dy', Int16MultiArray, queue_size=10) 
 
         # NUEVOS TOPICOS PARA COMUNICACION CON PLANNER
         self.trayectoria_pub = rospy.Publisher('trayectoria_A_planificacion', Int16, queue_size=10)
@@ -297,11 +301,11 @@ class ControladorRobot:
         constr.orientation_constraints = [ori]
         return constr
 
-    def expandir_rutina(self, lista):
+    def expandir_rutina(self, lista,nombre):
         """Expande recursivamente las rutinas anidadas en una lista plana de puntos (elem donde elem['rutina'] == False).
         Ignora elementos con id == 'control'.
         """
-        nombre_rut='rutina_actual'
+        nombre_rut=nombre
         
         puntos = []
         for elem in lista:
@@ -313,7 +317,7 @@ class ControladorRobot:
                     rospy.logwarn("Elemento rutina sin nombre, se omite.")
                     continue
                 try:
-                    sub = obtener_rutina(nombre_rut)
+                    sub = obtener_rutina(nombre_rut)                    
                 except Exception as e:
                     rospy.logerr(f"Error al obtener rutina {nombre_rut}: {e}")
                     continue
@@ -324,7 +328,7 @@ class ControladorRobot:
                     continue
                 sub = [r for r in sub if r.get('id') != 'control']
                 # Recursivamente expandir
-                puntos.extend(self.expandir_rutina(sub))
+                puntos.extend(self.expandir_rutina(sub, nombre_rut))
             else:                
                 if elem.get('plan')== "Trayectoria":                    
                     self.posicion_Trayectorias.append(elem.get('pos'))
@@ -449,7 +453,7 @@ class ControladorRobot:
         rutina = [r for r in rutina if r.get('id') != 'control']
 
         # Expandir rutinas anidadas
-        puntos = self.expandir_rutina(rutina)
+        puntos = self.expandir_rutina(rutina,rut)
 
         rospy.loginfo(f"Puntos expandidos: {len(puntos)}")        
         
@@ -542,23 +546,11 @@ class ControladorRobot:
             
             self.sequence_action_client.cancel_all_goals() 
             posicion_actual = self.move_group.get_current_joint_values()
+            posicion_real= posicion_actual
             
             for idx, sub_tramos in enumerate(tramos):
-            
-                if idx > 0:
-                    robot_state_T = RobotState()
-                    robot_state_T.joint_state = JointState()
-                    robot_state_T.joint_state.name = self.move_group.get_active_joints()
-                    robot_state_T.joint_state.position = posicion_actual
-                    
-                    self.move_group.set_start_state(robot_state_T)
-                else:
-                    # Primer tramo: estado real
-                    self.move_group.set_start_state_to_current_state()
                 
-                goal = self.crear_goal(sub_tramos["puntos"],posicion_actual )    
-                
-                posicion_actual= sub_tramos["P_final"]   
+                goal = self.crear_goal(sub_tramos["puntos"],posicion_actual )                 
                 
                 rospy.loginfo("Comiendo de planificaciond de rutina: enviando -1 a planificación y mandando goal completo")
                 self.trayectoria_pub.publish(Int16(-1)) 
@@ -566,17 +558,44 @@ class ControladorRobot:
                     rospy.logerr("El servidor de secuencia no está disponible.")
                     self.ejecutando_rutina = False
                     return        
-                                             
-                self.sequence_action_client.send_goal(goal)
                 
-                if not self.esperar_confirmacion(0, timeout=10.0):
-                    rospy.logerr("Error ,rutina no ejecutable. Abortando.")
-                    self.ejecutando_rutina = False
-                    return          
+                if idx > 0:
+                    self.pos_dy_pub.publish(Int16MultiArray(data=norm.rad_bit(posicion_actual)))
+                    posiciones_rad = posicion_actual
+                    joint_msg = JointState()
+                    joint_msg.header.stamp = rospy.Time.now()
+                    joint_msg.name = ["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
+                    joint_msg.position = posiciones_rad
+                    self.joint_pub.publish(joint_msg)
+                    
+                
+                    self.sequence_action_client.send_goal(goal) 
+                    
+                    if not self.esperar_confirmacion(0, timeout=10.0):
+                        rospy.logerr("Error ,rutina no ejecutable. Abortando.")
+                        self.ejecutando_rutina = False
+                        return          
+                    else:
+                        rospy.logerr("rutina ejecutable")
+                
+                    self.pos_dy_pub.publish(Int16MultiArray(data=norm.rad_bit(posicion_real)))
+                    posiciones_rad = posicion_real
+                    joint_msg.header.stamp = rospy.Time.now()
+                    joint_msg.position = posiciones_rad
+                    self.joint_pub.publish(joint_msg)   
+                
                 else:
-                    rospy.logerr("rutina ejecutable")         
-            
-            self.move_group.set_start_state_to_current_state()       
+                    self.sequence_action_client.send_goal(goal)                           
+                                
+                    if not self.esperar_confirmacion(0, timeout=10.0):
+                        rospy.logerr("Error ,rutina no ejecutable. Abortando.")
+                        self.ejecutando_rutina = False
+                        return          
+                    else:
+                        rospy.logerr("rutina ejecutable")  
+                        
+                posicion_actual= sub_tramos["P_final"]       
+                  
                 
                 
                 

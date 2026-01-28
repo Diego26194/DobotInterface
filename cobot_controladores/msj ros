@@ -65,11 +65,100 @@ move_group/display_planned_path
 
 
 
-[ERROR] [1760460027.520426]: bad callback: <function callback_sequence_result at 0x7fea94efe3a0>
-Traceback (most recent call last):
-  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
-    cb(msg)
-  File "controlador_rutina_prueba_rutina.py", line 41, in callback_sequence_result
-    sequence = msg.result.response.planned_trajectory_sequence
-AttributeError: 'MotionSequenceResponse' object has no attribute 'planned_trajectory_sequence'
+[WARN] [1769575647.435141480]: Execution of motions should always start at the robot's current state. Ignoring the state supplied as difference in the planning scene diff
+[INFO] [1769575647.435263718]: Planning attempt 1 of at most 1
+[INFO] [1769575647.435552055]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.435693210]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.435800312]: Generating PTP trajectory...
+[INFO] [1769575647.438186943]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.438513133]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.439041440]: Generating PTP trajectory...
+[INFO] [1769575647.463563232]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.468485581]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.469108761]: Generating PTP trajectory...
+[INFO] [1769575647.476882967]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.486105518]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.487356185]: Generating PTP trajectory...
+[INFO] [1769575647.497500191]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.498165055]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.498934349]: Generating PTP trajectory...
+[INFO] [1769575647.505392012]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.507481392]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.509542801]: Generating PTP trajectory...
+[INFO] [1769575647.535432119]: Fake execution of trajectory
+[INFO] [1769575647.695122126]: Stopping execution due to preempt request
+[INFO] [1769575647.738963426]: Fake trajectory execution cancelled
+[INFO] [1769575647.739257920]: Stopped trajectory execution.
+[INFO] [1769575647.739526332]: Completed trajectory execution with status PREEMPTED ...
+[INFO] [1769575647.835229050]: Combined planning and execution request received for MoveGroupSequenceAction.
+[WARN] [1769575647.835473903]: Execution of motions should always start at the robot's current state. Ignoring the state supplied as difference in the planning scene diff
+[INFO] [1769575647.835707656]: Planning attempt 1 of at most 1
+[INFO] [1769575647.836052050]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.836312250]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.836607791]: Generating PTP trajectory...
+[INFO] [1769575647.842518191]: Initialized Point-to-Point Trajectory Generator.
+[INFO] [1769575647.842834158]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
+[INFO] [1769575647.849464287]: Generating PTP trajectory...
+[INFO] [1769575647.937629947]: Fake execution of trajectory
+[INFO] [1769575652.734574042]: Completed trajectory execution with status SUCCEEDED ...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[INFO] [1769575647.283518]: 🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...
+[INFO] [1769575647.341929]: 📡 Feedback: estado='IDLE'
+[INFO] [1769575647.350748]: 📡 Feedback: estado='PLANNING'
+[INFO] [1769575647.447172]: 📦 Fragmento de plan recibido (3)
+[INFO] [1769575647.461998]: 📡 Feedback: estado='PLANNING'
+[INFO] [1769575647.465885]: 📦 Fragmento de plan recibido (4)
+[INFO] [1769575647.489956]: 📦 Fragmento de plan recibido (5)
+[INFO] [1769575647.493576]: ✅ Planificación válida (estado MONITOR)
+[INFO] [1769575647.522251]: 📦 Fragmento de plan recibido (6)
+[INFO] [1769575647.525860]: 📡 Feedback: estado='MONITOR'
+[INFO] [1769575647.533622]: 📦 Fragmento de plan recibido (7)
+[INFO] [1769575647.553227]: 📦 Fragmento de plan recibido (8)
+[INFO] [1769575647.657108]: 🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...
+[INFO] [1769575647.664276]: ✅ Planificación válida (estado MONITOR)
+[INFO] [1769575647.721593]: 🔄 Señal -4 recibida. Esperando Trayectorias
+[INFO] [1769575647.745075]: 📡 Feedback: estado='IDLE'
+[INFO] [1769575647.750811]: 📡 Feedback: estado='PLANNING'
+[INFO] [1769575647.838906]: 📡 Feedback: estado='PLANNING'
+[INFO] [1769575647.845240]: 📦 Fragmento de plan recibido (9)
+[INFO] [1769575647.879106]: 📦 Fragmento de plan recibido (10)
+[INFO] [1769575647.881892]: 📡 Feedback: estado='MONITOR'
+[INFO] [1769575652.737786]: 📡 Feedback: estado='IDLE'
+[WARN] [1769575652.756138]: ⚠️ No se recibió feedback en el tiempo establecido.
+[INFO] [1769575652.764909]: 🧹 Variables internas limpiadas y nodo listo para próxima planificación.
+
 

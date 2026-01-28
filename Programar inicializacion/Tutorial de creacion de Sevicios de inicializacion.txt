@@ -1,0 +1,145 @@
+-Crear el servicio roscore 
+
+	.entrar en la carpta y generarlo(ingresa este comando en una temrinal)
+	
+		d
+	
+	.Averiguar el usuario(si es que no se conoce)
+	
+		whoami
+		
+	.En la ventana que aparesca copiar lo siguiente (en donde ponga ##USUARIO## colocar el usuario antes conocido)
+		
+		[Unit]
+		Description=ROS Core
+		After=network.target
+
+		[Service]
+		Type=simple
+		User=##USUARIO##       
+		ExecStart=/bin/bash -c "source /opt/ros/noetic/setup.bash && exec roscore"
+		Restart=always
+
+		[Install]
+		WantedBy=multi-user.target
+		
+	.Apretar ctrl+o para guardar, aca pregunta el nombre, confirmar con "enter"
+	.se vuelve a la misma ventana anterior, apretar para salir ctrl+x
+	.Activar el servicio
+	
+		sudo systemctl daemon-reload
+		sudo systemctl enable roscore.service
+		sudo systemctl start roscore.service
+		
+	.Conformar que el servicio esta activo
+	
+		systemctl status roscore
+		
+-Crear el servicio inicializacion_encendido 
+
+	.entrar en la carpta y generarlo(ingresa este comando en una temrinal)
+	
+		sudo nano /etc/systemd/system/inicializacion_encendido.service
+	
+	.Averiguar el usuario(si es que no se conoce)
+	
+		whoami
+		
+	.En la ventana que aparesca copiar lo siguiente (en donde ponga ##USUARIO## colocar el usuario antes conocido)
+	//VERIFCAR bien las ubicaciones//
+		
+		[Unit]
+		Description=Inicialización del robot colaborativo (encendido)
+		After=roscore.service
+
+		[Service]
+		Type=simple
+		User=dobot
+		Environment=ROS_DISTRO=noetic
+		Environment=DISPLAY=:0  # Ajusta si tu entorno gráfico está en otra pantalla
+		Environment=XAUTHORITY=/home/dobot/.Xauthority  # Asegúrate de que esta ruta sea correcta
+		ExecStart=/bin/bash -c 'source /opt/ros/noetic/setup.bash; source /home/dobot/catkin_ws/devel/setup.bash; exec /opt/ros/noetic/bin/roslaunch cobot_controladores inicializacion_encendido.launch'
+
+		Restart=always
+		RestartSec=5
+
+		[Install]
+		WantedBy=multi-user.target
+		
+	.Apretar ctrl+o para guardar, aca pregunta el nombre, confirmar con "enter"
+	.se vuelve a la misma ventana anterior, apretar para salir ctrl+x
+	.Activar el servicio
+	
+		sudo systemctl daemon-reload			  //Siempre se debe correr luego de crear-modificar un servicio//
+		sudo systemctl start inicializacion_encendido   //activa el servicio//
+		sudo systemctl enable inicializacion_encendido  //hace que el servicio inicialice al encender la computadora//
+		
+	.Conformar que el servicio esta activo
+	
+		systemctl status inicializacion_encendido
+
+		
+-Crear el servicio para inicializar la Pagina Web como servidor de nodejs (React)
+
+	.entrar en la carpta y generarlo(ingresa este comando en una temrinal)
+	
+		sudo nano /etc/systemd/system/web_ros_interface.service
+	
+	.Averiguar el usuario(si es que no se conoce)
+	
+		whoami
+		
+	.En la ventana que aparesca copiar lo siguiente (en donde ponga ##USUARIO## colocar el usuario antes conocido)
+	//VERIFCAR bien las ubicaciones//
+				            
+		[Unit]
+		Description=Interfaz Web ROS (Node.js)
+		After=network.target roscore.service
+		Requires=roscore.service
+
+		[Service]
+		Type=simple
+		User=dobot
+		WorkingDirectory=/home/dobot/Diego_Carpetas_exteriores/DobotInterface
+
+
+		Environment=PATH=/home/dobot/.nvm/versions/node/v22.20.0/bin:/usr/bin:/bin
+
+		ExecStart=/home/dobot/.nvm/versions/node/v22.20.0/bin/npm run dev -- --host
+		Restart=always
+
+		[Install]
+		WantedBy=multi-user.target
+
+	.Apretar ctrl+o para guardar, aca pregunta el nombre, confirmar con "enter"
+	.se vuelve a la misma ventana anterior, apretar para salir ctrl+x
+	.Activar el servicio
+	
+		sudo systemctl daemon-reload			  //Siempre se debe correr luego de crear-modificar un servicio//
+		sudo systemctl start web_ros_interface.service   //activa el servicio//
+		sudo systemctl enable web_ros_interface.service  //hace que el servicio inicialice al encender la computadora//
+		
+	.Conformar que el servicio esta activo
+	
+		systemctl status web_ros_interface.service
+	
+	.Para Reiniciar el servicio(en caso de hacer un pull o errores)
+		
+		sudo systemctl restart web_ros_interface.service
+		
+	.Para Cerrar el servicio
+	
+		sudo systemctl stop web_ros_interface.service
+
+-Verifico si esta instalado el gnome (solo si lo pienso usar, con el archivo "inicializacion_encendido.py",explicado mas abajo)
+	
+		echo $XDG_CURRENT_DESKTOP
+
+	
+-Ver en los Launch de inicializacion que las direccion, nombres, paquetes y archivos sean los que se ustilizan
+	"ini_rob_colaborativo.launch"
+	"inicializacion_encendido.launch"
+-Ver en el .py de inicio que la direccion sea la correcta, y cambiar en en el launch si usar el "inicializacion_encendido.py"
+(abre una terminal donde se puede verificar que todo este andando correctamente, usa gnome) o el "inicializacion_encendido2.py" (que no
+abre terminal,para cuando se pase a la raspberry pi) 
+tengo
