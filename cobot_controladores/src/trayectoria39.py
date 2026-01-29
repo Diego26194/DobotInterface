@@ -480,6 +480,8 @@ class ControladorRobot:
             if wait_val != 0:
                 indices_wait.append(i) 
                 valores_wait.append(wait_val)
+                rospy.logwarn(indices_wait)
+                rospy.logwarn(valores_wait)
             if p.get('plan')== "Trayectoria":
                 indices_Trayectorias.append(i)
                 tramo_actual.append(p)
@@ -520,7 +522,7 @@ class ControladorRobot:
                 self.ejecutando_rutina = False
                 return          
             else:
-                rospy.logerr("rutina ejecutable") 
+                rospy.loginfo("rutina ejecutable") 
                   
                 
             if not tiene_wait: #NO Tiene trayectoria NI wait
@@ -629,8 +631,7 @@ class ControladorRobot:
                 msg_trayectorias = trayectorias()
                 msg_trayectorias.indice = indices_Trayectorias
                 msg_trayectorias.posicion = self.posicion_Trayectorias
-                msg_trayectorias.Rutina = self.rutina_Trayectorias
-                
+                msg_trayectorias.Rutina = self.rutina_Trayectorias                
 
                 self.rutine_trayectorias.publish(msg_trayectorias)
                 rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
@@ -653,6 +654,8 @@ class ControladorRobot:
                 msg_trayectorias.indice = indices_Trayectorias
                 msg_trayectorias.posicion = self.posicion_Trayectorias
                 msg_trayectorias.Rutina = self.rutina_Trayectorias
+                
+                rospy.logwarn(msg_trayectorias)
 
                 self.rutine_trayectorias.publish(msg_trayectorias)
                 rospy.loginfo(f"📤 Publicado trayectorias: {list(zip(indices_Trayectorias, self.posicion_Trayectorias))}")
@@ -678,7 +681,7 @@ class ControladorRobot:
         rospy.loginfo(f"Puntos expandidos: {trayectoria}") 
         self.sequence_action_client.cancel_all_goals()     
                   
-        self.posicion_Trayectorias.append(0)
+        self.posicion_Trayectorias.append(trayectoria.get('pos'))
         self.rutina_Trayectorias.append("rutina_actual")   
         
         posicion_actual = self.move_group.get_current_joint_values()
@@ -702,9 +705,9 @@ class ControladorRobot:
         
         indices_Trayectorias = []
         
-        indices_Trayectorias.append(i)
+        indices_Trayectorias.append(0)
 
-        rospy.loginfo("Rutina con waits: enviando -4 a planificación y esperando confirmación")
+        rospy.loginfo("Rutina sin waits: enviando -4 a planificación y esperando confirmación")
         self.trayectoria_pub.publish(Int16(-4))
 
         if not self.esperar_confirmacion(1, timeout=30.0):
@@ -744,19 +747,21 @@ class ControladorRobot:
             self.rutina_pub.publish(F)
             try:
                 if data.descriocion[1]==1:
+                    velocidad=data.descriocion[2]/100
                     plan="PTP"
                 elif data.descriocion[1]==2:
+                    velocidad=data.descriocion[2]/100
                     plan="LIN"
                 elif data.descriocion[1]==3:
+                    velocidad=data.descriocion[2]/100
                     plan="CIRC"
                 elif data.descriocion[1]==4:
                     plan="Rutina"
                 elif data.descriocion[1]==5:
                     plan="Trayectoria"
                 else:
-                    rospy.logerr("Eror,Plan no especificado: {}".format(data.descriocion[1]))
-                    
-                velocidad=data.descriocion[2]/100
+                    rospy.logerr("Eror,Plan no especificado: {}".format(data.descriocion[1]))                    
+                
                 pose = None
                 if data.descriocion[0] == 1:
                     # Obtener los datos de cord_ros (pose en este caso)

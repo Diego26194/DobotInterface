@@ -18,7 +18,7 @@ rostopic echo pos_dy
 python3 trayectoria39.py
 python3 modo_lectura18.py
 python3 publicacion_posicion_real3.py
-python3 controlador_rutina_prueba4.py
+python3 controlador_rutina_prueba5.py
 
 roslaunch cobot_controladores preubaInicio9.launch
 
@@ -64,43 +64,31 @@ rostopic pub -1 /rutina std_msgs/Bool "data: true"
 move_group/display_planned_path
 
 
+al tratar de cargar(editar) rutina con una rutina eliminada , mensaje en "modo_lectura18"
 
-[WARN] [1769575647.435141480]: Execution of motions should always start at the robot's current state. Ignoring the state supplied as difference in the planning scene diff
-[INFO] [1769575647.435263718]: Planning attempt 1 of at most 1
-[INFO] [1769575647.435552055]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.435693210]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.435800312]: Generating PTP trajectory...
-[INFO] [1769575647.438186943]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.438513133]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.439041440]: Generating PTP trajectory...
-[INFO] [1769575647.463563232]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.468485581]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.469108761]: Generating PTP trajectory...
-[INFO] [1769575647.476882967]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.486105518]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.487356185]: Generating PTP trajectory...
-[INFO] [1769575647.497500191]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.498165055]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.498934349]: Generating PTP trajectory...
-[INFO] [1769575647.505392012]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.507481392]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.509542801]: Generating PTP trajectory...
-[INFO] [1769575647.535432119]: Fake execution of trajectory
-[INFO] [1769575647.695122126]: Stopping execution due to preempt request
-[INFO] [1769575647.738963426]: Fake trajectory execution cancelled
-[INFO] [1769575647.739257920]: Stopped trajectory execution.
-[INFO] [1769575647.739526332]: Completed trajectory execution with status PREEMPTED ...
-[INFO] [1769575647.835229050]: Combined planning and execution request received for MoveGroupSequenceAction.
-[WARN] [1769575647.835473903]: Execution of motions should always start at the robot's current state. Ignoring the state supplied as difference in the planning scene diff
-[INFO] [1769575647.835707656]: Planning attempt 1 of at most 1
-[INFO] [1769575647.836052050]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.836312250]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.836607791]: Generating PTP trajectory...
-[INFO] [1769575647.842518191]: Initialized Point-to-Point Trajectory Generator.
-[INFO] [1769575647.842834158]: The timeout for planning must be positive (0.000000 specified). Assuming one second instead.
-[INFO] [1769575647.849464287]: Generating PTP trajectory...
-[INFO] [1769575647.937629947]: Fake execution of trajectory
-[INFO] [1769575652.734574042]: Completed trajectory execution with status SUCCEEDED ...
+[ERROR] [1769649255.468246]: bad callback: <bound method ModoLectura.acciones_web of <__main__.ModoLectura object at 0x7f54065f34c0>>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "modo_lectura18.py", line 692, in acciones_web
+    coorCartesianas_quat = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
+  File "modo_lectura18.py", line 797, in dict_to_pose
+    x=pose_dict["position"]["x"],
+TypeError: list indices must be integers or slices, not str
+
+
+
+
+al tratar de elimiar cosas que parece ya fueron eliminadas , mensaje en "modo_lectura18"
+
+
+[ERROR] [1769649314.029869]: bad callback: <bound method ModoLectura.acciones_web of <__main__.ModoLectura object at 0x7f54065f34c0>>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "modo_lectura18.py", line 576, in acciones_web
+    self.publicar_informe('Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], item), -1)
+UnboundLocalError: local variable 'item' referenced before assignment
 
 
 
@@ -108,57 +96,22 @@ move_group/display_planned_path
 
 
 
+al intentar correr una rutina con una rutina eliminada , mensaje en "trayectoria39"
+
+[ERROR] [1769649403.627223]: bad callback: <bound method ControladorRobot.Ordenar_ejec_rutina of <__main__.ControladorRobot object at 0x7fece710cca0>>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "trayectoria39.py", line 432, in Ordenar_ejec_rutina
+    self.ejecutar_rutina("rutina_actual")
+  File "trayectoria39.py", line 462, in ejecutar_rutina
+    puntos = self.expandir_rutina(rutina,rut)
+  File "trayectoria39.py", line 337, in expandir_rutina
+    puntos.extend(self.expandir_rutina(sub, nombre_rut))
+  File "trayectoria39.py", line 331, in expandir_rutina
+    control = next((r for r in sub if r.get('id') == 'control'), None)
+TypeError: 'NoneType' object is not iterable
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[INFO] [1769575647.283518]: 🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...
-[INFO] [1769575647.341929]: 📡 Feedback: estado='IDLE'
-[INFO] [1769575647.350748]: 📡 Feedback: estado='PLANNING'
-[INFO] [1769575647.447172]: 📦 Fragmento de plan recibido (3)
-[INFO] [1769575647.461998]: 📡 Feedback: estado='PLANNING'
-[INFO] [1769575647.465885]: 📦 Fragmento de plan recibido (4)
-[INFO] [1769575647.489956]: 📦 Fragmento de plan recibido (5)
-[INFO] [1769575647.493576]: ✅ Planificación válida (estado MONITOR)
-[INFO] [1769575647.522251]: 📦 Fragmento de plan recibido (6)
-[INFO] [1769575647.525860]: 📡 Feedback: estado='MONITOR'
-[INFO] [1769575647.533622]: 📦 Fragmento de plan recibido (7)
-[INFO] [1769575647.553227]: 📦 Fragmento de plan recibido (8)
-[INFO] [1769575647.657108]: 🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...
-[INFO] [1769575647.664276]: ✅ Planificación válida (estado MONITOR)
-[INFO] [1769575647.721593]: 🔄 Señal -4 recibida. Esperando Trayectorias
-[INFO] [1769575647.745075]: 📡 Feedback: estado='IDLE'
-[INFO] [1769575647.750811]: 📡 Feedback: estado='PLANNING'
-[INFO] [1769575647.838906]: 📡 Feedback: estado='PLANNING'
-[INFO] [1769575647.845240]: 📦 Fragmento de plan recibido (9)
-[INFO] [1769575647.879106]: 📦 Fragmento de plan recibido (10)
-[INFO] [1769575647.881892]: 📡 Feedback: estado='MONITOR'
-[INFO] [1769575652.737786]: 📡 Feedback: estado='IDLE'
-[WARN] [1769575652.756138]: ⚠️ No se recibió feedback en el tiempo establecido.
-[INFO] [1769575652.764909]: 🧹 Variables internas limpiadas y nodo listo para próxima planificación.
 
 

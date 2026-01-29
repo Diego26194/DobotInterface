@@ -46,8 +46,6 @@ class ControladorCobot:
         # === Parámetros ===
         self.PAUSA_ENTRE_TRAYECTORIAS = 0.1  # segundos
         self.TIMEOUT_PLANIFICACION = 5.0    # segundos máximos de espera
-
-        rospy.loginfo("✅ Esperando señal (-4) para iniciar planificación...")
         
         self._limpiar_variables()
 
