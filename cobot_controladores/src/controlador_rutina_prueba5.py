@@ -91,13 +91,12 @@ class ControladorCobot:
         # Evaluar estado
         if self.feedback_state == "MONITOR":
             self.planificacion_valida = True
-            self.feedback_relevante = True
         elif self.feedback_state == "IDLE":
+            self.feedback_relevante = True
         # Solo marcar como fallo si el texto menciona error
             if "error" in msg.status.text.lower() or "failed" in msg.status.text.lower():
                 rospy.logerr("❌ Estado IDLE con error detectado.")
                 self.planificacion_valida = False
-                self.feedback_relevante = True
                 
         self.recibido_feedback = True
 
@@ -222,7 +221,6 @@ class ControladorCobot:
     # ----------------------------------------------------
     def ejecutar_plan_completo(self):
         """Ejecuta todas las trayectorias acumuladas."""  
-        indice_trayectorias_a_ejecutar=0
         for i, frag in enumerate(self.plan_fragmentos):
             
             rospy.loginfo(f"▶ Ejecutando fragmento {i+1}/{len(self.plan_fragmentos)}...")            
@@ -230,8 +228,8 @@ class ControladorCobot:
                 self.ejecutar_trayectoria_individual(trajectory.joint_trajectory)   
             
             if (i) in self.indicesT:
-                self.ejecutar_trayectoria_bruta(self.trayectoras[indice_trayectorias_a_ejecutar])  
-                indice_trayectorias_a_ejecutar+= 1             
+                idx = self.indicesT.index(i)
+                self.ejecutar_trayectoria_bruta(self.trayectoras[idx])  
             
             if (i) in self.indicesWait:  
                 # Obtener el tiempo de espera correspondiente

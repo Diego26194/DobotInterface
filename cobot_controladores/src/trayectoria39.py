@@ -219,6 +219,12 @@ class ControladorRobot:
                     return True
                 if val == expected:
                     return True
+                if val==-1:
+                    rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                    return False
+                if val==-2:
+                    rospy.logwarn("❌ Planificación fallida")
+                    return False
                 # si llega otro valor lo ignoramos y seguimos esperando
                 self._plan_event = False
             try:
@@ -495,6 +501,7 @@ class ControladorRobot:
         tiene_trayectoria = len(indices_Trayectorias) > 0
             
         if not tiene_trayectoria:
+            self.sequence_action_client.cancel_all_goals()
             
             posicion_actual = self.move_group.get_current_joint_values()
             goal = self.crear_goal(puntos,posicion_actual )        
@@ -504,9 +511,8 @@ class ControladorRobot:
             if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
                 rospy.logerr("El servidor de secuencia no está disponible.")
                 self.ejecutando_rutina = False
-                return        
-            
-            self.sequence_action_client.cancel_all_goals()              
+                return                    
+                          
             self.sequence_action_client.send_goal(goal)
             
             if not self.esperar_confirmacion(0, timeout=10):
@@ -574,6 +580,14 @@ class ControladorRobot:
                     if not self.esperar_confirmacion(0, timeout=10.0):
                         rospy.logerr("Error ,rutina no ejecutable. Abortando.")
                         self.ejecutando_rutina = False
+                        
+                        
+                        self.pos_dy_pub.publish(Int16MultiArray(data=norm.rad_bit(posicion_real)))
+                        posiciones_rad = posicion_real
+                        joint_msg.header.stamp = rospy.Time.now()
+                        joint_msg.position = posiciones_rad
+                        self.joint_pub.publish(joint_msg)   
+                        
                         return          
                     else:
                         rospy.logerr("rutina ejecutable")
@@ -661,7 +675,8 @@ class ControladorRobot:
         rospy.loginfo("ejecutar_rutina: finalizada.")
 
     def ejecutar_Trayectoria(self, trayectoria):
-        rospy.loginfo(f"Puntos expandidos: {trayectoria}")     
+        rospy.loginfo(f"Puntos expandidos: {trayectoria}") 
+        self.sequence_action_client.cancel_all_goals()     
                   
         self.posicion_Trayectorias.append(0)
         self.rutina_Trayectorias.append("rutina_actual")   
@@ -674,10 +689,8 @@ class ControladorRobot:
         if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
             rospy.logerr("El servidor de secuencia no está disponible.")
             self.ejecutando_rutina = False
-            return
-        
-        
-        self.sequence_action_client.cancel_all_goals()              
+            return       
+                             
         self.sequence_action_client.send_goal(goal)
         
         if not self.esperar_confirmacion(0, timeout=30.0):
