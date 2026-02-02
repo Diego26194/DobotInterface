@@ -1,5 +1,6 @@
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
+import { cargarPuntosDB, cargarRutinasDB } from "../../Services/Funciones";
 
 interface ToolBarProps {
   LinkHome: string;
@@ -12,6 +13,17 @@ function ToolBar({
   onTogglePuntos,
   onToggleRutinas,
 }: ToolBarProps) {
+
+  const abrirRutinas = () => {
+      onToggleRutinas
+      cargarRutinasDB
+    };
+
+  const abrirPuntos = () => {
+      onTogglePuntos
+      cargarPuntosDB
+    };
+
   return (
     <AppBar
       position="static"
@@ -33,11 +45,11 @@ function ToolBar({
           gap: 1,
         }}
       >
-        <Button onClick={onTogglePuntos}  variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+        <Button onClick={abrirPuntos}  variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
           B.Puntos
         </Button>
 
-        <Button onClick={onToggleRutinas} variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
+        <Button onClick={abrirRutinas} variant="contained" sx={{ backgroundColor: "rgba(73, 202, 101, 0.67)", height: "90%" }}>
           B.Rutinas
         </Button>
 

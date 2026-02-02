@@ -513,11 +513,8 @@ class ModoLectura:
             else:
                 self.publicar_informe(f"Punto {posicion} no agregado correctamente.", -1)
 
-
-        # Publicar en el tópico 'informe_web'
+        # Publicar en el tópico 'informe_web'            
             
-            
-
         elif accion == 'editPR':            
             coorCartesianas_euler=data.coordenadas[:6]
             coorCartesianas_quat=self.cartesianasEuler_a_pose(coorCartesianas_euler)

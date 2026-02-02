@@ -27,7 +27,7 @@ import InputAng from "../Components/Elements/Inputs/InputCord";
 import { useState,useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import {initRos} from "../Services/RosService2";
-import {msgInforme, ModoActuar} from "../Services/Funciones";
+import {msgInforme, ModoActuar,cargarPuntosDB, cargarRutinasDB} from "../Services/Funciones";
 
 type MensajeInforme = {
   texto: string;
@@ -86,6 +86,7 @@ useEffect(() => {
   });
 }, []);
 
+/* 
 useEffect(() => {
   setMensajes([
     {
@@ -94,6 +95,7 @@ useEffect(() => {
     },
   ]);
 }, []);
+*/
 
 //scroll valla siempre al final al llegar un msg
 useEffect(() => {
@@ -129,6 +131,18 @@ useEffect(() => {
     if (unsubscribe) unsubscribe();
   };
 }, []);
+
+useEffect(() => {
+  if (showLibrariePuntos) {
+    cargarPuntosDB();
+  }
+}, [showLibrariePuntos]);
+
+useEffect(() => {
+  if (showLibrarieRutina) {
+    cargarRutinasDB();
+  }
+}, [showLibrarieRutina]);
 
   return (
     <Stack
@@ -289,7 +303,7 @@ useEffect(() => {
             sx={{
               color: getColorByNivel(m.nivel),
               fontSize: "0.6rem",
-              lineHeight: 1.4,
+              lineHeight: 1,
               fontFamily: "monospace",
             }}
           >

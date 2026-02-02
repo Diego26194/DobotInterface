@@ -134,6 +134,11 @@ class ControladorRobot:
     
         try:
             self.trayectoria_pub.publish(Int16(0)) 
+            if not self.esperar_confirmacion(0, timeout=10):
+                rospy.logerr("Error ,No comunicado con Controlador.")
+                return
+            
+            self.trayectoria_pub.publish(Int16(-6)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -167,6 +172,11 @@ class ControladorRobot:
     def ejecutar_trayectoria_pose(self, pose,velocidad,plan):
         try:
             self.trayectoria_pub.publish(Int16(0)) 
+            if not self.esperar_confirmacion(0, timeout=10):
+                rospy.logerr("Error ,No comunicado con Controlador.")
+                return
+            
+            self.trayectoria_pub.publish(Int16(-6)) 
             # Activar la bandera rutina_corriendo
             self.rutina_corriendo = True
             self.planear_Rutina = False
@@ -508,6 +518,11 @@ class ControladorRobot:
             posicion_actual = self.move_group.get_current_joint_values()
             goal = self.crear_goal(puntos,posicion_actual )        
             
+            self.trayectoria_pub.publish(Int16(0)) 
+            if not self.esperar_confirmacion(0, timeout=10):
+                rospy.logerr("Error ,No comunicado con Controlador.")
+                return            
+            
             rospy.loginfo("Comiendo de planificaciond de rutina: enviando -1 a planificación y mandando goal completo")
             self.trayectoria_pub.publish(Int16(-1)) 
             if not self.sequence_action_client.wait_for_server(timeout=rospy.Duration(5)):
@@ -559,6 +574,11 @@ class ControladorRobot:
             for idx, sub_tramos in enumerate(tramos):
                 
                 goal = self.crear_goal(sub_tramos["puntos"],posicion_actual )                 
+                
+                self.trayectoria_pub.publish(Int16(0)) 
+                if not self.esperar_confirmacion(0, timeout=10):
+                    rospy.logerr("Error ,No comunicado con Controlador.")
+                    return
                 
                 rospy.loginfo("Comiendo de planificaciond de rutina: enviando -1 a planificación y mandando goal completo")
                 self.trayectoria_pub.publish(Int16(-1)) 
@@ -685,7 +705,12 @@ class ControladorRobot:
         self.rutina_Trayectorias.append("rutina_actual")   
         
         posicion_actual = self.move_group.get_current_joint_values()
-        goal = self.crear_goal([trayectoria],posicion_actual )   
+        goal = self.crear_goal([trayectoria],posicion_actual ) 
+        
+        self.trayectoria_pub.publish(Int16(0)) 
+        if not self.esperar_confirmacion(0, timeout=10):
+            rospy.logerr("Error ,No comunicado con Controlador.")
+            return  
                                               
         rospy.loginfo("Comiendo de planificaciond de rutina: enviando -2 a planificación y mandando goal completo")
         self.trayectoria_pub.publish(Int16(-1)) 

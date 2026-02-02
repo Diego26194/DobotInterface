@@ -179,7 +179,7 @@ export function cargarRutinasDB() {
     coordenadas: []
   };
 
-  console.log(" Enviando a /orden_web:", msg);
+  console.log(" refrescar rutinas:", msg);
 
   // Publica en ROS
   pubTopic('orden_web', msg);
@@ -192,15 +192,20 @@ export function cargarRutinasDB() {
 
 
 export function correrTAngular( coord:number[],descriptcion:number[]) {
-  const msg = {
-    descriocion:descriptcion,
-    coordenadas: coord
-  };
+  if (descriptcion[1]==1) {
+    const msg = {
+      descriocion:descriptcion,
+      coordenadas: coord
+    };
 
-  console.log(" Enviando a /cord_ros: correr angulos", msg);
+    console.log(" Enviando a /cord_ros: correr angulos", msg);
 
-  // Publica en ROS
-  pubTopic('cord_ros', msg);
+    // Publica en ROS
+    pubTopic('cord_ros', msg);
+  }
+  else{
+    msgEmergente("ErrorLinCirc")
+  }
 }
 
 export function correrTCartesiano( coord:number[]) {
@@ -409,6 +414,14 @@ export function msgEmergente(tipoMsg: string) {
         "🔄 Refresque la tabla para asegurarse de trabajar con los datos reales.",
       ].join("\n");
       break;
+
+    case 'ErrorLinCirc':
+      mensaje = [
+        "⚠ Por el momento los Planes LIN y CIRC no estan en funcionamiento.",
+        "🔄 Utilive el tipo de plan PTP.",
+      ].join("\n");
+      break;
+      
 
     default:
       console.warn("Acción no reconocida:", tipoMsg);
