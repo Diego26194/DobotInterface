@@ -573,7 +573,7 @@ class ModoLectura:
               punto = leer_punto_rutina(data.coordenadas[i])        
               if not punto or punto['nombre'] != data.orden[i+1]:
                 mensaje_puntoR.coordenadas.append(data.coordenadas[i])
-                self.publicar_informe('Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], item), -1)               
+                self.publicar_informe('Punto NO ELIMINADO,'+ mensajes_informe['errorPunRut'].format(data.orden[i+1], data.coordenadas[i]), -1)               
                 errores = True
             if not errores:
               mensaje_puntoR.orden=['delPR']
@@ -583,9 +583,9 @@ class ModoLectura:
                 if punto['plan']=="Rutina":
                     eliminar_rutina_control(punto['nombre'])
                     verificar_rutinas_control()
-              mensaje_puntoR.coordenadas=data.coordenadas
-              self.publicar_informe(mensajes_informe['eliminarPunRut'].format(punto['nombre'], item), 1)
-              self.refrescarRutinaActual() #ver si dejar esto o no
+                mensaje_puntoR.coordenadas=data.coordenadas
+                self.publicar_informe(mensajes_informe['eliminarPunRut'].format(punto['nombre'], item), 1)
+                self.refrescarRutinaActual() #ver si dejar esto o no
              
              
 
@@ -669,6 +669,8 @@ class ModoLectura:
                                                        
                     for doc in rutina:
                         if doc.get("id") == "control":
+                            rospy.loginfo("Rutinas de modo control que deberian aparecer")
+                            rospy.loginfo(doc)
                             actualizar_control(
                                 doc.get("rutinas", []),
                                 doc.get("fechas", [])
@@ -682,13 +684,13 @@ class ModoLectura:
                             wait=doc.get("wait")
                             agregar_trayectoria_rutina(trayectoria,poseInit, identificador,pos,wait)
 
-                        elif doc.get("rutina") == True:
+                        elif doc.get("plan") == "Rutina":
                             identificador = doc.get("nombre")
                             pos = doc.get("pos")
                             wait=doc.get("wait")
                             agregar_rutina_rutina(identificador, pos,wait)
-                            
-                        else:
+                        
+                        elif doc.get("plan") == "PTP" or doc.get("plan") == "LIN" or doc.get("plan") == "CIRC":   
                             coorCartesianas_quat = self.dict_to_pose( doc.get("coordenadasCQuaterniones", []) )
                             coorCartesianas_euler = self.pose_a_cartesianasEuler(coorCartesianas_quat)
                             vel_esc = doc.get("vel_esc", 0)
@@ -700,10 +702,20 @@ class ModoLectura:
 
                             agregar_punto_rutina(coorCartesianas_quat, coorCartesianas_euler,
                                                 vel_esc, ratio, plan,
-                                                identificador, pos)
+                                                identificador, pos) 
+                            
+                        else:
+                            self.publicar_informe(f"⚠️ Instruccion No Existente: {doc}", -2)                    
                     
+                    control = next((r for r in rutina if r.get('id') == 'control'), None)
+                    rospy.loginfo("Rutinas de modo control que aparecen")
+                    rospy.loginfo(control)
                     
                     faltantes = verificar_rutinas_control()
+                    
+                    rospy.loginfo("Rutinas de modo control que faltan")
+                    rospy.loginfo(faltantes)
+                    
                     if faltantes:  
                         # Al menos una rutina declarada en control no existe en DB
                         self.publicar_informe(f"⚠️ Rutinas faltantes: {', '.join(faltantes)}", -2)

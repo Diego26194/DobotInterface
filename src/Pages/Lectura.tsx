@@ -288,7 +288,7 @@ useEffect(() => {
             variant="body2"
             sx={{
               color: getColorByNivel(m.nivel),
-              fontSize: "0.75rem",
+              fontSize: "0.6rem",
               lineHeight: 1.4,
               fontFamily: "monospace",
             }}
