@@ -299,13 +299,13 @@ def eliminar_rutina_control(nombre_rutina: str):
     if not doc:
         raise Exception("No existe documento de control en la tabla")
 
-    rutinas = doc["rutinas"].copy()  # copiamos para no modificar en vivo
+    rutinas = doc["rutinas"].copy()  # copiamos para no modificar en vivo    
 
-    try:
+    try:    
         rutinas.remove(nombre_rutina)  # elimina solo la primera coincidencia
     except ValueError:
         return False  # no estaba en la lista
-
+        
     rutina_actual.update({"rutinas": rutinas}, Control.id == "control")
     return True
 

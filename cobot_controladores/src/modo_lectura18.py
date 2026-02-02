@@ -582,7 +582,7 @@ class ModoLectura:
                 eliminar_punto_rutina(item)
                 if punto['plan']=="Rutina":
                     eliminar_rutina_control(punto['nombre'])
-                    verificar_rutinas_control()
+                    preuba=verificar_rutinas_control()
                 mensaje_puntoR.coordenadas=data.coordenadas
                 self.publicar_informe(mensajes_informe['eliminarPunRut'].format(punto['nombre'], item), 1)
                 self.refrescarRutinaActual() #ver si dejar esto o no
@@ -668,13 +668,8 @@ class ModoLectura:
                     eliminar_todos_datos_rutina()  
                                                        
                     for doc in rutina:
-                        if doc.get("id") == "control":
-                            rospy.loginfo("Rutinas de modo control que deberian aparecer")
-                            rospy.loginfo(doc)
-                            actualizar_control(
-                                doc.get("rutinas", []),
-                                doc.get("fechas", [])
-                            )
+                        if doc.get("id") == "control":                            
+                            actualizar_control([], [])
 
                         elif doc.get("plan") == "Trayectoria":
                             identificador = doc.get("nombre")
@@ -706,15 +701,8 @@ class ModoLectura:
                             
                         else:
                             self.publicar_informe(f"⚠️ Instruccion No Existente: {doc}", -2)                    
-                    
-                    control = next((r for r in rutina if r.get('id') == 'control'), None)
-                    rospy.loginfo("Rutinas de modo control que aparecen")
-                    rospy.loginfo(control)
-                    
+                                        
                     faltantes = verificar_rutinas_control()
-                    
-                    rospy.loginfo("Rutinas de modo control que faltan")
-                    rospy.loginfo(faltantes)
                     
                     if faltantes:  
                         # Al menos una rutina declarada en control no existe en DB

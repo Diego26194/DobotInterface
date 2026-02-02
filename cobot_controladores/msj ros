@@ -114,4 +114,18 @@ TypeError: 'NoneType' object is not iterable
 
 
 
+#########################################################################################
+
+
+al eliminar dato ya eliminado no salta error "modolecutra18"
+
+[ERROR] [1770007969.196405]: bad callback: <bound method ModoLectura.acciones_web of <__main__.ModoLectura object at 0x7f9ee39e44c0>>
+Traceback (most recent call last):
+  File "/opt/ros/noetic/lib/python3/dist-packages/rospy/topics.py", line 750, in _invoke_callback
+    cb(msg)
+  File "modo_lectura18.py", line 584, in acciones_web
+    eliminar_rutina_control(punto['nombre'])
+  File "/home/dobot/catkin_ws/src/cobot/cobot_controladores/src/db_puntos6.py", line 303, in eliminar_rutina_control
+    rospy.logwarn("Rtutinas antes de eliminar")
+NameError: name 'rospy' is not defined
 
