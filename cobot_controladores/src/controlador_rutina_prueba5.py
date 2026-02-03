@@ -34,7 +34,7 @@ class ControladorCobot:
 
         # === Publicadores ===
         self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
-        self.pub_planificacion_trayectoria = rospy.Publisher('planificacion_A_trayectoria', Int16, queue_size=2)
+        self.pub_planificacion_trayectoria = rospy.Publisher('planificacion_A_trayectoria', Int16, queue_size=10)
 
         # === Subscriptores ===
         rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, self.callback_display_rutina)
@@ -100,11 +100,24 @@ class ControladorCobot:
 
     def callback_planificacion(self, msg):
         self.orden=msg.data
-        
         if self.orden==0:
-            rospy.loginfo("Limpieza inicial")
-            self._limpiar_variables() 
-            self.pub_planificacion_trayectoria.publish(0)     
+            rospy.loginfo("🔄 Señal 0 recibida. Esperando planificación (feedback + plan)...")
+
+            # Esperar feedback y trayectorias planificadas
+            inicio = time.time()
+            while (not self.plan_fragmentos) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                rospy.sleep(0.1)
+
+            if not self.plan_fragmentos:
+                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                self._limpiar_variables()
+                self.pub_planificacion_trayectoria.publish(-2)
+                return
+
+            rospy.loginfo("✅ Planificación válida (estado MONITOR)")
+                
+            self.ejecutar_plan_completo()
+            self._limpiar_variables()      
             
         elif self.orden==-1:
             rospy.loginfo("🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...")
@@ -123,7 +136,7 @@ class ControladorCobot:
             # Evaluar resultado            
             if self.planificacion_valida and self.plan_fragmentos_state and self.plan_fragmentos:
                 rospy.loginfo("✅ Planificación válida (estado MONITOR)")
-                self.pub_planificacion_trayectoria.publish(1)
+                self.pub_planificacion_trayectoria.publish(0)
                 self.plan_fragmentos_state=False
             else:
                 rospy.logerr("❌ Planificación fallida (estado IDLE o sin trayectoria). No se ejecutará.")
@@ -133,7 +146,7 @@ class ControladorCobot:
             self.ejecutar_plan_completo()
             self._limpiar_variables()      
         elif self.orden==-3:
-            self.pub_planificacion_trayectoria.publish(2)
+            self.pub_planificacion_trayectoria.publish(1)
             
             rospy.loginfo("🔄 Señal -3 recibida. Esperando waits")
             
@@ -153,7 +166,7 @@ class ControladorCobot:
             
         elif self.orden==-4:
                 
-            self.pub_planificacion_trayectoria.publish(2)
+            self.pub_planificacion_trayectoria.publish(1)
             
             rospy.loginfo("🔄 Señal -4 recibida. Esperando Trayectorias")
             
@@ -173,7 +186,7 @@ class ControladorCobot:
             
         elif self.orden==-5:
                 
-            self.pub_planificacion_trayectoria.publish(2)
+            self.pub_planificacion_trayectoria.publish(1)
             
             rospy.loginfo("🔄 Señal -5 recibida. Esperando waits y Trayectorias")
             
@@ -199,26 +212,7 @@ class ControladorCobot:
                 return
             
             self.ejecutar_plan_completo()
-            self._limpiar_variables()         
-            
-        elif self.orden==-6:
-            rospy.loginfo("🔄 Señal 0 recibida. Esperando planificación (feedback + plan)...")
-
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.plan_fragmentos) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
-
-            if not self.plan_fragmentos:
-                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-
-            rospy.loginfo("✅ Planificación válida (estado MONITOR)")
-                
-            self.ejecutar_plan_completo()
-            self._limpiar_variables()           
+            self._limpiar_variables()              
 
     # ----------------------------------------------------
     # Ejecución

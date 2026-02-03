@@ -149,7 +149,7 @@ class ControladorRobot:
             success, traj, planning_time, error_code = self.move_group.plan()
             
             # esperar confirmacion 3
-            if not self.esperar_confirmacion(3, timeout=10.0):
+            if not self.esperar_confirmacion(3, timeout=30.0):
                 rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
             self.rutina_corriendo = False
@@ -179,7 +179,7 @@ class ControladorRobot:
             success, traj, planning_time, error_code = self.move_group.plan()
             
             # esperar confirmacion 3
-            if not self.esperar_confirmacion(3, timeout=10.0):
+            if not self.esperar_confirmacion(3, timeout=30.0):
                 rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
             self.rutina_corriendo = False
@@ -517,7 +517,7 @@ class ControladorRobot:
                           
             self.sequence_action_client.send_goal(goal)
             
-            if not self.esperar_confirmacion(1, timeout=10):
+            if not self.esperar_confirmacion(0, timeout=10):
                 rospy.logerr("Error ,rutina no ejecutable. Abortando.")
                 self.ejecutando_rutina = False
                 return          
@@ -537,7 +537,7 @@ class ControladorRobot:
                 rospy.loginfo("Rutina con waits: enviando -3 a planificación y esperando confirmación")
                 self.trayectoria_pub.publish(Int16(-3))
 
-                if not self.esperar_confirmacion(2, timeout=10.0):
+                if not self.esperar_confirmacion(1, timeout=30.0):
                     rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
                     self.ejecutando_rutina = False
                     return
@@ -579,7 +579,7 @@ class ControladorRobot:
                 
                     self.sequence_action_client.send_goal(goal) 
                     
-                    if not self.esperar_confirmacion(1, timeout=10.0):
+                    if not self.esperar_confirmacion(0, timeout=10.0):
                         rospy.logerr("Error ,rutina no ejecutable. Abortando.")
                         self.ejecutando_rutina = False
                         
@@ -603,7 +603,7 @@ class ControladorRobot:
                 else:
                     self.sequence_action_client.send_goal(goal)                           
                                 
-                    if not self.esperar_confirmacion(1, timeout=10.0):
+                    if not self.esperar_confirmacion(0, timeout=10.0):
                         rospy.logerr("Error ,rutina no ejecutable. Abortando.")
                         self.ejecutando_rutina = False
                         return          
@@ -623,7 +623,7 @@ class ControladorRobot:
                 rospy.loginfo("Rutina con trayectorias: enviando -4 a planificación y esperando confirmación")
                 self.trayectoria_pub.publish(Int16(-4))
 
-                if not self.esperar_confirmacion(2, timeout=10.0):
+                if not self.esperar_confirmacion(1, timeout=30.0):
                     rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
                     self.ejecutando_rutina = False
                     return
@@ -645,7 +645,7 @@ class ControladorRobot:
                 rospy.loginfo("Rutina con waits y trayectorias: enviando -5 a planificación y esperando confirmación")
                 self.trayectoria_pub.publish(Int16(-5))
 
-                if not self.esperar_confirmacion(2, timeout=10.0):
+                if not self.esperar_confirmacion(1, timeout=30.0):
                     rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
                     self.ejecutando_rutina = False
                     return
@@ -671,7 +671,7 @@ class ControladorRobot:
                 rospy.loginfo(f"📤 Publicado waits: {list(zip(indices_wait, valores_wait))}")
 
         # esperar confirmacion 3
-        if not self.esperar_confirmacion(3, timeout=10.0):
+        if not self.esperar_confirmacion(3, timeout=30.0):
             rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
         self.ejecutando_rutina = False
@@ -696,7 +696,7 @@ class ControladorRobot:
                              
         self.sequence_action_client.send_goal(goal)
         
-        if not self.esperar_confirmacion(1, timeout=10.0):
+        if not self.esperar_confirmacion(0, timeout=30.0):
             rospy.logerr("Error ,rutina no ejecutable. Abortando.")
             self.ejecutando_rutina = False
             return          
@@ -710,7 +710,7 @@ class ControladorRobot:
         rospy.loginfo("Rutina sin waits: enviando -4 a planificación y esperando confirmación")
         self.trayectoria_pub.publish(Int16(-4))
 
-        if not self.esperar_confirmacion(2, timeout=10.0):
+        if not self.esperar_confirmacion(1, timeout=30.0):
             rospy.logerr("No se recibió confirmación de planificación (1). Abortando.")
             self.ejecutando_rutina = False
             return
@@ -727,7 +727,7 @@ class ControladorRobot:
         self.rutina_Trayectorias.clear()
 
         # esperar confirmacion 3
-        if not self.esperar_confirmacion(3, timeout=10.0):
+        if not self.esperar_confirmacion(3, timeout=30.0):
             rospy.logwarn("No se recibió confirmación final (3), pero finalizando localmente.")
 
         self.ejecutando_rutina = False

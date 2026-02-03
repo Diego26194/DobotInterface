@@ -569,16 +569,17 @@ class ControladorRobot:
             
             self.sequence_action_client.cancel_all_goals() 
             posicion_actual = self.move_group.get_current_joint_values()
-            posicion_real= posicion_actual
+            posicion_real= posicion_actual    
             
+            self.trayectoria_pub.publish(Int16(0)) 
+            if not self.esperar_confirmacion(0, timeout=10):
+                rospy.logerr("Error ,No comunicado con Controlador.")
+                return            
+                        
             for idx, sub_tramos in enumerate(tramos):
                 
                 goal = self.crear_goal(sub_tramos["puntos"],posicion_actual )                 
                 
-                self.trayectoria_pub.publish(Int16(0)) 
-                if not self.esperar_confirmacion(0, timeout=10):
-                    rospy.logerr("Error ,No comunicado con Controlador.")
-                    return
                 
                 rospy.loginfo("Comiendo de planificaciond de rutina: enviando -1 a planificación y mandando goal completo")
                 self.trayectoria_pub.publish(Int16(-1)) 
@@ -612,7 +613,7 @@ class ControladorRobot:
                         
                         return          
                     else:
-                        rospy.logerr("rutina ejecutable")
+                        rospy.loginfo("rutina ejecutable")
                 
                     self.pos_dy_pub.publish(Int16MultiArray(data=norm.rad_bit(posicion_real)))
                     posiciones_rad = posicion_real
@@ -628,7 +629,7 @@ class ControladorRobot:
                         self.ejecutando_rutina = False
                         return          
                     else:
-                        rospy.logerr("rutina ejecutable")  
+                        rospy.loginfo("rutina ejecutable")  
                         
                 posicion_actual= sub_tramos["P_final"]       
                   
@@ -726,7 +727,7 @@ class ControladorRobot:
             self.ejecutando_rutina = False
             return          
         else:
-            rospy.logerr("rutina ejecutable")                
+            rospy.loginfo("rutina ejecutable")                
         
         indices_Trayectorias = []
         
