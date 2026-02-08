@@ -66,8 +66,8 @@ const Section1: React.FC<Section1Props> = ({ setFlagAddPoint }) => {
         <ButtonAdd onClick={handleAddClick}/>
         <ButtonEdit onClick={() => setOpen(true)}/>
         */}
-        <ButtonDelete onClick={() => elimiarPuntoDB(nombre)}/>
-        <ButtonReflesh onClick={cargarPuntosDB}/>
+        <ButtonDelete description={'Eliminar Punto Seleccionado'} onClick={() => elimiarPuntoDB(nombre)}/>
+        <ButtonReflesh description={'Refrescar Tabla de Puntos'} onClick={cargarPuntosDB}/>
       </Stack>
       <Paper sx={{
             width: '100%', 

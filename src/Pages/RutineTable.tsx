@@ -545,6 +545,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
 
         return rowEditable ? (
           <IconButton
+            title={'Confirmar Edicion de Punto'}
             onClick={() => handleConfirm(params.row.id)}
             color="success"       
             sx={{ 
@@ -558,6 +559,7 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
           </IconButton>
         ) : (
           <IconButton
+            title={'Editar Punto'}
             onClick={() => handleEdit(params.row.id)}
             color="primary"
             sx={{ 
@@ -578,7 +580,8 @@ const RutineTable = forwardRef<RutineTableRef,RutineTableProps> (({flagEliminarP
       width: 40,
        renderCell: (params) =>
         (!params.row.editable && modoActuar) ? (
-          <IconButton
+          <IconButton            
+            title={'Correr Instruccion'}
             onClick={() => handlePlayRow(params.row.id)}
             color="primary"
             sx={{

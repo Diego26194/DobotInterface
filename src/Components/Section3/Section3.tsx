@@ -153,7 +153,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine, modoActuar }) => 
                 {<PlayArrowIcon />}Ejecutar
               </Button1>    
              {/*<ButtonAdd description={'Agregar Punto a la Rutina'} onClick={handleAddRutineClick}/> */}
-              <ButtonDelete description={'Eliminar Puntos de la Rutina'}onClick={handleDeleteRutineClick}/>                          
+              <ButtonDelete description={'Eliminar Instrucciones seleccionada de la Rutina'}onClick={handleDeleteRutineClick}/>                          
                 
               <InputPositive
                 label="Wait" 
@@ -170,7 +170,7 @@ const Section3: React.FC<Section3Props> = ({ setFlagAddRutine, modoActuar }) => 
                   pt: 1,
                 }}
               />     
-              <Button1 sx={{width: '20%'}} variant="outlined" onClick={handleWaitPassDatagrid}>
+              <Button1 title={'Agregar Tiempo de espera en intruccion seleccionada'} sx={{width: '20%'}} variant="outlined" onClick={handleWaitPassDatagrid}>
                 add
               </Button1>
               

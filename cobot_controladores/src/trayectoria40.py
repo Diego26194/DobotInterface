@@ -446,6 +446,9 @@ class ControladorRobot:
 
         rospy.loginfo("Iniciando rutina...")
         self.ejecutando_rutina = True
+        
+        self.posicion_Trayectorias.clear()
+        self.rutina_Trayectorias.clear()
 
         # Leer rutina desde DB
         try:

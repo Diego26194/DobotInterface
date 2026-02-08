@@ -297,7 +297,7 @@ const Section2V2: React.FC<Section2V2Props> =
               
             }}      
             >
-            <Button1 variant="contained" onClick={correr} disabled={!modoActuar}>Ejecutar</Button1>
+            <Button1 title={'Ejecutar Punto'} variant="contained" onClick={correr} disabled={!modoActuar}>Ejecutar</Button1>
             <ButtonSave description={'Guardar Punto en Base de Datos'} onClick={agregarPuDB}/>  
             <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={agregarPuRutina}/> 
           </Stack>

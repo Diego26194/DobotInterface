@@ -13,7 +13,7 @@ const CoordDisplay: React.FC = () => {
   const [coords, setCoords] = useState<CordMsg>({
     cart: [200, 200, 200, 200, 200, 200],
     ang: [120, 120, 210, 120, 120, 120],
-    error: [false, false, false, false, false, false], // error: [false, false, false, false, false, false] error: [true, true, true, true, true, true]
+    error: [true, true, true, true, true, true], // error: [false, false, false, false, false, false] error: [true, true, true, true, true, true]
   });
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const CoordDisplay: React.FC = () => {
             <span
               key={i}
               style={{
-                color: coords.error[i] ? "#5c5b5bff" : "red"  ,
+                color: coords.error[i] ? "rgb(90, 190, 81)" : "red"  ,
                 marginRight: "2px",
               }}
             >

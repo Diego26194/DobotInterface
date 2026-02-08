@@ -65,10 +65,10 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
       <Stack direction="row" spacing={0} sx={{height: '10%'}}>
         <Typography variant="h6"sx={{fontSize: '1.1rem'}}>Rutina</Typography>
         {/*<ButtonAdd onClick={handleAddClick}/> */}
-        <ButtonEdit onClick={() => cargarRutinaRA(nombre)}/>
-        <ButtonDelete onClick={() => elimiarRutinaDB(nombre)}/>
-        <ButtonRutineAdd description={'Agregar Punto a la Rutina'} onClick={handleAddClick}/>
-        <ButtonReflesh onClick={() => cargarRutinasDB()}/>
+        <ButtonEdit description={'Cargar Rutina en Cuadro'} onClick={() => cargarRutinaRA(nombre)}/>
+        <ButtonDelete description={'Eliminar Rutina Seleccionada'} onClick={() => elimiarRutinaDB(nombre)}/>
+        <ButtonRutineAdd description={'Agregar Rutina Seleccionada a la Rutina Actual'} onClick={handleAddClick}/>
+        <ButtonReflesh description={'Refrescar Tabla de Rutinas'} onClick={() => cargarRutinasDB()}/>
       </Stack>
       <Paper sx={{
             width: '100%', 

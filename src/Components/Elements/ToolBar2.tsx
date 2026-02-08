@@ -36,27 +36,27 @@ function ToolBar({
           gap: 1,
         }}
       >
-        <Button onClick={onTogglePuntos}  sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Lista de Puntos Guardados'} onClick={onTogglePuntos}  sx={{height: "90%", color: "#f1eaeaff" }}>
           B.Puntos
         </Button>
 
-        <Button onClick={onToggleRutinas} sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Lista de Rutinas Guardadas'} onClick={onToggleRutinas} sx={{height: "90%", color: "#f1eaeaff" }}>
           B.Rutinas
         </Button>
 
-        <Button onClick={inicializarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Inicializar Controlador'} onClick={inicializarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
           Inicializar Programa
         </Button>
 
-        <Button onClick={cerrarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Cerrar Controlador'} onClick={cerrarPrograma}   sx={{height: "90%", color: "#f1eaeaff" }}>
           Cerrar Programa
         </Button>
 
-        <Button onClick={modoControl}   sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Modo Control'} onClick={modoControl}   sx={{height: "90%", color: "#f1eaeaff" }}>
           M Control
         </Button>
 
-        <Button onClick={modoLectura}   sx={{height: "90%", color: "#f1eaeaff" }}>
+        <Button title={'Modo Lectura'} onClick={modoLectura}   sx={{height: "90%", color: "#f1eaeaff" }}>
           M Lectura
         </Button>
         
