@@ -98,6 +98,13 @@ class ControladorRobot:
         
         self.posicion_Trayectorias=[]
         self.rutina_Trayectorias=[] 
+        
+        
+        
+        
+        self.tiempo_envioi=0
+        self.tiempo_enviof=0
+        self.tiempo_enviot=0
     
     def dict_to_pose(self,pose_dict):
         
@@ -204,6 +211,10 @@ class ControladorRobot:
 
     # callback del topico planificacion_A_trayectoria
     def _planificacion_callback(self, msg):
+        if int(msg.data)==10:
+            self.tiempo_enviot=rospy.Time.now()-self.tiempo_envioi
+            rospy.loginfo("tiempo entre trayectoria")
+            rospy.loginfo(self.tiempo_enviot.to_sec()*1000)
         try:
             self._last_plan_msg = int(msg.data)
             self._plan_event = True
@@ -434,6 +445,9 @@ class ControladorRobot:
         return goal
     
     def Ordenar_ejec_rutina(self, data):
+        if data.data:
+            rospy.logerr("Inicializar tiempo")
+            self.tiempo_envioi=rospy.Time.now()
         F = Bool(False)
         self.planear_Rutina = True
         self.rutina_pub.publish(F)
@@ -447,8 +461,8 @@ class ControladorRobot:
         rospy.loginfo("Iniciando rutina...")
         self.ejecutando_rutina = True
         
-        self.posicion_Trayectorias.clear()
-        self.rutina_Trayectorias.clear()
+        self.posicion_Trayectorias=[]
+        self.rutina_Trayectorias=[]
 
         # Leer rutina desde DB
         try:
@@ -767,6 +781,7 @@ class ControladorRobot:
         self.estado_actual = data.data
 
     def ejecutar_cord_ros(self, data):
+        self.tiempo_envioi=rospy.Time.now()
         F = Bool(False)
         #data.descripcion[orgien_de_orden,plan,velocidad,radio]
         rospy.loginfo(data)

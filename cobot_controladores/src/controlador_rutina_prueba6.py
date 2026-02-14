@@ -224,6 +224,7 @@ class ControladorCobot:
     # Ejecución
     # ----------------------------------------------------
     def ejecutar_plan_completo(self):
+        self.pub_planificacion_trayectoria.publish(10)
         """Ejecuta todas las trayectorias acumuladas."""  
         for i, frag in enumerate(self.plan_fragmentos):
             
@@ -260,13 +261,17 @@ class ControladorCobot:
 
         for punto in puntos:
             posiciones_bits = norm.rad_bit(punto.positions)
+            
+            ultimo_punto=punto.positions
+            
             msg = Int16MultiArray(data=posiciones_bits)
             self.pub_cord_dy.publish(msg)
 
-            t_obj = punto.time_from_start.to_sec()
+            t_obj = punto.time_from_start.to_sec()/2
             while (time.time() - t0) < t_obj:
                 time.sleep(0.001)
         self.pub_planificacion_trayectoria.publish(3)
+        rospy.loginfo(norm.rad_grados(ultimo_punto))
 
     # ----------------------------------------------------
     # Limpieza
