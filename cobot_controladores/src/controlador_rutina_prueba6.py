@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import rospy
-from std_msgs.msg import Int16, Int16MultiArray
+from std_msgs.msg import Int16, Int16MultiArray, Bool
 from moveit_msgs.msg import DisplayTrajectory, MoveGroupSequenceActionFeedback
 import numpy as np
 import time
-from cobot_controladores.msg import waits, trayectorias
+from cobot_controladores.msg import waits, trayectorias, msg_web
 from db_puntos6 import (obtener_rutina)
 
 from Normalizacion_Robot import NormalizacionRobot
@@ -31,27 +31,40 @@ class ControladorCobot:
         self.planificacion_valida = False   # bandera de éxito o error
         self.feedback_relevante = False
         self.recibido_waits = False 
+        
+        self.paradaEmergencia=True
 
         # === Publicadores ===
         self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
         self.pub_planificacion_trayectoria = rospy.Publisher('planificacion_A_trayectoria', Int16, queue_size=2)
 
         # === Subscriptores ===
+        rospy.Subscriber('parada_emergencia', Bool, self.callback_parada)
+        
         rospy.Subscriber('/move_group/display_planned_path', DisplayTrajectory, self.callback_display_rutina)
         rospy.Subscriber('/sequence_move_group/feedback', MoveGroupSequenceActionFeedback, self.callback_feedback)
         rospy.Subscriber('trayectoria_A_planificacion', Int16, self.callback_planificacion)  
         self.rutine_waits = rospy.Subscriber('rutine_waits', waits, self.callback_waits)
         self.rutine_trayectorias = rospy.Subscriber('rutine_trayectorias', trayectorias, self.callback_trayectorias)
-
+        self.informe_web = rospy.Publisher('informe_web', msg_web, queue_size=10)
         # === Parámetros ===
         self.PAUSA_ENTRE_TRAYECTORIAS = 0.1  # segundos
         self.TIMEOUT_PLANIFICACION = 5.0    # segundos máximos de espera
         
         self._limpiar_variables()
 
+    def publicar_informe(self, mensaje: str, tipo: int):
+        msg = msg_web()
+        msg.mensaje = mensaje
+        msg.tipo = tipo
+        self.informe_web.publish(msg)
+        
     # ----------------------------------------------------
     # Callbacks
     # ----------------------------------------------------
+    def callback_parada(self, msg):
+        self.paradaEmergencia=msg.data
+        
     def callback_waits(self, msg):
         """Guarda los waits y sus idices."""      
         self.indicesWait=list(msg.indice)
@@ -99,126 +112,132 @@ class ControladorCobot:
         self.recibido_feedback = True
 
     def callback_planificacion(self, msg):
-        self.orden=msg.data
-        
-        if self.orden==0:
-            rospy.loginfo("Limpieza inicial")
-            self._limpiar_variables() 
-            self.pub_planificacion_trayectoria.publish(0)     
+        if self.paradaEmergencia:
+            self.publicar_informe("Parada activada, Desactivela y vuelva a mandar la orden de correr la rutina",-1)
+            self._limpiar_variables()
+            return
+        else:
+            self.orden=msg.data
             
-        elif self.orden==-1:
-            rospy.loginfo("🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...")
+            if self.orden==0:
+                rospy.loginfo("Limpieza inicial")
+                self._limpiar_variables() 
+                self.pub_planificacion_trayectoria.publish(0)     
+                
+            elif self.orden==-1:
+                rospy.loginfo("🔄 Señal -1 recibida. Esperando planificación (feedback + plan)...")
 
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.plan_fragmentos_state or not self.feedback_relevante) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
+                # Esperar feedback y trayectorias planificadas
+                inicio = time.time()
+                while (not self.plan_fragmentos_state or not self.feedback_relevante) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                    rospy.sleep(0.1)
 
-            if not self.recibido_feedback:
-                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
+                if not self.recibido_feedback:
+                    rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
 
-            # Evaluar resultado            
-            if self.planificacion_valida and self.plan_fragmentos_state and self.plan_fragmentos:
+                # Evaluar resultado            
+                if self.planificacion_valida and self.plan_fragmentos_state and self.plan_fragmentos:
+                    rospy.loginfo("✅ Planificación válida (estado MONITOR)")
+                    self.pub_planificacion_trayectoria.publish(1)
+                    self.plan_fragmentos_state=False
+                else:
+                    rospy.logerr("❌ Planificación fallida (estado IDLE o sin trayectoria). No se ejecutará.")
+                    self.publicar_informe("ERROR EN PLANIFIACION",-2)
+                    self.pub_planificacion_trayectoria.publish(-1)                
+                    self._limpiar_variables()
+            elif self.orden==-2:
+                self.ejecutar_plan_completo()
+                self._limpiar_variables()      
+            elif self.orden==-3:
+                self.pub_planificacion_trayectoria.publish(2)
+                
+                rospy.loginfo("🔄 Señal -3 recibida. Esperando waits")
+                
+                # Esperar feedback y trayectorias planificadas
+                inicio = time.time()
+                while (not self.recibido_waits) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                    rospy.sleep(0.1)
+
+                if not self.recibido_waits:
+                    rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+                
+                self.ejecutar_plan_completo()
+                self._limpiar_variables() 
+                
+            elif self.orden==-4:
+                    
+                self.pub_planificacion_trayectoria.publish(2)
+                
+                rospy.loginfo("🔄 Señal -4 recibida. Esperando Trayectorias")
+                
+                # Esperar feedback y trayectorias planificadas
+                inicio = time.time()
+                while (not self.recibido_trayectorias) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                    rospy.sleep(0.1)
+
+                if not self.recibido_trayectorias:
+                    rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+                
+                self.ejecutar_plan_completo()
+                self._limpiar_variables()   
+                
+            elif self.orden==-5:
+                    
+                self.pub_planificacion_trayectoria.publish(2)
+                
+                rospy.loginfo("🔄 Señal -5 recibida. Esperando waits y Trayectorias")
+                
+                # Esperar feedback y trayectorias planificadas
+                inicio = time.time()
+                while (not self.recibido_waits or not self.recibido_trayectorias) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                    rospy.sleep(0.1)
+
+                if (not self.recibido_waits) and (not self.recibido_trayectorias):
+                    rospy.logwarn("⚠️ No se recibió feedback de waits ni trayectorias en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+                elif not self.recibido_waits:
+                    rospy.logwarn("⚠️ No se recibió feedback de waits en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+                elif not self.recibido_trayectorias:
+                    rospy.logwarn("⚠️ No se recibió feedback de trayectorias en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+                
+                self.ejecutar_plan_completo()
+                self._limpiar_variables()         
+                
+            elif self.orden==-6:
+                rospy.loginfo("🔄 Señal 0 recibida. Esperando planificación (feedback + plan)...")
+
+                # Esperar feedback y trayectorias planificadas
+                inicio = time.time()
+                while (not self.plan_fragmentos) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
+                    rospy.sleep(0.1)
+
+                if not self.plan_fragmentos:
+                    rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
+                    self._limpiar_variables()
+                    self.pub_planificacion_trayectoria.publish(-2)
+                    return
+
                 rospy.loginfo("✅ Planificación válida (estado MONITOR)")
-                self.pub_planificacion_trayectoria.publish(1)
-                self.plan_fragmentos_state=False
-            else:
-                rospy.logerr("❌ Planificación fallida (estado IDLE o sin trayectoria). No se ejecutará.")
-                self.pub_planificacion_trayectoria.publish(-1)                
-                self._limpiar_variables()
-        elif self.orden==-2:
-            self.ejecutar_plan_completo()
-            self._limpiar_variables()      
-        elif self.orden==-3:
-            self.pub_planificacion_trayectoria.publish(2)
-            
-            rospy.loginfo("🔄 Señal -3 recibida. Esperando waits")
-            
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.recibido_waits) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
-
-            if not self.recibido_waits:
-                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-            
-            self.ejecutar_plan_completo()
-            self._limpiar_variables() 
-            
-        elif self.orden==-4:
-                
-            self.pub_planificacion_trayectoria.publish(2)
-            
-            rospy.loginfo("🔄 Señal -4 recibida. Esperando Trayectorias")
-            
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.recibido_trayectorias) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
-
-            if not self.recibido_trayectorias:
-                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-            
-            self.ejecutar_plan_completo()
-            self._limpiar_variables()   
-            
-        elif self.orden==-5:
-                
-            self.pub_planificacion_trayectoria.publish(2)
-            
-            rospy.loginfo("🔄 Señal -5 recibida. Esperando waits y Trayectorias")
-            
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.recibido_waits or not self.recibido_trayectorias) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
-
-            if (not self.recibido_waits) and (not self.recibido_trayectorias):
-                rospy.logwarn("⚠️ No se recibió feedback de waits ni trayectorias en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-            elif not self.recibido_waits:
-                rospy.logwarn("⚠️ No se recibió feedback de waits en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-            elif not self.recibido_trayectorias:
-                rospy.logwarn("⚠️ No se recibió feedback de trayectorias en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-            
-            self.ejecutar_plan_completo()
-            self._limpiar_variables()         
-            
-        elif self.orden==-6:
-            rospy.loginfo("🔄 Señal 0 recibida. Esperando planificación (feedback + plan)...")
-
-            # Esperar feedback y trayectorias planificadas
-            inicio = time.time()
-            while (not self.plan_fragmentos) and (time.time() - inicio < self.TIMEOUT_PLANIFICACION):
-                rospy.sleep(0.1)
-
-            if not self.plan_fragmentos:
-                rospy.logwarn("⚠️ No se recibió feedback en el tiempo establecido.")
-                self._limpiar_variables()
-                self.pub_planificacion_trayectoria.publish(-2)
-                return
-
-            rospy.loginfo("✅ Planificación válida (estado MONITOR)")
-                
-            self.ejecutar_plan_completo()
-            self._limpiar_variables()           
+                    
+                self.ejecutar_plan_completo()
+                self._limpiar_variables()           
 
     # ----------------------------------------------------
     # Ejecución
@@ -230,7 +249,12 @@ class ControladorCobot:
             
             rospy.loginfo(f"▶ Ejecutando fragmento {i+1}/{len(self.plan_fragmentos)}...")            
             for trajectory in frag.trajectory:
-                self.ejecutar_trayectoria_individual(trajectory.joint_trajectory)   
+                if self.paradaEmergencia:
+                    self.publicar_informe("Parada de Emergencia Activada",-2)
+                    self._limpiar_variables()
+                    return
+                else:
+                    self.ejecutar_trayectoria_individual(trajectory.joint_trajectory)   
             
             if (i) in self.indicesT:
                 idx = self.indicesT.index(i)
@@ -245,14 +269,19 @@ class ControladorCobot:
             else:
                 # Pausa corta estándar
                 time.sleep(self.PAUSA_ENTRE_TRAYECTORIAS)
+        self.pub_planificacion_trayectoria.publish(3)
     
     def ejecutar_trayectoria_bruta(self, puntos):
         rate = rospy.Rate(20)  
         for punto in puntos:
-            msg = Int16MultiArray()
-            msg.data = punto
-            self.pub_cord_dy.publish(msg)
-            rate.sleep()
+            if self.paradaEmergencia:
+                self._limpiar_variables()
+                return
+            else:
+                msg = Int16MultiArray()
+                msg.data = punto
+                self.pub_cord_dy.publish(msg)
+                rate.sleep()
 
     def ejecutar_trayectoria_individual(self, joint_trajectory):
         """Envía los puntos de una trayectoria."""
@@ -260,17 +289,20 @@ class ControladorCobot:
         t0 = time.time()
 
         for punto in puntos:
-            posiciones_bits = norm.rad_bit(punto.positions)
-            
-            ultimo_punto=punto.positions
-            
-            msg = Int16MultiArray(data=posiciones_bits)
-            self.pub_cord_dy.publish(msg)
+            if self.paradaEmergencia:
+                self._limpiar_variables()
+                return
+            else:
+                posiciones_bits = norm.rad_bit(punto.positions)
+                
+                ultimo_punto=punto.positions
+                
+                msg = Int16MultiArray(data=posiciones_bits)
+                self.pub_cord_dy.publish(msg)
 
-            t_obj = punto.time_from_start.to_sec()/2
-            while (time.time() - t0) < t_obj:
-                time.sleep(0.001)
-        self.pub_planificacion_trayectoria.publish(3)
+                t_obj = punto.time_from_start.to_sec()/2
+                while (time.time() - t0) < t_obj:
+                    time.sleep(0.001)        
         rospy.loginfo(norm.rad_grados(ultimo_punto))
 
     # ----------------------------------------------------

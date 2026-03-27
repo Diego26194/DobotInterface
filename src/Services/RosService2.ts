@@ -108,7 +108,14 @@ export function initRos() {
     ros,
     name: '/pos_dy',
     messageType: 'std_msgs/Int16MultiArray',
-  });
+  });  
+  
+  //no va
+  topics['mod_pid'] = new ROSLIB.Topic({
+    ros,
+    name: '/mod_pid',
+    messageType: 'std_msgs/Int16MultiArray',
+  });  
 
 
 

@@ -52,6 +52,9 @@ class ModoLectura:
         
         # Definir el nombre del nuevo tópico
         self.puntos_dy_pub = rospy.Publisher('puntos_dy', Float32MultiArray, queue_size=10)
+        
+        
+        rospy.Subscriber('limpieza_rutina', Bool, self.botonera_borrar_rut)
 
         #   ////////  PAGINA WEB    ////////
 
@@ -189,6 +192,11 @@ class ModoLectura:
         msg.error = errores                              
         
         self.pub_pos_real.publish(msg)
+
+        
+    def botonera_borrar_rut(self, data):  
+        eliminar_todos_datos_rutina() 
+        self.refrescarRutinaActual()       
         
     def callback(self, data):
         # Obtener el vector de coordenadas del mensaje recibido(bit)

@@ -63,6 +63,8 @@ function ToolBar({
         <Button
           component={Link}
           to={LinkHome}
+          target="_blank"
+          rel="noopener noreferrer"
           sx={{height: "90%", color: "#f1eaeaff" }}
         >
           Emulador Robot

@@ -83,13 +83,11 @@ useEffect(() => {
   const enviarEstadoReal = () => {
     console.log("Enviar Estado Real:", posDy);
     mandarCordReal(posDy);
-    // acá tu lógica para ROS
   };
 
   const guardarPunto = () => {
     console.log("Guardar Punto:", pDy);
     mandarPunto(pDy);
-    // acá tu lógica para ROS
   };
 
    return (

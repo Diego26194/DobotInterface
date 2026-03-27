@@ -3,6 +3,7 @@ import Lectura from "./Pages/Lectura";
 import Arduino from "./Pages/arduino";
 import Cinematica from "./Pages/cinematic";
 import ToolBar from "./Components/Elements/ToolBar";
+import CorreccionPID from "./Pages/CorreccionPID";
 
 import RutineTable from "./Pages/RutineTable";
 import Prueba2 from "./Pages/prueba2"
@@ -37,6 +38,7 @@ function App() {
             <Route path="/p2" element={<Prueba2 />} />
             <Route path="/arduino" element={<Arduino />} />
             <Route path="/c" element={<Cinematica />} />
+            <Route path="/pid" element={<CorreccionPID />} />
           </Routes>
         </Box>
       </Router>
