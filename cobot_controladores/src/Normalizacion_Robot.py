@@ -11,8 +11,8 @@ class NormalizacionRobot:
 
     def __init__(self):
         # Límites articulares en grados
-        self.angMin = [-175, -115, -160, -175, -175, -175]
-        self.angMax = [ 175,  115,  160,  175,  175,  175]
+        self.angMin = [-175, -115, -160, -150, -150, -150]
+        self.angMax = [ 175,  115,  160,  150,  150,  150]
 
     # ------------------------------
     # Conversiones
@@ -26,7 +26,10 @@ class NormalizacionRobot:
                 b = int((r + np.pi) * 4095 / (2 * np.pi))
             else:
                 # XL320: de [-150°, +150°] a [0,1023] 150° = 2.61799 rad y 300º = 5.23599
-                b = int((r + 2.61799) * 1023 / 5.23599)
+                #b = int((r + 2.61799) * 1023 / 5.23599)
+                
+                # En este caso esta desfasado en -45° por lo que el 0 no esta en 150° sino en 105° = 1.8326 rad                
+                b = int((r + 1.8326) * 1023 / 5.23599)
             bit.append(b)
 
         return np.int32(bit)
@@ -40,7 +43,10 @@ class NormalizacionRobot:
                 r = (b * (2*np.pi) / 4095.0) - np.pi
             else:
                 # XL320
-                r = (b * 5.23599 / 1023.0) - 2.61799
+                #r = (b * 5.23599 / 1023.0) - 2.61799
+                #Correccion por desfasaje mecanico
+                r = (b * 5.23599 / 1023.0) - 1.8326
+                
             rad.append(r)
 
         return rad
@@ -55,6 +61,8 @@ class NormalizacionRobot:
             else:
                 # XL320: [–150°, +150°]
                 b = int((g + 150) * 1023 / 300)
+                #Correccion por desfasaje mecanico
+                b = int((g + 105) * 1023 / 300)
             bit.append(b)
 
         return np.int32(bit)
@@ -75,7 +83,9 @@ class NormalizacionRobot:
                 g = (b * 360.0 / 4095.0) - 180.0
             else:
                 # Para XL320 (0–1023 → 300°)
-                g = (b * 300.0 / 1023.0) - 150.0
+                #g = (b * 300.0 / 1023.0) - 150.0
+                #Correccion por desfasaje mecanico
+                g = (b * 300.0 / 1023.0) - 105.0
             grados.append(g)
         return grados
 

@@ -1,6 +1,7 @@
 import { AppBar, Toolbar, Button, Box } from "@mui/material";
 import { Link } from "react-router-dom";
 import { inicializarPrograma, cerrarPrograma, modoControl, modoLectura } from "../../Services/Funciones";
+import icon from "../../imagenes/icon_labme2.png";
 
 interface ToolBarProps {
   LinkHome: string;
@@ -36,6 +37,15 @@ function ToolBar({
           gap: 1,
         }}
       >
+        <img
+          src={icon}
+          alt="LabMe"
+          style={{
+            height: "200%",
+            objectFit: "contain",
+            marginRight: "0px",
+          }}
+        />
         <Button title={'Lista de Puntos Guardados'} onClick={onTogglePuntos}  sx={{height: "90%", color: "#f1eaeaff" }}>
           B.Puntos
         </Button>

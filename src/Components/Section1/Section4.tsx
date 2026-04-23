@@ -66,7 +66,7 @@ const Section4: React.FC<Section4Props> = ({ setFlagAddPoint }) => {
         <Typography variant="h6"sx={{fontSize: '1.1rem'}}>Rutina</Typography>
         {/*<ButtonAdd onClick={handleAddClick}/> */}
         <ButtonEdit description={'Cargar Rutina en Cuadro'} onClick={() => cargarRutinaRA(nombre)}/>
-        <ButtonDelete description={'Eliminar Rutina Seleccionada'} onClick={() => elimiarRutinaDB(nombre)}/>
+        <ButtonDelete description={'Eliminar Rutina Seleccionada'} onClick={() => elimiarRutinaDB("nombre")}/>
         <ButtonRutineAdd description={'Agregar Rutina Seleccionada a la Rutina Actual'} onClick={handleAddClick}/>
         <ButtonReflesh description={'Refrescar Tabla de Rutinas'} onClick={() => cargarRutinasDB()}/>
       </Stack>

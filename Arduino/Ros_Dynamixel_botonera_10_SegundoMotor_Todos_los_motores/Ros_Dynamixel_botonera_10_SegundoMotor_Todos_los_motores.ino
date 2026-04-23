@@ -221,21 +221,21 @@ void llama(const std_msgs::Int16MultiArray& msg) {
     dxl.setGoalPosition(DXL_ID5, dato.data[4]/4,UNIT_RAW);
     dxl.setGoalPosition(DXL_ID6, dato.data[5]/4,UNIT_RAW);
 */
-    //te1 = millis();
+    te1 = millis();
     dxl.setGoalPosition(DXL_ID1, msg.data[0],UNIT_RAW);
-    //te2 = millis();
+    te2 = millis();
     dxl.setGoalPosition( DXL_ID7, 4095 -msg.data[1],UNIT_RAW);
-    //te2 = millis();
+    te2 = millis();
     dxl.setGoalPosition(DXL_ID2, msg.data[1],UNIT_RAW);
-    //te3 = millis();
+    te3 = millis();
     dxl.setGoalPosition(DXL_ID3, msg.data[2],UNIT_RAW);
-    //te4 = millis();
+    te4 = millis();
     dxl.setGoalPosition(DXL_ID4, msg.data[3]/4,UNIT_RAW);
-    //te5 = millis();
+    te5 = millis();
     dxl.setGoalPosition(DXL_ID5, msg.data[4]/4,UNIT_RAW);
-    //te6 = millis();
+    te6 = millis();
     dxl.setGoalPosition(DXL_ID6, msg.data[5]/4,UNIT_RAW);
-    //te7 = millis();
+    te7 = millis();
 
     //contadorAciertos1=contadorAciertos1 + 1;
   //}
@@ -310,7 +310,7 @@ void publishPositions(void)
 
 
   //Comprobacion de msjs BORRAR
-  /*
+  
   contadorPublicaciones=contadorPublicaciones+1;
   if(contadorPublicaciones>20){
     contadorPublicaciones=0;
@@ -325,7 +325,7 @@ void publishPositions(void)
     erroresA.publish(&cErrores);
     */
 
-    /*
+    
     de6=(int16_t)(te7-te6);
     de5=(int16_t)(te6-te5);
     de4=(int16_t)(te5-te4);
@@ -338,7 +338,7 @@ void publishPositions(void)
     cErrores.data_length = sizeof(erroresData)/sizeof(erroresData[0]);
     erroresA.publish(&cErrores);
   }
-*/
+
 
 }
 

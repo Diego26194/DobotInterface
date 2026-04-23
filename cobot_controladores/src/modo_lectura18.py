@@ -106,36 +106,36 @@ class ModoLectura:
         
         self.pub_cord_dy = rospy.Publisher('cord_dy', Int16MultiArray, queue_size=10)
         
-        ##################### Crear Trayectoria inicial ###################
+        ##################### Crear Trayectoria inicial de prueba###################
         
         # Parámetros
-        num_puntos = 100
-        bit_inicio = 2047          # 0 grados
-        bit_fin = 3071 
-        incremento = (bit_fin - bit_inicio) / (num_puntos - 1)
+#        num_puntos = 100
+#        bit_inicio = 2047          # 0 grados
+#        bit_fin = 3071 
+#        incremento = (bit_fin - bit_inicio) / (num_puntos - 1)
 
-        for i in range(num_puntos):
-            motor1 = int(bit_inicio + i * incremento)
-            
-            # Motor 1: 0° → 90°  
-            self.angulosBit = [motor1,2047,2047,512,512,512]
+#        for i in range(num_puntos):
+#            motor1 = int(bit_inicio + i * incremento)
+#            
+#            # Motor 1: 0° → 90°  
+#            self.angulosBit = [motor1,2047,2047,512,512,512]
 
-            self.rutina.append(list(self.angulosBit))
+#            self.rutina.append(list(self.angulosBit))
         
-        angInit=norm.bit_grados(self.rutina[0])
-        poseInit=self.AngulosArticulares_a_pose(angInit)
-        pos=agregar_trayectoria_rutina(self.rutina,poseInit)           
+#        angInit=norm.bit_grados(self.rutina[0])
+#        poseInit=self.AngulosArticulares_a_pose(angInit)
+#        pos=agregar_trayectoria_rutina(self.rutina,poseInit)           
             
-        punto = leer_punto_rutina(pos)  
-        if punto:
-            mensaje_puntoR = punto_web()
-            mensaje_puntoR.orden = ['addT', punto['nombre'], punto['plan']]
-            mensaje_puntoR.coordenadas = [(punto['wait']), (punto['pos'])]
-            self.puntos_rutina.publish(mensaje_puntoR)
+#        punto = leer_punto_rutina(pos)  
+#        if punto:
+#            mensaje_puntoR = punto_web()
+#            mensaje_puntoR.orden = ['addT', punto['nombre'], punto['plan']]
+#            mensaje_puntoR.coordenadas = [(punto['wait']), (punto['pos'])]
+#            self.puntos_rutina.publish(mensaje_puntoR)
             
-            self.publicar_informe(f"Trayectoria {punto['nombre']} agregada correctamente",1)
+#            self.publicar_informe(f"Trayectoria {punto['nombre']} agregada correctamente",1)
             
-            self.rutina.clear()
+#            self.rutina.clear()
 
     def publicar_informe(self, mensaje: str, tipo: int):
         msg = msg_web()

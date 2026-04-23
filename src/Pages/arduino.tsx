@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {initRos, pubTopic, subTopic, unsubTopic } from '../Services/RosService2';
 import {  Stack } from "@mui/material";
+import icon from "../imagenes/icon_labme2.png";
 
 function mandarCordReal( coord:number[]) {
   const msg = {
@@ -42,8 +43,15 @@ const Arduino = () => {
   const [cordDy, setCordDy] = useState([2090, 2090, 2090, 512, 512, 512]);
   const [posDy, setPosDy] = useState([2090, 2090, 2090, 512, 512, 512]);
   const [pDy, setPDy] = useState([2090, 2090, 2090, 512, 512, 512]);
-  
-  
+    
+useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+
+    if (link) {
+      link.href = icon;
+    }
+  }, []);
+
 useEffect(() => {
   // inicializa ROS solo una vez cuando el componente se monta
   initRos();

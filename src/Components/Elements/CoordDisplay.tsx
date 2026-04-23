@@ -13,7 +13,7 @@ const CoordDisplay: React.FC = () => {
   const [coords, setCoords] = useState<CordMsg>({
     cart: [200, 200, 200, 200, 200, 200],
     ang: [120, 120, 210, 120, 120, 120],
-    error: [true, true, true, true, true, true], // error: [false, false, false, false, false, false] error: [true, true, true, true, true, true]
+    error: [false, false, false, false, false, false], // rror: [false, false, false, false, false, false]e error: [true, true, true, true, true, true]
   });
 
   useEffect(() => {
